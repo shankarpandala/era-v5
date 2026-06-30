@@ -5,22 +5,30 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 // A claim supplies a `build()` that returns a fresh "trainer" object:
 //   { step(): void, snapshot(): object, model?: ... }
 // step() runs ONE epoch; snapshot() returns whatever metrics the UI shows.
-// This hook runs `stepsPerFrame` epochs per animation frame so the convergence
-// is watchable (1 epoch/frame ≈ 5s for 300 epochs at 60fps — slow enough to see
-// the boundary morph). `stepsPerFrame` is read from a live ref, so the speed
-// knob changes pacing mid-run WITHOUT restarting. A hard time cap per frame
-// keeps a heavy model (S1-4 n=2000) from freezing the tab. It rebuilds and
-// (optionally) restarts whenever `deps` change — that's how a knob re-runs the
-// experiment.
+//
+// Pacing is EASE-IN: the early epochs — where the decision boundary changes the
+// most — run slowly (< 1 epoch/frame, so the morph is clearly visible), then the
+// rate ramps up exponentially to blow through the boring fine-tuning tail. A
+// fractional accumulator lets the rate dip below 1 epoch/frame. A hard time cap
+// per frame keeps the heavy S1-4 (n=2000) case from freezing the tab. The loop
+// rebuilds and (optionally) restarts whenever `deps` change — that's how a knob
+// re-runs the experiment.
 const MAX_FRAME_MS = 34 // safety cap so a frame can't lock the UI
+const RATE_MIN = 0.5 // epochs/frame at the start — slow, dramatic
+const RATE_MAX = 20 // epochs/frame cap for the tail — fast
+const RATE_HALFLIFE = 45 // epochs to double the rate
 
-export default function useTrainer({ build, epochs, autoStart = true, deps = [], stepsPerFrame = 1 }) {
+// Epochs to advance this frame, as a function of how far training has progressed.
+function rateAt(epoch) {
+  return Math.min(RATE_MAX, RATE_MIN * Math.pow(2, epoch / RATE_HALFLIFE))
+}
+
+export default function useTrainer({ build, epochs, autoStart = true, deps = [] }) {
   const trainerRef = useRef(null)
   const rafRef = useRef(0)
   const epochRef = useRef(0)
   const runningRef = useRef(false)
-  const stepsRef = useRef(stepsPerFrame)
-  stepsRef.current = Math.max(1, stepsPerFrame) // live: speed changes apply without a restart
+  const accRef = useRef(0) // fractional epoch accumulator for sub-1-epoch/frame pacing
 
   const [epoch, setEpoch] = useState(0)
   const [snapshot, setSnapshot] = useState(null)
@@ -43,11 +51,12 @@ export default function useTrainer({ build, epochs, autoStart = true, deps = [],
     const t = trainerRef.current
     if (!t || !runningRef.current) return
     const t0 = performance.now()
-    let n = 0
-    while (n < stepsRef.current && epochRef.current < epochs && performance.now() - t0 < MAX_FRAME_MS) {
+    // Add this frame's quota (may be < 1 early on); step whole epochs out of it.
+    accRef.current += rateAt(epochRef.current)
+    while (accRef.current >= 1 && epochRef.current < epochs && performance.now() - t0 < MAX_FRAME_MS) {
       t.step()
       epochRef.current += 1
-      n += 1
+      accRef.current -= 1
     }
     publish()
     if (epochRef.current < epochs) {
@@ -60,6 +69,7 @@ export default function useTrainer({ build, epochs, autoStart = true, deps = [],
 
   const start = useCallback(() => {
     if (runningRef.current || epochRef.current >= epochs) return
+    accRef.current = 0
     runningRef.current = true
     setRunning(true)
     rafRef.current = requestAnimationFrame(loop)
@@ -70,6 +80,7 @@ export default function useTrainer({ build, epochs, autoStart = true, deps = [],
       cancelAnimationFrame(rafRef.current)
       trainerRef.current = build()
       epochRef.current = 0
+      accRef.current = 0
       runningRef.current = false
       setEpoch(0)
       setSnapshot(trainerRef.current?.snapshot() ?? null)
