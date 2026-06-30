@@ -33,7 +33,7 @@ export default function S1RingActivation() {
   const [lr, setLr] = useState(0.05)
   const [epochsTarget, setEpochsTarget] = useState(300)
   const [seed, setSeed] = useState(1)
-  const [speed, setSpeed] = useState(1)
+  const [activated, setActivated] = useState(false)
   const [useReLU, setUseReLU] = useState(true)
   const [show3D, setShow3D] = useState(false)
 
@@ -69,9 +69,16 @@ export default function S1RingActivation() {
   const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
-    stepsPerFrame: speed,
+    autoStart: activated,
     deps: [data, hidden, lr, useReLU, seed, epochsTarget],
   })
+
+  // Training holds off until the user engages: the first hover over (or click on)
+  // the widget kicks it off, so the untrained "before" state is visible on load.
+  const begin = () => {
+    setActivated(true)
+    start()
+  }
 
   const lifted = useMemo(() => {
     const t = trainer.current
@@ -95,7 +102,7 @@ export default function S1RingActivation() {
       claim="A model with no nonlinearity can only draw a straight boundary, so it cannot separate two concentric rings. Adding a single ReLU hidden layer can — only the activation changed."
       takeaway="The linear model is stuck near chance with a straight cut no matter how long it trains. Flip the activation on and the same-sized network wraps the ring to ~99%. The decision-boundary picture is the proof: nonlinearity is what buys curved boundaries."
     >
-      <div className="panel p-4">
+      <div className="panel p-4" onMouseEnter={() => !activated && begin()}>
         <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
           {/* Visualization */}
           <div>
@@ -129,7 +136,7 @@ export default function S1RingActivation() {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button onClick={running ? stop : epoch >= epochsTarget ? () => reset(true) : start}>
+              <Button onClick={running ? stop : epoch >= epochsTarget ? () => reset(true) : begin}>
                 {running ? '⏸ Pause' : epoch >= epochsTarget ? '↻ Re-train' : '▶ Train'}
               </Button>
               <Button variant="ghost" onClick={() => reset(true)}>
@@ -172,7 +179,6 @@ export default function S1RingActivation() {
             <Slider label="hidden units" value={hidden} min={2} max={32} step={1} onChange={setHidden} />
             <Slider label="learning rate" value={lr} min={0.005} max={0.2} step={0.005} onChange={setLr} format={(v) => v.toFixed(3)} />
             <Slider label="epochs" value={epochsTarget} min={50} max={800} step={50} onChange={setEpochsTarget} />
-            <Slider label="speed" value={speed} min={1} max={30} step={1} onChange={setSpeed} format={(v) => `${v} ep/frame`} />
             <Slider label="seed" value={seed} min={1} max={20} step={1} onChange={setSeed} />
             <div className="rounded-lg bg-zinc-50 p-2 text-[11px] text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
               <BlockMath math={'\\hat y=\\sigma(Wx+b)\\;\\;\\text{vs}\\;\\;\\hat y=\\sigma\\big(W_2\\,\\mathrm{ReLU}(W_1x)\\big)'} />

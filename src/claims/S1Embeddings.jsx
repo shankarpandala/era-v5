@@ -60,7 +60,7 @@ export default function S1Embeddings() {
   const [epochsTarget, setEpochsTarget] = useState(400)
   const [seed, setSeed] = useState(1)
   const [nPairs, setNPairs] = useState(1500)
-  const [speed, setSpeed] = useState(1)
+  const [activated, setActivated] = useState(false)
 
   const build = useCallback(() => {
     const { xIdx, yIdx } = makeGrammarPairs(nPairs, makeRng(seed))
@@ -89,9 +89,16 @@ export default function S1Embeddings() {
   const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
-    stepsPerFrame: speed,
+    autoStart: activated,
     deps: [embDim, lr, seed, nPairs, epochsTarget],
   })
+
+  // Hold off training until the user engages (hover or click), so the untrained
+  // "before" state (random embeddings) is visible on load.
+  const begin = () => {
+    setActivated(true)
+    start()
+  }
 
   const { coords, neighbors, purity } = useMemo(() => {
     const t = trainer.current
@@ -134,7 +141,7 @@ export default function S1Embeddings() {
       claim="Trained only to predict the next token in a tiny synthetic grammar, the embedding table clusters related tokens — even though similarity was never supplied as a label."
       takeaway="Same-category tokens share next-token distributions, so the only way to predict well is to give them similar embeddings. Watch animals, fruits, and verbs drift into three separate clusters as training runs — and every nearest neighbor becomes same-category. Emergent structure, learned from prediction alone."
     >
-      <div className="panel p-4">
+      <div className="panel p-4" onMouseEnter={() => !activated && begin()}>
         <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
           <div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -189,7 +196,7 @@ export default function S1Embeddings() {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button onClick={running ? stop : epoch >= epochsTarget ? () => reset(true) : start}>
+              <Button onClick={running ? stop : epoch >= epochsTarget ? () => reset(true) : begin}>
                 {running ? '⏸ Pause' : epoch >= epochsTarget ? '↻ Re-train' : '▶ Train'}
               </Button>
               <Button variant="ghost" onClick={() => reset(true)}>
@@ -207,7 +214,6 @@ export default function S1Embeddings() {
             <Slider label="learning rate" value={lr} min={0.01} max={0.3} step={0.01} onChange={setLr} format={(v) => v.toFixed(2)} />
             <Slider label="epochs" value={epochsTarget} min={50} max={800} step={50} onChange={setEpochsTarget} />
             <Slider label="training pairs" value={nPairs} min={200} max={3000} step={100} onChange={setNPairs} />
-            <Slider label="speed" value={speed} min={1} max={30} step={1} onChange={setSpeed} format={(v) => `${v} ep/frame`} />
             <Slider label="seed" value={seed} min={1} max={20} step={1} onChange={setSeed} />
             <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
               Grammar: <code>animal → verb → (fruit | animal)</code>, <code>fruit → animal</code>. The next-token
