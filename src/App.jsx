@@ -18,13 +18,8 @@ function Hero() {
     <header id="top" className="pt-12 pb-2">
       <p className="font-mono text-xs uppercase tracking-widest text-brand-500">ERA-V5 · The School of AI</p>
       <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl">
-        Assignment 1 — Interactive Proofs
+        Assignment 1
       </h1>
-      <p className="mt-3 max-w-2xl text-zinc-600 dark:text-zinc-300">
-        Four claims about what actually makes neural networks work — activations, depth, embeddings, and data. Each
-        one is proven <em>live</em> in your browser: a tiny hand-written neural net trains in front of you, and every
-        knob lets you flip the claim on and off to check it yourself. Nothing is precomputed.
-      </p>
 
       <nav aria-label="Claims" className="mt-6 grid gap-2 sm:grid-cols-2">
         {SECTIONS.map((s) => (

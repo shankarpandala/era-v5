@@ -86,16 +86,6 @@ export default function S1MemorizeGeneralize() {
     return arr && arr.length ? arr[arr.length - 1].y : null
   }
 
-  const gapSeries = useMemo(() => {
-    const data = SIZES.map((size) => {
-      const tr = last(size, 'train')
-      const te = last(size, 'test')
-      return { x: size, y: tr == null ? 0 : Math.max(0, te - tr) }
-    })
-    return [{ label: 'test − train loss', color: ACCENT, data, markers: true }]
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tick])
-
   const curveSeries = useMemo(() => {
     const h = histories?.[selected]
     if (!h) return []
@@ -171,22 +161,6 @@ export default function S1MemorizeGeneralize() {
                 </div>
                 <LineChart series={curveSeries} xLabel="epoch" yLabel="loss" yMin={0} height={232} />
               </div>
-            </div>
-
-            <div className="mt-4 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
-              <div className="mb-1 text-center text-xs font-medium text-zinc-600 dark:text-zinc-300">
-                Generalization gap vs dataset size — the money shot
-              </div>
-              <LineChart
-                series={gapSeries}
-                xLabel="training set size (log)"
-                yLabel="gap"
-                logX
-                xMin={20}
-                xMax={2000}
-                yMin={0}
-                height={200}
-              />
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
