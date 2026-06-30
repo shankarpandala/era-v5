@@ -97,7 +97,7 @@ export default function S1DepthLinear() {
     }
   }, [data, lr, seed])
 
-  const { tick, running, snapshot, trainer, epoch, start, reset } = useTrainer({
+  const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
     deps: [data, lr, seed, epochsTarget],
@@ -147,8 +147,8 @@ export default function S1DepthLinear() {
             <MatrixCollapse collapsed={collapsed} />
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button onClick={start} disabled={running || epoch >= epochsTarget}>
-                ▶ Train
+              <Button onClick={running ? stop : epoch >= epochsTarget ? () => reset(true) : start}>
+                {running ? '⏸ Pause' : epoch >= epochsTarget ? '↻ Re-train' : '▶ Train'}
               </Button>
               <Button variant="ghost" onClick={() => reset(true)}>
                 ↻ Restart

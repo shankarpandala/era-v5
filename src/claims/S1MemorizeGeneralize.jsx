@@ -65,7 +65,7 @@ export default function S1MemorizeGeneralize() {
     }
   }, [width, lr, seed])
 
-  const { tick, running, snapshot, trainer, epoch, start, reset } = useTrainer({
+  const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
     deps: [width, lr, seed, epochsTarget],
@@ -181,8 +181,8 @@ export default function S1MemorizeGeneralize() {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button onClick={start} disabled={running || epoch >= epochsTarget}>
-                ▶ Train all sizes
+              <Button onClick={running ? stop : epoch >= epochsTarget ? () => reset(true) : start}>
+                {running ? '⏸ Pause' : epoch >= epochsTarget ? '↻ Re-train' : '▶ Train all sizes'}
               </Button>
               <Button variant="ghost" onClick={() => reset(true)}>
                 ↻ Restart
