@@ -1,0 +1,58 @@
+@import "tailwindcss";
+@import "katex/dist/katex.min.css";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  --color-brand-50: oklch(0.97 0.02 250);
+  --color-brand-100: oklch(0.93 0.05 250);
+  --color-brand-200: oklch(0.87 0.10 250);
+  --color-brand-300: oklch(0.78 0.16 250);
+  --color-brand-400: oklch(0.67 0.20 250);
+  --color-brand-500: oklch(0.55 0.22 250);
+  --color-brand-600: oklch(0.45 0.22 250);
+  --color-brand-700: oklch(0.36 0.19 250);
+  --color-brand-800: oklch(0.28 0.15 250);
+  --color-brand-900: oklch(0.20 0.10 250);
+}
+
+/* Tailwind v4: drive dark mode from a class on <html> instead of the media query. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --navbar-height: 56px;
+  /* Per-claim accent colors (used by section index + ClaimCards) */
+  --claim-1: #3b82f6; /* blue   — activations   */
+  --claim-2: #8b5cf6; /* violet — depth         */
+  --claim-3: #10b981; /* emerald — embeddings   */
+  --claim-4: #f59e0b; /* amber  — data/gap      */
+  /* Class colors for scatter plots */
+  --class-0: #ef4444; /* red  */
+  --class-1: #3b82f6; /* blue */
+}
+
+html {
+  scroll-behavior: smooth;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* Offset anchor scrolling so section titles aren't hidden under the sticky navbar. */
+[id] {
+  scroll-margin-top: calc(var(--navbar-height) + 12px);
+}
+
+body {
+  font-family: var(--font-sans);
+  @apply bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Reusable surface for visualization panels / control boxes. */
+.panel {
+  @apply rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900;
+}
+
+.katex { font-size: 1.04em; }
+.dark .katex { color: #e4e4e7; }
+.katex-display { @apply my-4 overflow-x-auto overflow-y-hidden py-1; }
