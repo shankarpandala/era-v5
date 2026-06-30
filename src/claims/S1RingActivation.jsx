@@ -65,7 +65,7 @@ export default function S1RingActivation() {
     }
   }, [data, hidden, lr, useReLU, seed])
 
-  const { tick, running, snapshot, trainer, epoch, start, reset } = useTrainer({
+  const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
     deps: [data, hidden, lr, useReLU, seed, epochsTarget],
@@ -127,8 +127,8 @@ export default function S1RingActivation() {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Button onClick={start} disabled={running || epoch >= epochsTarget}>
-                ▶ Train
+              <Button onClick={running ? stop : epoch >= epochsTarget ? () => reset(true) : start}>
+                {running ? '⏸ Pause' : epoch >= epochsTarget ? '↻ Re-train' : '▶ Train'}
               </Button>
               <Button variant="ghost" onClick={() => reset(true)}>
                 ↻ Restart
