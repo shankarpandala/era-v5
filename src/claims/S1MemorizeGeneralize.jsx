@@ -18,6 +18,7 @@ export default function S1MemorizeGeneralize() {
   const [lr, setLr] = useState(0.03)
   const [epochsTarget, setEpochsTarget] = useState(200)
   const [seed, setSeed] = useState(1)
+  const [speed, setSpeed] = useState(1)
   const [selected, setSelected] = useState(20)
 
   const build = useCallback(() => {
@@ -68,6 +69,7 @@ export default function S1MemorizeGeneralize() {
   const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
+    stepsPerFrame: speed,
     deps: [width, lr, seed, epochsTarget],
   })
 
@@ -197,6 +199,7 @@ export default function S1MemorizeGeneralize() {
             <Slider label="capacity (hidden width)" value={width} min={8} max={48} step={4} onChange={setWidth} />
             <Slider label="learning rate" value={lr} min={0.005} max={0.1} step={0.005} onChange={setLr} format={(v) => v.toFixed(3)} />
             <Slider label="epochs" value={epochsTarget} min={50} max={400} step={25} onChange={setEpochsTarget} />
+            <Slider label="speed" value={speed} min={1} max={30} step={1} onChange={setSpeed} format={(v) => `${v} ep/frame`} />
             <Slider label="seed" value={seed} min={1} max={20} step={1} onChange={setSeed} />
             <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
               Same network <code>[2→{width}→{width}→1]</code> trained on 20, 200, and 2000 points from the same noisy

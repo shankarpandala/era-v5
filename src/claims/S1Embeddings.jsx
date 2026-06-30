@@ -60,6 +60,7 @@ export default function S1Embeddings() {
   const [epochsTarget, setEpochsTarget] = useState(400)
   const [seed, setSeed] = useState(1)
   const [nPairs, setNPairs] = useState(1500)
+  const [speed, setSpeed] = useState(1)
 
   const build = useCallback(() => {
     const { xIdx, yIdx } = makeGrammarPairs(nPairs, makeRng(seed))
@@ -88,6 +89,7 @@ export default function S1Embeddings() {
   const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
+    stepsPerFrame: speed,
     deps: [embDim, lr, seed, nPairs, epochsTarget],
   })
 
@@ -205,6 +207,7 @@ export default function S1Embeddings() {
             <Slider label="learning rate" value={lr} min={0.01} max={0.3} step={0.01} onChange={setLr} format={(v) => v.toFixed(2)} />
             <Slider label="epochs" value={epochsTarget} min={50} max={800} step={50} onChange={setEpochsTarget} />
             <Slider label="training pairs" value={nPairs} min={200} max={3000} step={100} onChange={setNPairs} />
+            <Slider label="speed" value={speed} min={1} max={30} step={1} onChange={setSpeed} format={(v) => `${v} ep/frame`} />
             <Slider label="seed" value={seed} min={1} max={20} step={1} onChange={setSeed} />
             <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
               Grammar: <code>animal → verb → (fruit | animal)</code>, <code>fruit → animal</code>. The next-token
