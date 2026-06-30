@@ -33,6 +33,7 @@ export default function S1RingActivation() {
   const [lr, setLr] = useState(0.05)
   const [epochsTarget, setEpochsTarget] = useState(300)
   const [seed, setSeed] = useState(1)
+  const [speed, setSpeed] = useState(1)
   const [useReLU, setUseReLU] = useState(true)
   const [show3D, setShow3D] = useState(false)
 
@@ -68,6 +69,7 @@ export default function S1RingActivation() {
   const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
+    stepsPerFrame: speed,
     deps: [data, hidden, lr, useReLU, seed, epochsTarget],
   })
 
@@ -170,6 +172,7 @@ export default function S1RingActivation() {
             <Slider label="hidden units" value={hidden} min={2} max={32} step={1} onChange={setHidden} />
             <Slider label="learning rate" value={lr} min={0.005} max={0.2} step={0.005} onChange={setLr} format={(v) => v.toFixed(3)} />
             <Slider label="epochs" value={epochsTarget} min={50} max={800} step={50} onChange={setEpochsTarget} />
+            <Slider label="speed" value={speed} min={1} max={30} step={1} onChange={setSpeed} format={(v) => `${v} ep/frame`} />
             <Slider label="seed" value={seed} min={1} max={20} step={1} onChange={setSeed} />
             <div className="rounded-lg bg-zinc-50 p-2 text-[11px] text-zinc-500 dark:bg-zinc-800/60 dark:text-zinc-400">
               <BlockMath math={'\\hat y=\\sigma(Wx+b)\\;\\;\\text{vs}\\;\\;\\hat y=\\sigma\\big(W_2\\,\\mathrm{ReLU}(W_1x)\\big)'} />

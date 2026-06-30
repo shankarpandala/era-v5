@@ -67,6 +67,7 @@ export default function S1DepthLinear() {
   const [lr, setLr] = useState(0.05)
   const [epochsTarget, setEpochsTarget] = useState(450)
   const [seed, setSeed] = useState(1)
+  const [speed, setSpeed] = useState(1)
 
   const data = useMemo(() => makeRings(n, noise, makeRng(seed)), [n, noise, seed])
 
@@ -100,6 +101,7 @@ export default function S1DepthLinear() {
   const { tick, running, snapshot, trainer, epoch, start, stop, reset } = useTrainer({
     build,
     epochs: epochsTarget,
+    stepsPerFrame: speed,
     deps: [data, lr, seed, epochsTarget],
   })
 
@@ -164,6 +166,7 @@ export default function S1DepthLinear() {
             <Slider label="points" value={n} min={60} max={600} step={20} onChange={setN} />
             <Slider label="learning rate" value={lr} min={0.005} max={0.2} step={0.005} onChange={setLr} format={(v) => v.toFixed(3)} />
             <Slider label="epochs" value={epochsTarget} min={100} max={1000} step={50} onChange={setEpochsTarget} />
+            <Slider label="speed" value={speed} min={1} max={30} step={1} onChange={setSpeed} format={(v) => `${v} ep/frame`} />
             <Slider label="seed" value={seed} min={1} max={20} step={1} onChange={setSeed} />
             <p className="text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-400">
               Left two panels stay a straight line however long they train. Only the ReLU stack (right) wraps the
