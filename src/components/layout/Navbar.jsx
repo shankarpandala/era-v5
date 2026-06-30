@@ -1,4 +1,4 @@
-// Header, adapted from the math4ai reference: same look (∑ mark, ~/pandala.in
+// Header, adapted from the math4ai reference: same look (node-graph mark, ~/pandala.in
 // tag, theme toggle, portfolio + LinkedIn + GitHub links) but rebranded to
 // ERA-V5 · Assignment 1, with the react-router center nav removed (this is a
 // single page — the logo is a plain anchor).
@@ -70,10 +70,29 @@ export default function Navbar({ theme, onToggleTheme }) {
           <span className="hidden select-none text-zinc-300 dark:text-[#2d3a4d] sm:inline" aria-hidden="true">
             |
           </span>
-          <a href="#top" className="flex items-baseline gap-1.5 select-none">
-            <span className="bg-gradient-to-r from-blue-500 to-violet-600 bg-clip-text text-lg font-bold text-transparent" aria-hidden="true">
-              ∑
-            </span>
+          <a href="#top" className="flex items-center gap-2 select-none">
+            {/* Node-graph mark — a small attention-style graph; this course is
+                "building LLMs from scratch", so the app gets its own logo. */}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="#3b82f6" />
+                  <stop offset="1" stopColor="#7c3aed" />
+                </linearGradient>
+              </defs>
+              <g stroke="url(#logoGrad)" strokeWidth="1.4" opacity="0.85">
+                <line x1="5" y1="6" x2="19" y2="6" />
+                <line x1="5" y1="6" x2="19" y2="18" />
+                <line x1="5" y1="18" x2="19" y2="6" />
+                <line x1="5" y1="18" x2="19" y2="18" />
+              </g>
+              <g fill="url(#logoGrad)">
+                <circle cx="5" cy="6" r="2.6" />
+                <circle cx="5" cy="18" r="2.6" />
+                <circle cx="19" cy="6" r="2.6" />
+                <circle cx="19" cy="18" r="2.6" />
+              </g>
+            </svg>
             <span className="bg-gradient-to-r from-blue-500 to-violet-600 bg-clip-text text-lg font-bold tracking-tight text-transparent">
               ERA-V5
             </span>
