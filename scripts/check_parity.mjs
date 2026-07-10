@@ -17,26 +17,36 @@ const PUB = path.join(HERE, '..', 'public', 'tokenizer')
 
 const tok = JSON.parse(fs.readFileSync(path.join(PUB, 'tokenizer.json'), 'utf8'))
 const golden = JSON.parse(fs.readFileSync(path.join(PUB, 'parity_golden.json'), 'utf8'))
+const stats = JSON.parse(fs.readFileSync(path.join(PUB, 'stats.json'), 'utf8'))
 const bpe = BPE.fromJSON(tok)
 
 const LANGS = ['en', 'hi', 'te', 'mr']
 let ok = true
 for (const lang of LANGS) {
   const text = fs.readFileSync(path.join(PUB, 'corpora', `${lang}.txt`), 'utf8')
+  // (1) token-stream parity vs Python golden
   const ids = bpe.encode(text)
   const g = golden[lang]
-  const equal = ids.length === g.length && ids.every((v, i) => v === g[i])
-  console.log(`${lang}: ${equal ? 'OK ' : 'MISMATCH'}  js=${ids.length} py=${g.length}`)
-  if (!equal) {
+  const tokEq = ids.length === g.length && ids.every((v, i) => v === g[i])
+  // (2) word-count parity: JS [\p{L}\p{N}]+ count == Python \w+ count (stats.json)
+  const jsWords = bpe.countWords(text)
+  const pyWords = stats.primary.per_language[lang].words
+  const wordEq = jsWords === pyWords
+  console.log(
+    `${lang}: tokens ${tokEq ? 'OK ' : 'MISMATCH'} (js=${ids.length} py=${g.length})` +
+      `  words ${wordEq ? 'OK ' : 'MISMATCH'} (js=${jsWords} py=${pyWords})`,
+  )
+  if (!tokEq) {
     ok = false
     const n = Math.max(ids.length, g.length)
     for (let i = 0; i < n; i++) {
       if (ids[i] !== g[i]) {
-        console.log(`   first diff @ ${i}: js=${ids[i]} py=${g[i]}`)
+        console.log(`   first token diff @ ${i}: js=${ids[i]} py=${g[i]}`)
         break
       }
     }
   }
+  if (!wordEq) ok = false
 }
-console.log(ok ? '\nPARITY OK — JS == Python on all corpora' : '\nPARITY FAILED')
+console.log(ok ? '\nPARITY OK — JS == Python (tokens AND word counts) on all corpora' : '\nPARITY FAILED')
 process.exit(ok ? 0 : 1)

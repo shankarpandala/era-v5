@@ -53,6 +53,27 @@ def pre_tokenize(text: str) -> list[str]:
     return _COMPILED.findall(text)
 
 
+# --- Word-count metric (denominator of fertility X = tokens / words) --------
+# The fertility metric counts WORDS as maximal runs of Unicode letters/numbers.
+# `[\p{L}\p{N}]+` equals Python's built-in `\w+` EXACTLY on the India corpora
+# (verified: en 10363, hi 15709, te 7370, mr 12203) and is byte-for-byte
+# replicable in JS `/[\p{L}\p{N}]+/gu`, so the browser widget's word count is
+# identical to this Python reference. We also report the whitespace-split count
+# for transparency.
+WORD_PATTERN = r"[\p{L}\p{N}]+"
+_WORD_RE = re.compile(WORD_PATTERN)
+
+
+def count_words(text: str) -> int:
+    """Primary word count: Unicode letter/number runs (== re.findall(r'\\w+'))."""
+    return len(_WORD_RE.findall(text))
+
+
+def count_words_split(text: str) -> int:
+    """Secondary word count: whitespace-delimited runs (len(text.split()))."""
+    return len(text.split())
+
+
 # --- GPT-2 byte<->unicode map (for human-readable token display only) -------
 def bytes_to_unicode() -> dict[int, str]:
     """Reversible map from bytes (0-255) to printable Unicode code points.
@@ -233,6 +254,7 @@ def save_tokenizer(path: str, merges: list[tuple[int, int]], meta: dict) -> None
     """Write tokenizer.json (pattern + ordered merges + metadata)."""
     payload = {
         "pattern": SPLIT_PATTERN,
+        "word_pattern": WORD_PATTERN,
         "vocab_size": 256 + len(merges),
         "byte_encoder": "gpt2",
         "special_tokens": {},

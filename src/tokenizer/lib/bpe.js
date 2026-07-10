@@ -40,8 +40,9 @@ export function renderToken(bytes) {
 const _enc = new TextEncoder()
 
 export class BPE {
-  constructor(pattern, merges) {
+  constructor(pattern, merges, wordPattern = '[\\p{L}\\p{N}]+') {
     this.pattern = pattern
+    this.wordPattern = wordPattern // primary word-count pattern (== Python \w+)
     this.merges = merges // Array<[a, b]>, index == rank
     this.ranks = new Map()
     for (let i = 0; i < merges.length; i++) {
@@ -57,7 +58,14 @@ export class BPE {
   }
 
   static fromJSON(data) {
-    return new BPE(data.pattern, data.merges)
+    return new BPE(data.pattern, data.merges, data.word_pattern)
+  }
+
+  /** Primary word count: Unicode letter/number runs — identical to Python's
+   *  re.findall(r'\w+') on the corpora (marks/punctuation split words). */
+  countWords(text) {
+    const m = text.match(new RegExp(this.wordPattern, 'gu'))
+    return m ? m.length : 0
   }
 
   get vocabSize() {
@@ -128,8 +136,8 @@ export class BPE {
   }
 }
 
-/** Word count: maximal non-whitespace runs — matches Python len(text.split()). */
-export function wordCount(text) {
+/** Secondary word count: whitespace runs — matches Python len(text.split()). */
+export function wordCountSplit(text) {
   const t = text.trim()
   if (!t) return 0
   return t.split(/\s+/).length

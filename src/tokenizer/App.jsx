@@ -18,6 +18,7 @@ const SECTIONS = [
 ]
 
 function Hero({ stats }) {
+  const p = stats?.primary
   return (
     <header id="top" className="pt-12 pb-2">
       <p className="font-mono text-xs uppercase tracking-widest text-brand-500">ERA-V5 · The School of AI</p>
@@ -25,29 +26,39 @@ function Hero({ stats }) {
         Assignment 2 — Multilingual BPE Tokenizer
       </h1>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-        One from-scratch, byte-level Byte-Pair-Encoding tokenizer with a single shared vocabulary of{' '}
-        <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">10,000 tokens</span> for
-        English, Hindi, Telugu and Marathi — trained on India's Wikipedia page. Every number below is recomputed{' '}
-        <span className="font-semibold text-zinc-900 dark:text-zinc-100">live in your browser</span> from the same
-        tokenizer file you can download.
+        One from-scratch, byte-level BPE tokenizer with a single shared vocabulary of{' '}
+        <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">10,000 tokens</span> for English,
+        Hindi, Telugu and Marathi, trained on the <b>full</b> India Wikipedia article in each. Every number below is
+        recomputed <span className="font-semibold text-zinc-900 dark:text-zinc-100">live in your browser</span> from
+        the same tokenizer file you can download.
       </p>
 
-      {stats && (
+      {p && (
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="text-[11px] uppercase tracking-wide text-zinc-500">Self-score = 1000 / spread</div>
             <div className="font-mono text-2xl font-bold text-brand-600 dark:text-brand-400">
-              {stats.score.toFixed(1)}
+              {Number.isFinite(p.score) ? p.score.toFixed(1) : '∞'}
+            </div>
+          </div>
+          <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="text-[11px] uppercase tracking-wide text-zinc-500">English fertility (gate ≤ 1.2)</div>
+            <div
+              className={`font-mono text-2xl font-bold ${
+                p.per.en.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+              }`}
+            >
+              {p.per.en.X.toFixed(3)} {p.per.en.ok ? '✓' : '✗'}
             </div>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="text-[11px] uppercase tracking-wide text-zinc-500">All four ≤ 1.2 ?</div>
             <div
               className={`font-mono text-2xl font-bold ${
-                stats.constraintsMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                p.constraintsMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
               }`}
             >
-              {stats.constraintsMet ? 'YES ✓' : 'NO ✗'}
+              {p.constraintsMet ? 'YES ✓' : 'NO ✗'}
             </div>
           </div>
         </div>
@@ -94,12 +105,8 @@ export default function App() {
   useEffect(() => {
     let alive = true
     loadTokenizerData()
-      .then((d) => {
-        if (alive) setData(d)
-      })
-      .catch((e) => {
-        if (alive) setError(String(e))
-      })
+      .then((d) => alive && setData(d))
+      .catch((e) => alive && setError(String(e)))
     return () => {
       alive = false
     }
@@ -127,13 +134,13 @@ export default function App() {
         {stats && (
           <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
             <Method stats={stats} tok={data.tok} />
-            <Results stats={stats} refStats={data.stats} />
+            <Results bpe={bpe} corpora={data.corpora} refStats={data.stats} />
             <Playground bpe={bpe} corpora={data.corpora} />
             <Downloads tok={data.tok} bpe={bpe} />
           </div>
         )}
       </main>
-      <Footer note="ERA-V5 · Assignment 2 — a from-scratch 10k-vocab BPE tokenizer for English, Hindi, Telugu & Marathi. Every ratio is recomputed live in your browser from the downloadable tokenizer; nothing is hardcoded." />
+      <Footer note="ERA-V5 · Assignment 2 — a from-scratch 10k-vocab BPE tokenizer for English, Hindi, Telugu & Marathi, trained on the full India Wikipedia article. Every ratio is recomputed live in your browser from the downloadable tokenizer; nothing is hardcoded." />
     </div>
   )
 }

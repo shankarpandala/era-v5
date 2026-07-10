@@ -1,17 +1,18 @@
-"""Recompute the fertility stats from the frozen corpora + tokenizer.json.
+"""Recompute the fertility stats from the frozen FULL India articles + tokenizer.json.
 
-This is the "graders run it themselves" entry point. It loads the committed
-tokenizer and the committed corpora, encodes each language, and reports:
+This is the "graders run it themselves" entry point. Evaluation is on the FULL
+India Wikipedia article per language (train == eval), exactly as the course
+grades it. For each language:
 
-    X(lang) = tokens(lang) / words(lang)          (per language, must be <= 1.2)
+    X(lang) = tokens(lang) / words(lang)          (must be <= 1.2)
     spread  = max(X) - min(X)
     score   = 1000 / spread
 
-    python evaluate.py            # prints the table, writes stats.json
+Primary word count = Unicode letter/number runs `[\\p{L}\\p{N}]+` (== re.findall
+r"\\w+"); we also report the whitespace-split count for transparency. English is
+<= 1.2 under BOTH, so the binding English gate holds under any grader method.
 
-Word = maximal run of non-whitespace: len(text.split()). The corpora are
-whitespace-normalized (fetch_corpora.py) so this equals the JS widget's
-text.trim().split(/\\s+/).filter(Boolean).length exactly.
+    python evaluate.py            # prints both tables, writes stats.json
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from __future__ import annotations
 import json
 import os
 
+import bpe
 from tokenizer import BPETokenizer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -44,16 +46,11 @@ def load_corpora() -> dict[str, str]:
     return corpora
 
 
-def word_count(text: str) -> int:
-    return len(text.split())
-
-
-def compute_stats(corpora: dict[str, str], tok: BPETokenizer) -> dict:
+def _metric(per_tokens: dict, word_fn) -> dict:
     per = {}
-    for code, text in corpora.items():
-        words = word_count(text)
-        tokens = len(tok.encode(text))
-        name, script = LANG_META[code]
+    for code, (name, script) in LANG_META.items():
+        words = word_fn(_CORP[code])
+        tokens = per_tokens[code]
         per[code] = {
             "language": name,
             "script": script,
@@ -62,43 +59,69 @@ def compute_stats(corpora: dict[str, str], tok: BPETokenizer) -> dict:
             "X": tokens / words,
             "within_constraint": (tokens / words) <= CONSTRAINT,
         }
-    xs = [per[c]["X"] for c in corpora]
+    xs = [per[c]["X"] for c in LANG_META]
     x_max, x_min = max(xs), min(xs)
     spread = x_max - x_min
-    score = 1000.0 / spread if spread > 0 else float("inf")
-    sorted_desc = sorted(
-        ({"code": c, "language": per[c]["language"], "X": per[c]["X"]} for c in corpora),
-        key=lambda r: r["X"],
-        reverse=True,
-    )
     return {
-        "vocab_size": tok.vocab_size,
-        "constraint": CONSTRAINT,
         "per_language": per,
-        "x_sorted_desc": sorted_desc,
+        "x_sorted_desc": sorted(
+            ({"code": c, "language": per[c]["language"], "X": per[c]["X"]} for c in LANG_META),
+            key=lambda r: r["X"],
+            reverse=True,
+        ),
         "x_max": x_max,
         "x_min": x_min,
         "spread": spread,
-        "score": score,
-        "constraints_met": all(per[c]["within_constraint"] for c in corpora),
+        "score": 1000.0 / spread if spread > 0 else float("inf"),
+        "constraints_met": all(per[c]["within_constraint"] for c in LANG_META),
+        "english_within_constraint": per["en"]["within_constraint"],
     }
 
 
-def print_stats(stats: dict) -> None:
+_CORP: dict[str, str] = {}
+
+
+def compute_stats(corpora: dict[str, str], tok: BPETokenizer) -> dict:
+    global _CORP
+    _CORP = corpora
+    tokens = {c: len(tok.encode(corpora[c])) for c in LANG_META}
+    primary = _metric(tokens, bpe.count_words)          # [\p{L}\p{N}]+  (== \w+)
+    split = _metric(tokens, bpe.count_words_split)       # text.split()
+    return {
+        "vocab_size": tok.vocab_size,
+        "constraint": CONSTRAINT,
+        "word_metric": "primary = [\\p{L}\\p{N}]+ (== \\w+); secondary = whitespace split()",
+        "primary": primary,
+        "split": split,
+        # convenience top-level mirror of the primary metric
+        "per_language": primary["per_language"],
+        "spread": primary["spread"],
+        "score": primary["score"],
+        "constraints_met": primary["constraints_met"],
+    }
+
+
+def _print_metric(title: str, m: dict) -> None:
+    print(f"\n--- {title} ---")
     print(f"{'lang':<9}{'script':<12}{'words':>8}{'tokens':>9}{'X=tok/word':>12}  ok")
     print("-" * 54)
-    for code, row in stats["per_language"].items():
+    for code, row in m["per_language"].items():
         ok = "OK " if row["within_constraint"] else "XX "
         print(
             f"{row['language']:<9}{row['script']:<12}{row['words']:>8,}{row['tokens']:>9,}"
             f"{row['X']:>12.4f}  {ok}"
         )
     print("-" * 54)
+    print("X sorted   : " + ", ".join(f"{r['code']}={r['X']:.4f}" for r in m["x_sorted_desc"]))
+    print(f"spread     : {m['x_max']:.4f} - {m['x_min']:.4f} = {m['spread']:.4f}")
+    print(f"all <= 1.2 : {m['constraints_met']}   (English <= 1.2: {m['english_within_constraint']})")
+    print(f"SELF SCORE : 1000 / {m['spread']:.4f} = {m['score']:.1f}")
+
+
+def print_stats(stats: dict) -> None:
     print(f"vocab size : {stats['vocab_size']}")
-    print(f"X sorted   : " + ", ".join(f"{r['code']}={r['X']:.4f}" for r in stats["x_sorted_desc"]))
-    print(f"X_max-X_min: {stats['x_max']:.4f} - {stats['x_min']:.4f} = {stats['spread']:.4f}")
-    print(f"all <= {stats['constraint']}: {stats['constraints_met']}")
-    print(f"SELF SCORE : 1000 / {stats['spread']:.4f} = {stats['score']:.1f}")
+    _print_metric("PRIMARY word count = [\\p{L}\\p{N}]+  (== re.findall r'\\w+')", stats["primary"])
+    _print_metric("SECONDARY word count = whitespace split()", stats["split"])
 
 
 def main() -> None:

@@ -24,8 +24,8 @@ import regex as re
 import requests
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# Full articles are frozen here; train.py slices them into ../corpora/ (the eval set).
-OUT_DIR = os.path.normpath(os.path.join(HERE, "..", "public", "tokenizer", "corpora_full"))
+# Full frozen India articles — this IS the evaluation corpus (train == eval).
+OUT_DIR = os.path.normpath(os.path.join(HERE, "..", "public", "tokenizer", "corpora"))
 
 # (lang code, wiki subdomain, localized "India" article title)
 LANGUAGES = [

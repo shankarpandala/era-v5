@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import ClaimCard from '../../components/ClaimCard.jsx'
 import Button from '../../components/ui/Button.jsx'
 import { LANGS } from '../lib/loadData.js'
-import { wordCount } from '../lib/bpe.js'
 
 const CHIP_COLORS = [
   'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200',
@@ -28,7 +27,7 @@ export default function Playground({ bpe, corpora }) {
 
   const result = useMemo(() => {
     const tokens = bpe.encode(text)
-    const words = wordCount(text)
+    const words = bpe.countWords(text) // primary word count [\p{L}\p{N}]+
     return {
       tokens,
       words,
