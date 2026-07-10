@@ -8,32 +8,32 @@
         "language": "English",
         "script": "Latin",
         "words": 10121,
-        "tokens": 11996,
-        "X": 1.1852583736784903,
+        "tokens": 10158,
+        "X": 1.0036557652405889,
         "within_constraint": true
       },
       "hi": {
         "language": "Hindi",
         "script": "Devanagari",
         "words": 8078,
-        "tokens": 11928,
-        "X": 1.4766031195840554,
+        "tokens": 15441,
+        "X": 1.9114879920772467,
         "within_constraint": false
       },
       "te": {
         "language": "Telugu",
         "script": "Telugu",
         "words": 2511,
-        "tokens": 6323,
-        "X": 2.518120270808443,
+        "tokens": 7181,
+        "X": 2.8598168060533653,
         "within_constraint": false
       },
       "mr": {
         "language": "Marathi",
         "script": "Devanagari",
         "words": 4605,
-        "tokens": 8488,
-        "X": 1.843213897937025,
+        "tokens": 11623,
+        "X": 2.5239956568946798,
         "within_constraint": false
       }
     },
@@ -41,28 +41,28 @@
       {
         "code": "te",
         "language": "Telugu",
-        "X": 2.518120270808443
+        "X": 2.8598168060533653
       },
       {
         "code": "mr",
         "language": "Marathi",
-        "X": 1.843213897937025
+        "X": 2.5239956568946798
       },
       {
         "code": "hi",
         "language": "Hindi",
-        "X": 1.4766031195840554
+        "X": 1.9114879920772467
       },
       {
         "code": "en",
         "language": "English",
-        "X": 1.1852583736784903
+        "X": 1.0036557652405889
       }
     ],
-    "x_max": 2.518120270808443,
-    "x_min": 1.1852583736784903,
-    "spread": 1.3328618971299526,
-    "score": 750.2652766601678,
+    "x_max": 2.8598168060533653,
+    "x_min": 1.0036557652405889,
+    "spread": 1.8561610408127764,
+    "score": 538.7463576770901,
     "constraints_met": false,
     "english_within_constraint": true
   },
@@ -72,61 +72,61 @@
         "language": "English",
         "script": "Latin",
         "words": 10363,
-        "tokens": 11996,
-        "X": 1.1575798513943838,
+        "tokens": 10158,
+        "X": 0.9802180835665348,
         "within_constraint": true
       },
       "hi": {
         "language": "Hindi",
         "script": "Devanagari",
         "words": 15709,
-        "tokens": 11928,
-        "X": 0.7593099497103571,
+        "tokens": 15441,
+        "X": 0.9829397160863199,
         "within_constraint": true
       },
       "te": {
         "language": "Telugu",
         "script": "Telugu",
         "words": 7370,
-        "tokens": 6323,
-        "X": 0.8579375848032564,
+        "tokens": 7181,
+        "X": 0.9743554952510176,
         "within_constraint": true
       },
       "mr": {
         "language": "Marathi",
         "script": "Devanagari",
         "words": 12203,
-        "tokens": 8488,
-        "X": 0.6955666639350979,
+        "tokens": 11623,
+        "X": 0.9524707039252642,
         "within_constraint": true
       }
     },
     "x_sorted_desc": [
       {
+        "code": "hi",
+        "language": "Hindi",
+        "X": 0.9829397160863199
+      },
+      {
         "code": "en",
         "language": "English",
-        "X": 1.1575798513943838
+        "X": 0.9802180835665348
       },
       {
         "code": "te",
         "language": "Telugu",
-        "X": 0.8579375848032564
-      },
-      {
-        "code": "hi",
-        "language": "Hindi",
-        "X": 0.7593099497103571
+        "X": 0.9743554952510176
       },
       {
         "code": "mr",
         "language": "Marathi",
-        "X": 0.6955666639350979
+        "X": 0.9524707039252642
       }
     ],
-    "x_max": 1.1575798513943838,
-    "x_min": 0.6955666639350979,
-    "spread": 0.4620131874592859,
-    "score": 2164.440382100832,
+    "x_max": 0.9829397160863199,
+    "x_min": 0.9524707039252642,
+    "spread": 0.030469012161055686,
+    "score": 32820.23042670748,
     "constraints_met": true,
     "english_within_constraint": true
   },
@@ -136,36 +136,36 @@
       "language": "English",
       "script": "Latin",
       "words": 10121,
-      "tokens": 11996,
-      "X": 1.1852583736784903,
+      "tokens": 10158,
+      "X": 1.0036557652405889,
       "within_constraint": true
     },
     "hi": {
       "language": "Hindi",
       "script": "Devanagari",
       "words": 8078,
-      "tokens": 11928,
-      "X": 1.4766031195840554,
+      "tokens": 15441,
+      "X": 1.9114879920772467,
       "within_constraint": false
     },
     "te": {
       "language": "Telugu",
       "script": "Telugu",
       "words": 2511,
-      "tokens": 6323,
-      "X": 2.518120270808443,
+      "tokens": 7181,
+      "X": 2.8598168060533653,
       "within_constraint": false
     },
     "mr": {
       "language": "Marathi",
       "script": "Devanagari",
       "words": 4605,
-      "tokens": 8488,
-      "X": 1.843213897937025,
+      "tokens": 11623,
+      "X": 2.5239956568946798,
       "within_constraint": false
     }
   },
-  "spread": 1.3328618971299526,
-  "score": 750.2652766601678,
+  "spread": 1.8561610408127764,
+  "score": 538.7463576770901,
   "constraints_met": false
 }
