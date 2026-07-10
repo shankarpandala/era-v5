@@ -1,0 +1,3 @@
+# Assignment 2 — from-scratch BPE tokenizer. No ML/tokenizer libraries.
+regex        # Unicode-aware \s/\S in the pre-tokenizer (built-in re is fine too)
+requests     # only used by fetch_corpora.py to download the Wikipedia articles

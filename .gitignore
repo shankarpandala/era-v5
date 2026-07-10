@@ -23,3 +23,7 @@ dist-ssr
 
 # Claude Code internal directory
 .claude/
+
+# Python
+__pycache__/
+*.pyc
