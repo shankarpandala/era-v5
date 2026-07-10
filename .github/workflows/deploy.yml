@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - claude/era-v5-assignment-1-proofs-mc43m9
+      - claude/gracious-brahmagupta-8ahe6x
 
 jobs:
   deploy:

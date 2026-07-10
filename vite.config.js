@@ -13,4 +13,15 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   base: '/era-v5/',
   plugins: [react(), tailwindcss()],
+  // Multi-page build: Assignment 1 at dist/index.html (served /era-v5/), and
+  // Assignment 2 at dist/tokenizer/index.html (served /era-v5/tokenizer/).
+  // Each is a real static HTML file, so no router / 404.html fallback is needed.
+  build: {
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        tokenizer: 'tokenizer/index.html',
+      },
+    },
+  },
 })

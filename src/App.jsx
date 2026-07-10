@@ -49,7 +49,11 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar theme={theme} onToggleTheme={toggleTheme} />
+      <Navbar
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        crossLink={{ href: `${import.meta.env.BASE_URL}tokenizer/`, text: 'Assignment 2 →' }}
+      />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4">
         <Hero />
         <div className="divide-y divide-zinc-200 dark:divide-zinc-800">

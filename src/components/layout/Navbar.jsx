@@ -52,7 +52,7 @@ function UserIcon() {
   )
 }
 
-export default function Navbar({ theme, onToggleTheme }) {
+export default function Navbar({ theme, onToggleTheme, label = 'Assignment 1', crossLink = null }) {
   return (
     <header
       className="sticky top-0 z-50 h-14 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80"
@@ -96,12 +96,20 @@ export default function Navbar({ theme, onToggleTheme }) {
             <span className="bg-gradient-to-r from-blue-500 to-violet-600 bg-clip-text text-lg font-bold tracking-tight text-transparent">
               ERA-V5
             </span>
-            <span className="hidden text-xs font-medium text-zinc-400 sm:inline dark:text-zinc-500">· Assignment 1</span>
+            <span className="hidden text-xs font-medium text-zinc-400 sm:inline dark:text-zinc-500">· {label}</span>
           </a>
         </div>
 
         {/* Right: theme + links */}
         <div className="flex items-center gap-1">
+          {crossLink && (
+            <a
+              href={crossLink.href}
+              className="mr-1 hidden rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 sm:inline-flex"
+            >
+              {crossLink.text}
+            </a>
+          )}
           <button
             type="button"
             onClick={onToggleTheme}
