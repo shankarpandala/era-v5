@@ -9,57 +9,62 @@ Live widget: **https://www.pandala.in/era-v5/tokenizer/**
 ## The metric
 
 The tokenizer is graded by running it on the **full** India article per language, so we
-train and evaluate on the full articles (train == eval). Word count is the primary lever;
-we report both:
+train and evaluate on the full articles (train == eval).
 
 ```
-word (primary) = a run of Unicode letters/numbers  [\p{L}\p{N}]+   (== re.findall(r"\w+"))
-word (secondary)= a whitespace run                  len(text.split())
-
-X(lang) = total_BPE_tokens(lang) / total_words(lang)     # English must be <= 1.2
-spread  = X_max - X_min
-score   = 1000 / spread
+X(lang) = total_BPE_tokens(lang) / total_words(lang)
+hard constraint: X(English) <= 1.2          # X1 in the assignment
+score = 1000 / (X_max - X_min)
 ```
 
-`[\p{L}\p{N}]+` equals Python's built-in `\w+` exactly on these corpora and is byte-for-byte
-replicable in JS `/[\p{L}\p{N}]+/gu`, so the browser widget's word count is identical to this
-Python reference (verified in `../scripts/check_parity.mjs`).
+Two word counts are reported (the fertility denominator is the whole game):
+
+* **PRIMARY — whitespace words**: `len(text.split())`. Standard fertility; equals the
+  word-faithful `[\p{L}\p{N}\p{M}]+` count within 1–2% on these corpora.
+* **SECONDARY — `\w+` runs**: `[\p{L}\p{N}]+` (== `re.findall(r"\w+")`, the common
+  Python idiom several classmates use). **Caveat:** `\w` excludes combining marks, so it
+  splits Hindi/Telugu/Marathi words at matras/viramas, inflating Indic "word" counts
+  2–3× (e.g. Telugu 7,370 vs 2,511 real words). It measures tokens per syllable-fragment,
+  not per word — shown for comparability, never as our headline.
+
+Both counts are computed identically in Python and JS (verified byte-for-byte, see parity).
 
 ## Results (reproducible — see below)
 
-Trained on the full articles with per-language weights **`{en:8, hi:1, te:2, mr:1}`** (English
-up-sampled so enough of the shared budget learns English subwords to bring its fertility ≤ 1.2 —
-per-language weighting is allowed).
+Weights **`{en:7, hi:3, te:3, mr:3}`** (search: English placed just under the 1.2 gate —
+it is the *minimum* X, so raising it toward the gate frees merge budget for the Indic
+languages and tightens the spread; per-language weighting is allowed).
 
-**Primary word count `[\p{L}\p{N}]+` (== `\w+`):**
+**Primary (whitespace words):**
 
 | Language | Script | words | tokens | X = tokens/word | ≤ 1.2 |
 |----------|--------|------:|-------:|----------------:|:-----:|
-| English  | Latin      | 10,363 | 10,158 | 0.9802 | ✓ |
-| Hindi    | Devanagari | 15,709 | 15,441 | 0.9829 | ✓ |
-| Telugu   | Telugu     |  7,370 |  7,181 | 0.9744 | ✓ |
-| Marathi  | Devanagari | 12,203 | 11,623 | 0.9525 | ✓ |
+| English  | Latin      | 10,121 | 11,996 | **1.1853** | ✓ |
+| Hindi    | Devanagari |  8,078 | 11,928 | 1.4766 | ✗ |
+| Telugu   | Telugu     |  2,511 |  6,323 | 2.5181 | ✗ |
+| Marathi  | Devanagari |  4,605 |  8,488 | 1.8432 | ✗ |
 
-`spread = 0.9829 − 0.9525 = 0.0305` → **self-score = 1000 / 0.0305 ≈ 32,820**, all four ≤ 1.2.
+`spread = 2.5181 − 1.1853 = 1.3329` → **self-score = 750.3**. English (the required
+constraint) passes; the Indic three *cannot* all be ≤ 1.2 under real word counts — giving
+the **entire** 9,744-merge budget to the Indic languages still leaves max X ≈ 1.58 on the
+full articles. We report that honestly instead of switching denominators.
 
-**Secondary word count `text.split()`** (transparency): English stays **1.0037 ✓**; the Indic
-three are higher (hi 1.91, te 2.86, mr 2.52) because whitespace-splitting doesn't break their
-long agglutinative words — an inherent property of the *count*, not the tokenizer. **English ≤ 1.2
-holds under both counts**, so the binding gate is safe whichever method a grader uses.
+**Secondary (`\w+` count):** en 1.1576 ✓ · te 0.8579 ✓ · hi 0.7593 ✓ · mr 0.6956 ✓ —
+all ≤ 1.2, spread 0.4620, **score 2,164.4**. Same tokenizer, same token counts; only the
+denominator differs.
 
-> **Why English needs up-sampling.** A shared 10k vocab can't compress four full articles equally;
-> English (the binding ≤ 1.2 constraint) is up-weighted so it gets ~6k+ of the merges and lands
-> ~1.0. Under the `\w+` count, Indic word counts are 2–3× the whitespace count (combining marks
-> aren't word chars), giving the headroom for Indic fertility to also sit ≤ 1.2.
+**English ≤ 1.2 holds under BOTH counts** — the binding gate is safe whichever method a
+grader uses.
 
 ## Files
 
 ```
 bpe.py            from-scratch byte-level BPE: pre-tokenizer, heap-based trainer, encoder,
-                  and the [\p{L}\p{N}]+ word-count metric
-train.py          per-language weight search on the full articles; writes all artifacts
+                  and both word-count metrics
+train.py          weight search on the full articles (en <= 1.19 hard, min spread);
+                  writes all artifacts
 tokenizer.py      standalone BPETokenizer.load(...).encode(...) — import this to reproduce
-evaluate.py       recomputes X / spread / score (both word counts) and writes stats.json
+evaluate.py       recomputes X / spread / score under both word counts, writes stats.json
 fetch_corpora.py  downloads + freezes the full India articles (run once; output committed)
 requirements.txt  regex, requests
 ```
@@ -70,7 +75,7 @@ Artifacts (committed under `../public/tokenizer/`, single source of truth for Py
 corpora/{en,hi,te,mr}.txt   the frozen FULL India articles (the eval set)
 tokenizer.json              pattern + word_pattern + ordered merges + provenance
 vocab.txt                   all 10,000 tokens, id<TAB>rendered-token (GPT-2 byte map)
-stats.json                  per-language X under both word counts, spread, score
+stats.json                  per-language X under both word counts, spreads, scores
 parity_golden.json          Python token-id stream per corpus (JS parity check)
 ```
 
@@ -79,8 +84,8 @@ parity_golden.json          Python token-id stream per corpus (JS parity check)
 ```bash
 pip install -r requirements.txt
 python fetch_corpora.py    # (optional) re-download the full articles — already committed
-python train.py            # weight search on the full articles + write artifacts (deterministic)
-python evaluate.py         # print both metric tables, spread, score
+python train.py            # weight search + write artifacts (deterministic)
+python evaluate.py         # print both metric tables, spreads, scores
 ```
 
 Run our tokenizer on any text:
@@ -95,6 +100,13 @@ print(tok.encode("भारत एक देश है।"))
 
 The widget re-implements the **encoder** in JS (`../src/tokenizer/lib/bpe.js`) and recomputes
 every number live in the browser. `node ../scripts/check_parity.mjs` proves the JS encoder
-produces the **identical token stream** to Python AND the identical `[\p{L}\p{N}]+` word count on
-every corpus. So the numbers the widget shows are exactly the numbers this Python reference
-produces — and the widget lets a grader paste/upload their own cleaned India-page text to check.
+produces the **identical token stream** to Python AND identical word counts (both metrics) on
+every corpus. The widget also lets a grader paste/upload their own cleaned India-page text and
+watch both tables recompute live with this exact tokenizer.
+
+## Known unknown
+
+The instructor may grade on his own HTML→Markdown conversion of the pages (pipeline
+undecided, "secret sauce"). No one can tune for that reliably; our byte-level encoder never
+emits UNK on any input (an explicit requirement — UNK ⇒ score 0), and English remains the
+best-compressed language on markdown-ish text since URLs/markup are ASCII.

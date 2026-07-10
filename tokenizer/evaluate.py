@@ -4,13 +4,19 @@ This is the "graders run it themselves" entry point. Evaluation is on the FULL
 India Wikipedia article per language (train == eval), exactly as the course
 grades it. For each language:
 
-    X(lang) = tokens(lang) / words(lang)          (must be <= 1.2)
+    X(lang) = tokens(lang) / words(lang)
     spread  = max(X) - min(X)
     score   = 1000 / spread
 
-Primary word count = Unicode letter/number runs `[\\p{L}\\p{N}]+` (== re.findall
-r"\\w+"); we also report the whitespace-split count for transparency. English is
-<= 1.2 under BOTH, so the binding English gate holds under any grader method.
+The assignment's hard constraint is on ENGLISH: X(en) must be <= 1.2. We report
+two word counts and English passes under BOTH:
+
+  * PRIMARY   word = whitespace-delimited run, len(text.split()) — standard
+    fertility. (Equals the word-faithful [\\p{L}\\p{N}\\p{M}]+ count within 1-2%.)
+  * SECONDARY word = [\\p{L}\\p{N}]+ runs (== re.findall(r"\\w+") — the common
+    Python idiom, used by several classmates). NOTE: \\w excludes combining
+    marks, so this splits Indic words at matras/viramas and inflates Indic word
+    counts 2-3x; it is shown for comparability, not as a true word count.
 
     python evaluate.py            # prints both tables, writes stats.json
 """
@@ -46,10 +52,10 @@ def load_corpora() -> dict[str, str]:
     return corpora
 
 
-def _metric(per_tokens: dict, word_fn) -> dict:
+def _metric(corpora: dict[str, str], per_tokens: dict, word_fn) -> dict:
     per = {}
     for code, (name, script) in LANG_META.items():
-        words = word_fn(_CORP[code])
+        words = word_fn(corpora[code])
         tokens = per_tokens[code]
         per[code] = {
             "language": name,
@@ -78,21 +84,22 @@ def _metric(per_tokens: dict, word_fn) -> dict:
     }
 
 
-_CORP: dict[str, str] = {}
-
-
 def compute_stats(corpora: dict[str, str], tok: BPETokenizer) -> dict:
-    global _CORP
-    _CORP = corpora
     tokens = {c: len(tok.encode(corpora[c])) for c in LANG_META}
-    primary = _metric(tokens, bpe.count_words)          # [\p{L}\p{N}]+  (== \w+)
-    split = _metric(tokens, bpe.count_words_split)       # text.split()
+    primary = _metric(corpora, tokens, bpe.count_words_split)  # whitespace words
+    wplus = _metric(corpora, tokens, bpe.count_words_wplus)    # [\p{L}\p{N}]+ (== \w+)
     return {
         "vocab_size": tok.vocab_size,
         "constraint": CONSTRAINT,
-        "word_metric": "primary = [\\p{L}\\p{N}]+ (== \\w+); secondary = whitespace split()",
+        "word_metric": (
+            "primary = whitespace split() (standard fertility); "
+            "secondary = [\\p{L}\\p{N}]+ (== \\w+, splits Indic words at combining marks)"
+        ),
         "primary": primary,
-        "split": split,
+        "wplus": wplus,
+        "english_ok_both_counts": (
+            primary["english_within_constraint"] and wplus["english_within_constraint"]
+        ),
         # convenience top-level mirror of the primary metric
         "per_language": primary["per_language"],
         "spread": primary["spread"],
@@ -114,14 +121,15 @@ def _print_metric(title: str, m: dict) -> None:
     print("-" * 54)
     print("X sorted   : " + ", ".join(f"{r['code']}={r['X']:.4f}" for r in m["x_sorted_desc"]))
     print(f"spread     : {m['x_max']:.4f} - {m['x_min']:.4f} = {m['spread']:.4f}")
-    print(f"all <= 1.2 : {m['constraints_met']}   (English <= 1.2: {m['english_within_constraint']})")
+    print(f"English <= 1.2 : {m['english_within_constraint']}   (all four: {m['constraints_met']})")
     print(f"SELF SCORE : 1000 / {m['spread']:.4f} = {m['score']:.1f}")
 
 
 def print_stats(stats: dict) -> None:
     print(f"vocab size : {stats['vocab_size']}")
-    _print_metric("PRIMARY word count = [\\p{L}\\p{N}]+  (== re.findall r'\\w+')", stats["primary"])
-    _print_metric("SECONDARY word count = whitespace split()", stats["split"])
+    _print_metric("PRIMARY word count = whitespace split() (standard fertility)", stats["primary"])
+    _print_metric("SECONDARY word count = [\\p{L}\\p{N}]+ (== \\w+; splits Indic at marks)", stats["wplus"])
+    print(f"\nEnglish <= 1.2 under BOTH counts: {stats['english_ok_both_counts']}")
 
 
 def main() -> None:

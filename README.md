@@ -46,22 +46,26 @@ hold or break.
 A single **byte-level BPE** tokenizer, built from scratch, with a shared vocabulary of
 **10,000 tokens** for **English, Hindi, Telugu, and Marathi**, trained on the **full**
 India Wikipedia article in each (the text the course grades on). Fertility
-`X = tokens / words` with English required `≤ 1.2`; score `1000 / (X_max − X_min)`.
+`X = tokens / words`; the assignment's hard constraint is **English ≤ 1.2**; score
+`1000 / (X_max − X_min)`.
 
 🔗 **Live:** https://www.pandala.in/era-v5/tokenizer/
 
-**Result** (full articles; word = `[\p{L}\p{N}]+` ≡ `\w+`; weights `{en:8,hi:1,te:2,mr:1}`):
+**Result** (full articles; weights `{en:7,hi:3,te:3,mr:3}`; both word counts shown):
 
-| Language | X = tokens/word | ≤ 1.2 |
-|---|---:|:--:|
-| English | 0.9802 | ✓ |
-| Hindi | 0.9829 | ✓ |
-| Telugu | 0.9744 | ✓ |
-| Marathi | 0.9525 | ✓ |
+| Language | X (whitespace words) | X (`\w+` count) |
+|---|---:|---:|
+| English | **1.1853 ✓** | **1.1576 ✓** |
+| Hindi | 1.4766 | 0.7593 ✓ |
+| Telugu | 2.5181 | 0.8579 ✓ |
+| Marathi | 1.8432 | 0.6956 ✓ |
 
-`spread = 0.0305` → **self-score ≈ 32,820**, all four ≤ 1.2. English is also ≤ 1.2 under a
-whitespace-split count (1.0037), so the binding gate holds whichever word count the grader uses.
-The widget lets you **paste/upload your own India-page text** and recomputes the ratios live.
+**English ≤ 1.2 under both counts** (the binding gate). Self-score: **750.3** under real
+(whitespace) words, **2,164.4** under the `\w+` count some classmates use — `\w` drops Indic
+combining marks and splits words at matras, inflating Indic word counts 2–3×, which is why we
+headline the honest number and show both. Under real word counts the Indic three provably can't
+all reach ≤ 1.2 at a shared 10k vocab (devoting every merge to them still floors max X ≈ 1.58).
+The widget lets you **paste/upload your own India-page text** and recomputes both tables live.
 
 - **`tokenizer/`** — the from-scratch Python pipeline (trainer, encoder, evaluator). See
   [`tokenizer/README.md`](tokenizer/README.md) for the method and exact reproduce commands.

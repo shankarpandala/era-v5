@@ -61,8 +61,9 @@ export class BPE {
     return new BPE(data.pattern, data.merges, data.word_pattern)
   }
 
-  /** Primary word count: Unicode letter/number runs — identical to Python's
-   *  re.findall(r'\w+') on the corpora (marks/punctuation split words). */
+  /** Secondary (\w+-style) word count: Unicode letter/number runs — identical
+   *  to Python's re.findall(r'\w+') on the corpora. CAVEAT: excludes combining
+   *  marks, so Indic words split at matras/viramas (not a true word count). */
   countWords(text) {
     const m = text.match(new RegExp(this.wordPattern, 'gu'))
     return m ? m.length : 0
@@ -136,7 +137,7 @@ export class BPE {
   }
 }
 
-/** Secondary word count: whitespace runs — matches Python len(text.split()). */
+/** Primary word count: whitespace runs — matches Python len(text.split()). */
 export function wordCountSplit(text) {
   const t = text.trim()
   if (!t) return 0

@@ -53,24 +53,27 @@ def pre_tokenize(text: str) -> list[str]:
     return _COMPILED.findall(text)
 
 
-# --- Word-count metric (denominator of fertility X = tokens / words) --------
-# The fertility metric counts WORDS as maximal runs of Unicode letters/numbers.
-# `[\p{L}\p{N}]+` equals Python's built-in `\w+` EXACTLY on the India corpora
-# (verified: en 10363, hi 15709, te 7370, mr 12203) and is byte-for-byte
-# replicable in JS `/[\p{L}\p{N}]+/gu`, so the browser widget's word count is
-# identical to this Python reference. We also report the whitespace-split count
-# for transparency.
+# --- Word-count metrics (denominator of fertility X = tokens / words) -------
+# PRIMARY: whitespace-delimited runs (len(text.split())) — standard fertility.
+#   This equals the word-faithful `[\p{L}\p{N}\p{M}]+` count within 1-2% on the
+#   India corpora, because keeping combining marks (\p{M}) attached preserves
+#   real Indic words.
+# SECONDARY: `[\p{L}\p{N}]+` runs — equals Python's built-in `\w+` EXACTLY on
+#   these corpora (en 10363, hi 15709, te 7370, mr 12203) and is byte-for-byte
+#   replicable in JS `/[\p{L}\p{N}]+/gu`. CAVEAT: \w excludes combining marks,
+#   so it splits Indic words at matras/viramas (2-3x inflation) — reported for
+#   comparability with common classroom usage, not as a true word count.
 WORD_PATTERN = r"[\p{L}\p{N}]+"
 _WORD_RE = re.compile(WORD_PATTERN)
 
 
-def count_words(text: str) -> int:
-    """Primary word count: Unicode letter/number runs (== re.findall(r'\\w+'))."""
+def count_words_wplus(text: str) -> int:
+    """Secondary word count: Unicode letter/number runs (== re.findall(r'\\w+'))."""
     return len(_WORD_RE.findall(text))
 
 
 def count_words_split(text: str) -> int:
-    """Secondary word count: whitespace-delimited runs (len(text.split()))."""
+    """Primary word count: whitespace-delimited runs (len(text.split()))."""
     return len(text.split())
 
 

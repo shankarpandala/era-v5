@@ -3,9 +3,13 @@
 // tokenizer/evaluate.py::compute_stats so it cross-checks against stats.json.
 //
 // Two word counts per the metric:
-//   primary  = Unicode letter/number runs `[\p{L}\p{N}]+`  (== Python \w+)
-//   split    = whitespace runs  (text.split())
-// English is <= 1.2 under both, so the binding English gate holds either way.
+//   primary = whitespace runs (text.split()) — standard fertility. Equals the
+//             word-faithful [\p{L}\p{N}\p{M}]+ count within 1-2% on the corpora.
+//   wplus   = [\p{L}\p{N}]+ runs (== Python \w+) — the common classroom idiom.
+//             CAVEAT: \w drops combining marks, so it splits Indic words at
+//             matras/viramas (2-3x word-count inflation); shown for
+//             comparability, not as a true word count.
+// The assignment's hard gate is English <= 1.2 — met under BOTH counts.
 import { wordCountSplit } from './bpe.js'
 
 export const CONSTRAINT = 1.2
@@ -37,7 +41,7 @@ function metric(perTokens, texts, langs, wordFn) {
 export function computeStats(texts, bpe, langs) {
   const perTokens = {}
   for (const l of langs) perTokens[l.code] = bpe.encode(texts[l.code]).length
-  const primary = metric(perTokens, texts, langs, (t) => bpe.countWords(t))
-  const split = metric(perTokens, texts, langs, wordCountSplit)
-  return { primary, split, constraint: CONSTRAINT }
+  const primary = metric(perTokens, texts, langs, wordCountSplit)
+  const wplus = metric(perTokens, texts, langs, (t) => bpe.countWords(t))
+  return { primary, wplus, constraint: CONSTRAINT }
 }

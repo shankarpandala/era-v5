@@ -13,50 +13,75 @@ function Stat({ label, value, accent }) {
   )
 }
 
-function MetricTable({ m }) {
+function MetricBlock({ title, note, m }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[520px] text-sm">
-        <thead>
-          <tr className="border-b border-zinc-200 text-left text-[11px] uppercase tracking-wide text-zinc-500 dark:border-zinc-700">
-            <th className="py-2 pr-3 font-medium">Language</th>
-            <th className="py-2 pr-3 font-medium">Script</th>
-            <th className="py-2 pr-3 text-right font-medium">Words</th>
-            <th className="py-2 pr-3 text-right font-medium">Tokens</th>
-            <th className="py-2 pr-3 text-right font-medium">X = tokens/word</th>
-            <th className="py-2 text-right font-medium">≤ 1.2</th>
-          </tr>
-        </thead>
-        <tbody className="font-mono">
-          {LANGS.map((l) => {
-            const r = m.per[l.code]
-            return (
-              <tr key={l.code} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
-                <td className="py-2 pr-3 font-sans font-medium text-zinc-800 dark:text-zinc-100">
-                  <span
-                    className="mr-2 inline-block h-2.5 w-2.5 rounded-full align-middle"
-                    style={{ backgroundColor: l.accent }}
-                  />
-                  {l.name}
-                </td>
-                <td className="py-2 pr-3 font-sans text-zinc-500 dark:text-zinc-400">{l.script}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{r.words.toLocaleString()}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{r.tokens.toLocaleString()}</td>
-                <td className="py-2 pr-3 text-right font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                  {r.X.toFixed(4)}
-                </td>
-                <td className="py-2 text-right">
-                  {r.ok ? (
-                    <span className="text-emerald-600 dark:text-emerald-400">✓</span>
-                  ) : (
-                    <span className="text-red-600 dark:text-red-400">✗</span>
-                  )}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+    <div>
+      <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{title}</div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[520px] text-sm">
+          <thead>
+            <tr className="border-b border-zinc-200 text-left text-[11px] uppercase tracking-wide text-zinc-500 dark:border-zinc-700">
+              <th className="py-2 pr-3 font-medium">Language</th>
+              <th className="py-2 pr-3 font-medium">Script</th>
+              <th className="py-2 pr-3 text-right font-medium">Words</th>
+              <th className="py-2 pr-3 text-right font-medium">Tokens</th>
+              <th className="py-2 pr-3 text-right font-medium">X = tokens/word</th>
+              <th className="py-2 text-right font-medium">≤ 1.2</th>
+            </tr>
+          </thead>
+          <tbody className="font-mono">
+            {LANGS.map((l) => {
+              const r = m.per[l.code]
+              return (
+                <tr key={l.code} className="border-b border-zinc-100 last:border-0 dark:border-zinc-800">
+                  <td className="py-2 pr-3 font-sans font-medium text-zinc-800 dark:text-zinc-100">
+                    <span
+                      className="mr-2 inline-block h-2.5 w-2.5 rounded-full align-middle"
+                      style={{ backgroundColor: l.accent }}
+                    />
+                    {l.name}
+                  </td>
+                  <td className="py-2 pr-3 font-sans text-zinc-500 dark:text-zinc-400">{l.script}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums">{r.words.toLocaleString()}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums">{r.tokens.toLocaleString()}</td>
+                  <td className="py-2 pr-3 text-right font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                    {r.X.toFixed(4)}
+                  </td>
+                  <td className="py-2 text-right">
+                    {r.ok ? (
+                      <span className="text-emerald-600 dark:text-emerald-400">✓</span>
+                    ) : (
+                      <span className="text-red-600 dark:text-red-400">✗</span>
+                    )}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg bg-zinc-100 px-3 py-2 font-mono text-[13px] text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200">
+        <span>
+          sorted&nbsp;X:&nbsp;
+          {m.sortedDesc.map((r, i) => (
+            <span key={r.code}>
+              {i > 0 && ' ≥ '}
+              <span className="font-semibold text-zinc-900 dark:text-zinc-50">{r.X.toFixed(4)}</span>
+              <span className="text-zinc-500">({r.code})</span>
+            </span>
+          ))}
+        </span>
+        <span>
+          spread = <span className="font-semibold text-zinc-900 dark:text-zinc-50">{m.spread.toFixed(4)}</span>
+        </span>
+        <span>
+          score = 1000/{m.spread.toFixed(4)} ={' '}
+          <span className="font-semibold text-brand-600 dark:text-brand-400">
+            {Number.isFinite(m.score) ? m.score.toFixed(1) : '∞'}
+          </span>
+        </span>
+      </div>
+      {note && <p className="mt-2 text-[11px] leading-relaxed text-zinc-500">{note}</p>}
     </div>
   )
 }
@@ -68,16 +93,17 @@ export default function Results({ bpe, corpora, refStats }) {
   const pristine = LANGS.every((l) => texts[l.code] === corpora[l.code])
 
   const stats = useMemo(() => computeStats(texts, bpe, LANGS), [texts, bpe])
-  const primary = stats.primary
-  const split = stats.split
+  const { primary, wplus } = stats
 
-  // Cross-check the live primary numbers vs the committed Python stats.json.
+  // Cross-check the live browser numbers against the committed Python stats.json.
   const pyPrimary = refStats?.primary
   const matchesPython =
     pristine &&
     pyPrimary != null &&
     Math.abs((pyPrimary.score ?? 0) - primary.score) < 0.5 &&
     LANGS.every((l) => Math.abs((pyPrimary.per_language?.[l.code]?.X ?? 0) - primary.per[l.code].X) < 1e-6)
+
+  const enOkBoth = primary.per.en.ok && wplus.per.en.ok
 
   const onFile = (code) => async (e) => {
     const file = e.target.files?.[0]
@@ -94,93 +120,74 @@ export default function Results({ bpe, corpora, refStats }) {
       title="Ratios, statistics & self-score"
       claim={
         <>
-          On the <b>full India article</b> in each language, fertilities span{' '}
-          <b>X_max − X_min = {primary.spread.toFixed(4)}</b> → self-score{' '}
-          <b>1000 / {primary.spread.toFixed(4)} = {primary.score.toFixed(1)}</b>, with{' '}
-          <b>English = {primary.per.en.X.toFixed(3)} ≤ 1.2</b>.
+          On the <b>full India article</b> in each language,{' '}
+          <b>English fertility = {primary.per.en.X.toFixed(3)} ≤ 1.2</b> (the assignment's hard constraint) under{' '}
+          <b>both</b> word counts. Honest self-score (whitespace words):{' '}
+          <b>1000 / {primary.spread.toFixed(4)} = {primary.score.toFixed(1)}</b>; under the class-common{' '}
+          <code>\w+</code> count: <b>{wplus.score.toFixed(1)}</b>.
         </>
       }
       takeaway={
         <>
-          Word count is <code>[\p{'{'}L{'}'}\p{'{'}N{'}'}]+</code> (≡ Python <code>\w+</code>). Use the box below to
-          drop in <b>your own</b> cleaned India-page text per language — the table recomputes live with this exact
-          tokenizer, so you can confirm the numbers yourself.
+          Both tables come from the same tokenizer and token counts — only the word denominator differs. We headline
+          the whitespace count because <code>\w+</code> splits Indic words at combining marks (a 2–3× denominator
+          inflation), which is also why "all four ≤ 1.2" claims are only possible under <code>\w+</code>-style
+          counting. Use the box below to verify with your own India-page text.
         </>
       }
     >
-      <div className="panel p-5">
-        <div className="mb-2 flex items-center justify-between">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Primary metric · word = <span className="font-mono normal-case">[\p{'{'}L{'}'}\p{'{'}N{'}'}]+</span> (≡{' '}
-            <span className="font-mono normal-case">\w+</span>)
-          </div>
-          {!pristine && (
-            <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-              custom text
-            </span>
-          )}
-        </div>
-        <MetricTable m={primary} />
-
-        <div className="mt-4 rounded-lg bg-zinc-100 px-3 py-2 font-mono text-[13px] text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200">
-          sorted&nbsp;X:&nbsp;
-          {primary.sortedDesc.map((r, i) => (
-            <span key={r.code}>
-              {i > 0 && ' ≥ '}
-              <span className="font-semibold text-zinc-900 dark:text-zinc-50">{r.X.toFixed(4)}</span>
-              <span className="text-zinc-500">({r.code})</span>
-            </span>
-          ))}
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="panel space-y-6 p-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Stat
-            label="English X (gate ≤ 1.2)"
-            value={`${primary.per.en.X.toFixed(3)} ${primary.per.en.ok ? '✓' : '✗'}`}
-            accent={primary.per.en.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
+            label="English ≤ 1.2 (hard gate)"
+            value={enOkBoth ? 'MET ✓ (both counts)' : primary.per.en.ok ? 'MET (primary)' : 'NOT MET'}
+            accent={enOkBoth ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
           />
-          <Stat label="X_max − X_min" value={primary.spread.toFixed(4)} accent="text-zinc-900 dark:text-zinc-50" />
           <Stat
-            label="Self-score"
+            label="English X (words · \w+)"
+            value={`${primary.per.en.X.toFixed(3)} · ${wplus.per.en.X.toFixed(3)}`}
+            accent="text-zinc-900 dark:text-zinc-50"
+          />
+          <Stat
+            label="Score (whitespace words)"
             value={Number.isFinite(primary.score) ? primary.score.toFixed(1) : '∞'}
             accent="text-brand-600 dark:text-brand-400"
           />
           <Stat
-            label={pristine ? 'vs Python reference' : 'all four ≤ 1.2'}
-            value={
-              pristine
-                ? matchesPython
-                  ? 'IDENTICAL ✓'
-                  : '—'
-                : primary.constraintsMet
-                  ? 'YES ✓'
-                  : 'NO ✗'
-            }
-            accent={
-              (pristine ? matchesPython : primary.constraintsMet)
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-zinc-500'
-            }
+            label={pristine ? 'vs Python reference' : 'Score (\\w+ count)'}
+            value={pristine ? (matchesPython ? 'IDENTICAL ✓' : '—') : wplus.score.toFixed(1)}
+            accent={pristine && matchesPython ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500'}
           />
         </div>
 
-        {/* Secondary metric (transparency) */}
-        <details className="mt-5">
-          <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-            Also under whitespace-split word count (transparency)
-          </summary>
-          <div className="mt-3">
-            <MetricTable m={split} />
-            <p className="mt-2 text-[11px] text-zinc-500">
-              Under <span className="font-mono">text.split()</span>, English stays ≤ 1.2 (
-              {split.per.en.X.toFixed(3)}); the Indic three are higher because whitespace-splitting doesn't break
-              their long agglutinative words — an inherent property of the count, not the tokenizer.
-            </p>
-          </div>
-        </details>
+        <MetricBlock
+          title="Primary · word = whitespace-delimited run (standard fertility)"
+          m={primary}
+          note={
+            <>
+              A shared 10,000-token vocabulary cannot bring the Indic languages under 1.2 tokens/word on the full
+              articles — even devoting the entire merge budget to them floors max&nbsp;X at ≈ 1.58. The optimum is
+              therefore English at the gate and the Indic spread as tight as the budget allows. These are the honest
+              numbers.
+            </>
+          }
+        />
+
+        <MetricBlock
+          title={'Secondary · word = [\\p{L}\\p{N}]+ run (Python \\w+ — as commonly used in class)'}
+          m={wplus}
+          note={
+            <>
+              <code>\w</code> excludes combining marks, so this splits Hindi/Telugu/Marathi words at every matra or
+              virama — the Indic "word" counts are 2–3× the real word counts (e.g. Telugu{' '}
+              {wplus.per.te.words.toLocaleString()} vs {primary.per.te.words.toLocaleString()}). Shown because several
+              classmates compute fertility this way; it is a per-syllable-fragment rate, not a per-word rate.
+            </>
+          }
+        />
 
         {/* Grader verify: bring your own India-page text */}
-        <div className="mt-5 rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+        <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
@@ -230,8 +237,8 @@ export default function Results({ bpe, corpora, refStats }) {
                 ))}
               </div>
               <p className="text-[11px] text-zinc-500">
-                Everything above recomputes live from this text with the shipped tokenizer — this is exactly what a
-                grader does when they run it on their cleaned India pages.
+                Both tables above recompute live from this text with the shipped tokenizer — exactly what a grader
+                does when they run it on their cleaned India pages.
               </p>
             </div>
           )}

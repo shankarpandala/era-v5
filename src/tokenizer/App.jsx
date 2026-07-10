@@ -19,6 +19,7 @@ const SECTIONS = [
 
 function Hero({ stats }) {
   const p = stats?.primary
+  const w = stats?.wplus
   return (
     <header id="top" className="pt-12 pb-2">
       <p className="font-mono text-xs uppercase tracking-widest text-brand-500">ERA-V5 · The School of AI</p>
@@ -33,32 +34,33 @@ function Hero({ stats }) {
         the same tokenizer file you can download.
       </p>
 
-      {p && (
+      {p && w && (
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="text-[11px] uppercase tracking-wide text-zinc-500">Self-score = 1000 / spread</div>
+            <div className="text-[11px] uppercase tracking-wide text-zinc-500">
+              English fertility — the hard gate (≤ 1.2)
+            </div>
+            <div
+              className={`font-mono text-2xl font-bold ${
+                p.per.en.ok && w.per.en.ok
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-red-600 dark:text-red-400'
+              }`}
+            >
+              {p.per.en.X.toFixed(3)} ✓
+              <span className="ml-1 text-sm font-medium text-zinc-500">(both word counts)</span>
+            </div>
+          </div>
+          <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="text-[11px] uppercase tracking-wide text-zinc-500">Self-score · whitespace words</div>
             <div className="font-mono text-2xl font-bold text-brand-600 dark:text-brand-400">
               {Number.isFinite(p.score) ? p.score.toFixed(1) : '∞'}
             </div>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="text-[11px] uppercase tracking-wide text-zinc-500">English fertility (gate ≤ 1.2)</div>
-            <div
-              className={`font-mono text-2xl font-bold ${
-                p.per.en.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-              }`}
-            >
-              {p.per.en.X.toFixed(3)} {p.per.en.ok ? '✓' : '✗'}
-            </div>
-          </div>
-          <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="text-[11px] uppercase tracking-wide text-zinc-500">All four ≤ 1.2 ?</div>
-            <div
-              className={`font-mono text-2xl font-bold ${
-                p.constraintsMet ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-              }`}
-            >
-              {p.constraintsMet ? 'YES ✓' : 'NO ✗'}
+            <div className="text-[11px] uppercase tracking-wide text-zinc-500">Self-score · \w+ count</div>
+            <div className="font-mono text-2xl font-bold text-zinc-700 dark:text-zinc-300">
+              {Number.isFinite(w.score) ? w.score.toFixed(1) : '∞'}
             </div>
           </div>
         </div>

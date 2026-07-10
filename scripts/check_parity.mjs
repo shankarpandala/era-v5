@@ -10,7 +10,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { BPE } from '../src/tokenizer/lib/bpe.js'
+import { BPE, wordCountSplit } from '../src/tokenizer/lib/bpe.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const PUB = path.join(HERE, '..', 'public', 'tokenizer')
@@ -28,13 +28,17 @@ for (const lang of LANGS) {
   const ids = bpe.encode(text)
   const g = golden[lang]
   const tokEq = ids.length === g.length && ids.every((v, i) => v === g[i])
-  // (2) word-count parity: JS [\p{L}\p{N}]+ count == Python \w+ count (stats.json)
-  const jsWords = bpe.countWords(text)
-  const pyWords = stats.primary.per_language[lang].words
-  const wordEq = jsWords === pyWords
+  // (2) word-count parity for BOTH metrics:
+  //     primary: JS whitespace split == Python len(text.split())
+  //     secondary: JS [\p{L}\p{N}]+ == Python \w+
+  const jsSplit = wordCountSplit(text)
+  const pySplit = stats.primary.per_language[lang].words
+  const jsWplus = bpe.countWords(text)
+  const pyWplus = stats.wplus.per_language[lang].words
+  const wordEq = jsSplit === pySplit && jsWplus === pyWplus
   console.log(
     `${lang}: tokens ${tokEq ? 'OK ' : 'MISMATCH'} (js=${ids.length} py=${g.length})` +
-      `  words ${wordEq ? 'OK ' : 'MISMATCH'} (js=${jsWords} py=${pyWords})`,
+      `  words ${wordEq ? 'OK ' : 'MISMATCH'} (split js=${jsSplit}/py=${pySplit}, \\w+ js=${jsWplus}/py=${pyWplus})`,
   )
   if (!tokEq) {
     ok = false
