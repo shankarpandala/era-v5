@@ -1,0 +1,65 @@
+{
+  "vocab_size": 10000,
+  "constraint": 1.2,
+  "per_language": {
+    "en": {
+      "language": "English",
+      "script": "Latin",
+      "words": 2100,
+      "tokens": 2387,
+      "X": 1.1366666666666667,
+      "within_constraint": true
+    },
+    "hi": {
+      "language": "Hindi",
+      "script": "Devanagari",
+      "words": 2100,
+      "tokens": 2219,
+      "X": 1.0566666666666666,
+      "within_constraint": true
+    },
+    "te": {
+      "language": "Telugu",
+      "script": "Telugu",
+      "words": 2100,
+      "tokens": 2469,
+      "X": 1.1757142857142857,
+      "within_constraint": true
+    },
+    "mr": {
+      "language": "Marathi",
+      "script": "Devanagari",
+      "words": 2100,
+      "tokens": 2336,
+      "X": 1.1123809523809525,
+      "within_constraint": true
+    }
+  },
+  "x_sorted_desc": [
+    {
+      "code": "te",
+      "language": "Telugu",
+      "X": 1.1757142857142857
+    },
+    {
+      "code": "en",
+      "language": "English",
+      "X": 1.1366666666666667
+    },
+    {
+      "code": "mr",
+      "language": "Marathi",
+      "X": 1.1123809523809525
+    },
+    {
+      "code": "hi",
+      "language": "Hindi",
+      "X": 1.0566666666666666
+    }
+  ],
+  "x_max": 1.1757142857142857,
+  "x_min": 1.0566666666666666,
+  "spread": 0.11904761904761907,
+  "score": 8399.999999999998,
+  "constraints_met": true
+}
