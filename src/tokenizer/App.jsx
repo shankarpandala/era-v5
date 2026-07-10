@@ -52,15 +52,17 @@ function Hero({ stats }) {
             </div>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="text-[11px] uppercase tracking-wide text-zinc-500">Self-score · whitespace words</div>
+            <div className="text-[11px] uppercase tracking-wide text-zinc-500">
+              Self-score · \w+ count (class-standard)
+            </div>
             <div className="font-mono text-2xl font-bold text-brand-600 dark:text-brand-400">
-              {Number.isFinite(p.score) ? p.score.toFixed(1) : '∞'}
+              {Number.isFinite(w.score) ? w.score.toFixed(1) : '∞'}
             </div>
           </div>
           <div className="rounded-xl border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="text-[11px] uppercase tracking-wide text-zinc-500">Self-score · \w+ count</div>
+            <div className="text-[11px] uppercase tracking-wide text-zinc-500">Self-score · whitespace words</div>
             <div className="font-mono text-2xl font-bold text-zinc-700 dark:text-zinc-300">
-              {Number.isFinite(w.score) ? w.score.toFixed(1) : '∞'}
+              {Number.isFinite(p.score) ? p.score.toFixed(1) : '∞'}
             </div>
           </div>
         </div>

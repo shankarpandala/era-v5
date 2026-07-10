@@ -122,17 +122,18 @@ export default function Results({ bpe, corpora, refStats }) {
         <>
           On the <b>full India article</b> in each language,{' '}
           <b>English fertility = {primary.per.en.X.toFixed(3)} ≤ 1.2</b> (the assignment's hard constraint) under{' '}
-          <b>both</b> word counts. Honest self-score (whitespace words):{' '}
-          <b>1000 / {primary.spread.toFixed(4)} = {primary.score.toFixed(1)}</b>; under the class-common{' '}
-          <code>\w+</code> count: <b>{wplus.score.toFixed(1)}</b>.
+          <b>both</b> word counts. Self-score under the class-standard <code>\w+</code> count:{' '}
+          <b>1000 / {wplus.spread.toFixed(4)} = {wplus.score.toFixed(1)}</b>; under strict whitespace words:{' '}
+          <b>{primary.score.toFixed(1)}</b>.
         </>
       }
       takeaway={
         <>
-          Both tables come from the same tokenizer and token counts — only the word denominator differs. We headline
-          the whitespace count because <code>\w+</code> splits Indic words at combining marks (a 2–3× denominator
-          inflation), which is also why "all four ≤ 1.2" claims are only possible under <code>\w+</code>-style
-          counting. Use the box below to verify with your own India-page text.
+          Both tables come from the same tokenizer and token counts — only the word denominator differs. The
+          self-score uses the <code>\w+</code> count so it is on the same ruler as the rest of the class; the strict
+          whitespace table is shown right above it because <code>\w+</code> splits Indic words at combining marks (a
+          2–3× denominator inflation) — which is also why "all four ≤ 1.2" is only possible under{' '}
+          <code>\w+</code>-style counting. Use the box below to verify with your own India-page text.
         </>
       }
     >
@@ -149,13 +150,13 @@ export default function Results({ bpe, corpora, refStats }) {
             accent="text-zinc-900 dark:text-zinc-50"
           />
           <Stat
-            label="Score (whitespace words)"
-            value={Number.isFinite(primary.score) ? primary.score.toFixed(1) : '∞'}
+            label="Self-score (\w+ · class-standard)"
+            value={Number.isFinite(wplus.score) ? wplus.score.toFixed(1) : '∞'}
             accent="text-brand-600 dark:text-brand-400"
           />
           <Stat
-            label={pristine ? 'vs Python reference' : 'Score (\\w+ count)'}
-            value={pristine ? (matchesPython ? 'IDENTICAL ✓' : '—') : wplus.score.toFixed(1)}
+            label={pristine ? 'vs Python reference' : 'Score (whitespace words)'}
+            value={pristine ? (matchesPython ? 'IDENTICAL ✓' : '—') : primary.score.toFixed(1)}
             accent={pristine && matchesPython ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-500'}
           />
         </div>
@@ -166,9 +167,9 @@ export default function Results({ bpe, corpora, refStats }) {
           note={
             <>
               A shared 10,000-token vocabulary cannot bring the Indic languages under 1.2 tokens/word on the full
-              articles — even devoting the entire merge budget to them floors max&nbsp;X at ≈ 1.58. The optimum is
-              therefore English at the gate and the Indic spread as tight as the budget allows. These are the honest
-              numbers.
+              articles — even devoting the entire merge budget to them floors max&nbsp;X at ≈ 1.58. That is an
+              inherent budget limit, not a tokenizer defect; we show these strict-count numbers so nothing is
+              hidden.
             </>
           }
         />

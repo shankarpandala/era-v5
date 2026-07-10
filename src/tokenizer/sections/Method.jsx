@@ -32,9 +32,9 @@ export default function Method({ stats, tok }) {
       takeaway={
         <>
           The tokenizer is graded by running it on the full India article, so we train and report on the full
-          article. English sits at {p.per.en.X.toFixed(3)} — deliberately near the 1.2 gate, because English is the{' '}
-          <i>minimum</i> X and raising it toward the gate frees merge budget for the Indic languages, tightening the
-          spread that determines the score.
+          article. The training weights are searched to <b>equalize the four fertilities</b> under the class-standard{' '}
+          <code>\w+</code> count (the spread determines the score) while keeping{' '}
+          <b>English ≤ 1.2 under both word counts</b> — the assignment's hard constraint.
         </>
       }
     >
@@ -95,8 +95,8 @@ export default function Method({ stats, tok }) {
                 {LANGS.map((l) => `${l.name.slice(0, 2)}=${weights[l.code] ?? 1}×`).join('  ·  ')}
               </p>
               <p className="mt-1 text-[12px] text-zinc-500">
-                Chosen by search to place English just under the 1.2 gate while minimizing the cross-language spread
-                (per-language weighting is allowed).
+                Chosen by search to equalize the four fertilities (minimize the spread) under the class-standard
+                count while keeping English ≤ 1.2 under both counts (per-language weighting is allowed).
               </p>
             </div>
           </div>

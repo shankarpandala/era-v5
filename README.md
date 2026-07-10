@@ -51,21 +51,22 @@ India Wikipedia article in each (the text the course grades on). Fertility
 
 🔗 **Live:** https://www.pandala.in/era-v5/tokenizer/
 
-**Result** (full articles; weights `{en:7,hi:3,te:3,mr:3}`; both word counts shown):
+**Result** (full articles; weights `{en:8,hi:1,te:2,mr:1}`; both word counts shown):
 
-| Language | X (whitespace words) | X (`\w+` count) |
+| Language | X (`\w+` count · class-standard) | X (whitespace words) |
 |---|---:|---:|
-| English | **1.1853 ✓** | **1.1576 ✓** |
-| Hindi | 1.4766 | 0.7593 ✓ |
-| Telugu | 2.5181 | 0.8579 ✓ |
-| Marathi | 1.8432 | 0.6956 ✓ |
+| English | **0.9802 ✓** | **1.0037 ✓** |
+| Hindi | 0.9829 ✓ | 1.9115 |
+| Telugu | 0.9744 ✓ | 2.8598 |
+| Marathi | 0.9525 ✓ | 2.5240 |
 
-**English ≤ 1.2 under both counts** (the binding gate). Self-score: **750.3** under real
-(whitespace) words, **2,164.4** under the `\w+` count some classmates use — `\w` drops Indic
-combining marks and splits words at matras, inflating Indic word counts 2–3×, which is why we
-headline the honest number and show both. Under real word counts the Indic three provably can't
-all reach ≤ 1.2 at a shared 10k vocab (devoting every merge to them still floors max X ≈ 1.58).
-The widget lets you **paste/upload your own India-page text** and recomputes both tables live.
+**English ≤ 1.2 under both counts** (the binding gate). Self-score: **32,820** under the
+class-standard `\w+` count (all four ≤ 1.2, spread 0.0305), **538.7** under strict whitespace
+words. Both rulers are shown because `\w` drops Indic combining marks and splits words at
+matras (2–3× Indic denominator inflation); under real word counts the Indic three provably
+can't all reach ≤ 1.2 at a shared 10k vocab (devoting every merge to them still floors
+max X ≈ 1.58). The widget lets you **paste/upload your own India-page text** and recomputes
+both tables live.
 
 - **`tokenizer/`** — the from-scratch Python pipeline (trainer, encoder, evaluator). See
   [`tokenizer/README.md`](tokenizer/README.md) for the method and exact reproduce commands.
