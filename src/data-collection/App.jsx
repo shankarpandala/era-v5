@@ -6,9 +6,10 @@ import useTheme from '../hooks/useTheme.js'
 
 const SECTIONS = [
   { id: 'a3-1', code: 'A3-1', title: 'Data — what, how much, why', color: 'var(--claim-1)' },
-  { id: 'a3-2', code: 'A3-2', title: 'Cleaning for the objectives', color: 'var(--claim-2)' },
-  { id: 'a3-3', code: 'A3-3', title: 'Testing against the objectives', color: 'var(--claim-3)' },
-  { id: 'a3-4', code: 'A3-4', title: 'Fertility targets → tokenizer size', color: 'var(--claim-4)' },
+  { id: 'a3-2', code: 'A3-2', title: 'India-first by construction', color: 'var(--claim-2)' },
+  { id: 'a3-3', code: 'A3-3', title: 'Cleaning for the objectives', color: 'var(--claim-3)' },
+  { id: 'a3-4', code: 'A3-4', title: 'Testing against the objectives', color: 'var(--claim-4)' },
+  { id: 'a3-5', code: 'A3-5', title: 'Fertility targets → tokenizer size', color: 'var(--color-brand-500)' },
 ]
 
 function Tile({ label, value, accent = 'text-brand-600 dark:text-brand-400' }) {
@@ -20,10 +21,10 @@ function Tile({ label, value, accent = 'text-brand-600 dark:text-brand-400' }) {
   )
 }
 
-function Table({ head, rows }) {
+function Table({ head, rows, minW = 560 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] text-sm">
+      <table className="w-full text-sm" style={{ minWidth: `${minW}px` }}>
         <thead>
           <tr className="border-b border-zinc-200 text-left text-[11px] uppercase tracking-wide text-zinc-500 dark:border-zinc-700">
             {head.map((h) => (
@@ -52,21 +53,17 @@ function Table({ head, rows }) {
   )
 }
 
-function Note({ children }) {
-  return (
-    <p className="mt-3 rounded-lg bg-zinc-100 px-3 py-2 text-[13px] leading-relaxed text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200">
-      {children}
-    </p>
-  )
+function Label({ children }) {
+  return <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{children}</div>
 }
 
 async function downloadBrief() {
-  const res = await fetch(`${import.meta.env.BASE_URL}data-collection/bharat-40b-brief.md`)
+  const res = await fetch(`${import.meta.env.BASE_URL}data-collection/design-brief.md`)
   const blob = new Blob([await res.text()], { type: 'text/markdown;charset=utf-8' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = 'bharat-40b-design-brief.md'
+  a.download = 'design-brief.md'
   document.body.appendChild(a)
   a.click()
   a.remove()
@@ -91,13 +88,11 @@ export default function App() {
         <header id="top" className="pt-12 pb-2">
           <p className="font-mono text-xs uppercase tracking-widest text-brand-500">ERA-V5 · The School of AI</p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl">
-            Assignment 3 — Bharat-40B: Data &amp; Design
+            Assignment 3 — A 40B India-First Model: Data &amp; Design
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-            The complete design brief for a <b>40B-parameter, India-first</b> model that matches the latest Gemma
-            class and excels at coding, agentic work, and Indic languages. Four decisions — data, cleaning,
-            evaluation, tokenizer — each quantified and grounded in published training recipes and our own
-            Assignment-2 tokenizer measurements.
+            Design brief for a 40B-parameter model matching the latest Gemma class — top-tier coding, agentic work,
+            Indic languages, and a world view that defaults to the Indian perspective. Five decisions, each a table.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -109,8 +104,31 @@ export default function App() {
               accent="text-emerald-600 dark:text-emerald-400"
             />
             <Button variant="ghost" onClick={downloadBrief}>
-              ↓ brief.md
+              ↓ design-brief.md
             </Button>
+          </div>
+
+          {/* Model shape: dense vs MoE — a conditional decision */}
+          <div className="panel mt-6 p-5">
+            <Label>Model shape — why dense and not MoE (a conditional decision, not dogma)</Label>
+            <Table
+              minW={620}
+              head={['At a FIXED 40B total', 'Dense 40B', 'MoE @ 40B total (~8B active)']}
+              rows={[
+                ['Quality ceiling', 'Highest — all params active (Gemma-4’s 31B dense outranks its own 26B MoE)', 'Capped near ~8B-active quality'],
+                ['Training cost / token', '1×', '~0.25×'],
+                ['Serving', 'More FLOPs/token; either way all 40B must sit in memory', 'Cheaper FLOPs, plus routing complexity'],
+                ['RL / RLVR stability', 'Well-trodden', 'Router load-balancing fights RL'],
+                ['Community finetuning', 'Easy (LoRA)', 'Harder'],
+              ]}
+            />
+            <p className="mt-3 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+              The assignment fixes <b>total</b> parameters at 40B and the bar is the best same-size dense Gemma — so
+              dense maximizes quality inside the cap. <b>MoE becomes the right call</b> if the constraint were
+              serving throughput, or if the total budget could grow (e.g. ~120B-total / 17B-active). Budget:{' '}
+              <b>16T tokens (~400/param) + distillation from a stronger teacher</b> — Gemma-3-27B needed 14T + KD for
+              this class; 8T does not reach it.
+            </p>
           </div>
 
           <nav aria-label="Sections" className="mt-6 grid gap-2 sm:grid-cols-2">
@@ -141,169 +159,167 @@ export default function App() {
             code="A3-1"
             accent="var(--claim-1)"
             title="Data — what, how much, why"
-            claim={
-              <>
-                <b>16T pre-training tokens in 3 stages plus knowledge distillation</b> — Gemma-3-27B needed 14T + KD
-                for this class, so 8T-style budgets cannot reach it. India-first is a <b>pre-training</b> decision,
-                not an RLHF patch.
-              </>
-            }
-            takeaway="Signal-per-token beats raw scale: staged mixture, an honest real-vs-synthetic Indic ledger, agentic priors injected from pre-training onward, and native-authored (never translated) Indic post-training."
+            claim={<><b>16T pre-training tokens in 3 stages + knowledge distillation.</b> Signal-per-token beats raw scale.</>}
+            takeaway="An honest real-vs-synthetic Indic ledger; agentic priors injected from pre-training onward; native-authored (never translated) Indic post-training."
           >
-            <div className="panel space-y-5 p-5 text-sm leading-relaxed text-zinc-700 dark:text-zinc-200">
+            <div className="panel space-y-5 p-5">
               <div>
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                  Stage A · breadth — 12.5T
-                </div>
+                <Label>Stage A · breadth — 12.5T</Label>
                 <Table
                   head={['Bucket', '%', '~Tokens', 'Why']}
                   rows={[
-                    ['High-quality English web', '38%', '4.75T', 'FineWeb-Edu-class filtering; general capability lives here'],
-                    ['Code', '20%', '2.5T', 'Stack-v2-scale + PR/issue/commit threads — agentic priors start in pre-training'],
-                    ['Math + science', '10%', '1.25T', 'OpenWebMath / arXiv / textbooks; structured reasoning'],
-                    ['Indic (12 languages)', '17%', '2.1T', 'Honest ledger below'],
-                    ['Other multilingual', '5%', '0.6T', 'Transfer + translation strength'],
-                    ['Books / reference', '5%', '0.6T', 'Long-form coherence'],
-                    ['Synthetic reasoning', '5%', '0.6T', 'Teacher-generated, verified-only'],
+                    ['High-quality English web (Indian-authored upweighted)', '38%', '4.75T', 'general capability; the English distribution itself becomes India-centric'],
+                    ['Code + PR/issue threads', '20%', '2.5T', 'SE patterns; agentic priors start here'],
+                    ['Math + science', '10%', '1.25T', 'structured reasoning'],
+                    ['Indic — 12 scheduled languages', '17%', '2.1T', 'ledger below'],
+                    ['Other multilingual · books · verified synthetic reasoning', '15%', '1.9T', 'transfer · coherence · reasoning'],
                   ]}
                 />
-                <Note>
-                  <b>The Indic ledger (2.1T):</b> all cleaned native Indic text in existence is ≈275B tokens
-                  (Sangraha 251B — itself 65% machine-translated, only 64B human-verified — plus IndicCorp v2 ~21B
-                  and legal/govt corpora). So: 275B real × ~2.5 epochs + ~1.3T quality-gated synthetic (en→Indic
-                  translation of educational web, transliteration pairs, native-script textbook generations) +{' '}
-                  <b>15% romanized/code-mixed</b> — 52% of Hindi UGC online is romanized, so Hinglish is first-class
-                  data, not noise. Language weights ∝ speakers × digital availability (hi ~35%; bn/te/mr/ta ~8–10%
-                  each; then gu/ur/kn/ml/pa/or/as; a pinch of Sanskrit).
-                </Note>
-                <Note>
-                  <b>India-first injections, upsampled 2–4×:</b> Constitution + BNS, SC/HC judgments, Parliament
-                  debates, RBI/SEBI/NITI, NCERT/NPTEL, Census & data.gov.in, Indian newspapers, regional
-                  literature, UPI/ONDC/DigiLocker documentation. Worldview is learned in pre-training.
-                </Note>
               </div>
 
               <div>
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                  Stage B · mid-train 3T &nbsp;·&nbsp; Stage C · long-context 0.5T
-                </div>
-                <p>
-                  B: code→30% with repo-level context; math→20% with verified solutions; <b>~300B agentic-trace
-                  tokens</b> (tool-call logs, terminal sessions, SWE trajectories synthesized from PR-issue-patch
-                  triples); top-decile Indic (exams, judgments); anneal on the best data. C: context 8k→128k on full
-                  repos, case law, multi-document sets.
-                </p>
+                <Label>The Indic ledger — 2.1T from a 275B-token reality</Label>
+                <Table
+                  head={['Component', 'Tokens', 'Note']}
+                  rows={[
+                    ['Real native Indic (all that exists, cleaned)', '≈275B × ~2.5 epochs', 'Sangraha 251B (itself 65% machine-translated; 64B human-verified) + IndicCorp v2 ~21B + legal/govt'],
+                    ['Quality-gated synthetic', '~1.3T', 'en→Indic educational translation · transliteration pairs · native-script textbook-style'],
+                    ['Romanized / code-mixed (Hinglish)', '~15% of bucket', '52% of Hindi UGC online is romanized — data, not noise'],
+                    ['Language weights', '—', '∝ speakers × digital availability: hi ~35%; bn/te/mr/ta 8–10% each; gu/ur/kn/ml/pa/or/as rest'],
+                  ]}
+                />
               </div>
 
               <div>
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                  Post-training
-                </div>
-                <p>
-                  <b>SFT ~1M curated:</b> 35% agentic/code (sandbox-verified trajectories — a few hundred verified
-                  SWE trajectories measurably move a 30B-class model double digits on SWE-bench; verified tool-call
-                  sets), 25% reasoning CoT, <b>25% Indic written natively by paid writers — never translated</b>{' '}
-                  (translationese destroys cultural grounding), 15% India-domain (law/agri/health/GST/UPI) + safety.
-                </p>
-                <p className="mt-2">
-                  <b>RL, verifiable-first:</b> GRPO against unit tests, math answers, tool-call schemas and ~5K
-                  sandboxed SWE/tool environments (pure RL at 32B is proven to exceed 40% SWE-bench Verified). Then
-                  preference RL with a <b>paid Indian annotator pool</b> balanced across language, region, gender,
-                  caste — with no reward for verbosity. Alignment spec: an India-first constitution — Indian
-                  constitutional values, plural, non-partisan; Indian defaults when locale is unspecified
-                  (₹/lakh/crore, DD-MM-YYYY, BNS not US common law, Survey-of-India borders).
-                </p>
+                <Label>Stage B · mid-train 3T &nbsp;·&nbsp; Stage C · long-context 0.5T</Label>
+                <Table
+                  head={['Stage', 'Content']}
+                  rows={[
+                    ['B (3T)', 'code→30% repo-level · math→20% verified solutions · ~300B agentic-trace tokens (tool-call logs, terminal sessions, SWE trajectories from PR-issue-patch triples) · top-decile Indic · anneal on best data'],
+                    ['C (0.5T)', 'context 8k→128k: full repos, case law, multi-document'],
+                  ]}
+                />
+              </div>
+
+              <div>
+                <Label>Post-training</Label>
+                <Table
+                  head={['Component', 'Content']}
+                  rows={[
+                    ['SFT ~1M', '35% agentic/code (sandbox-verified trajectories + verified tool-calls) · 25% reasoning CoT · 25% Indic authored natively — never translated · 15% India-domain + safety'],
+                    ['RL step 1 — verifiable', 'GRPO on unit tests, math answers, tool-call schemas, ~5K sandboxed SWE/tool environments (pure RL at 32B is proven >40% SWE-bench Verified)'],
+                    ['RL step 2 — preference', 'Indian annotator pool (language/region/gender/caste-balanced); no reward for verbosity'],
+                  ]}
+                />
               </div>
             </div>
           </ClaimCard>
 
-          {/* ---------------- A3-2 CLEANING ---------------- */}
+          {/* ---------------- A3-2 INDIA-FIRST ---------------- */}
           <ClaimCard
             id="a3-2"
             code="A3-2"
             accent="var(--claim-2)"
+            title="India-first by construction"
+            claim={<>"Views the world from the Indian perspective" is engineered at <b>every</b> layer of the stack — not patched in at RLHF.</>}
+            takeaway="Each lever produces a measurable default; the eval row makes perspective testable, not vibes."
+          >
+            <div className="panel p-5">
+              <Table
+                minW={640}
+                head={['Lever', 'Mechanism', 'Default it produces']}
+                rows={[
+                  ['Pre-training corpus', 'Indian-authored English upweighted (press, textbooks, .in domains); India injections ×2–4: Constitution + BNS, SC/HC judgments, Parliament debates, RBI/SEBI, NCERT/NPTEL, Census, UPI/ONDC docs; quality classifiers calibrated on Indian English so idiom isn’t filtered as “low quality”', '“the Constitution” → India’s'],
+                  ['Knowledge frame', 'NCERT / BNS / RBI / Census treated as canonical for civics, law, finance, geography', 'tax → GST & IT Act, not IRS'],
+                  ['SFT', 'Native-written Indian daily-life scenarios: UPI dispute, IRCTC booking, ration card, monsoon sowing, board exams', '₹/lakh/crore, Indian names & examples'],
+                  ['RL reward', 'Indian annotators ARE the preference signal; constitution derived from Indian constitutional values (plural, non-partisan); judge models trained on Indian-perspective rubrics', 'refusal norms per Indian law; Survey-of-India borders'],
+                  ['Inference', 'Locale-default system prompt', 'DD-MM-YYYY, IST, Indian units'],
+                  ['Eval', 'Default-perspective probes — a question with unspecified locale must resolve to the Indian frame; refusal-balance parity across religion/caste/region; quarterly Indian-rater human eval', 'measurable, not vibes'],
+                ]}
+              />
+            </div>
+          </ClaimCard>
+
+          {/* ---------------- A3-3 CLEANING ---------------- */}
+          <ClaimCard
+            id="a3-3"
+            code="A3-3"
+            accent="var(--claim-3)"
             title="Cleaning for the objectives"
-            claim="Most quality comes from what you remove. Every bucket gets its own pipeline; everything passes global dedup, India-aware PII scrubbing, and decontamination against the entire eval suite."
-            takeaway="Two India-specific rules generic pipelines get wrong: preserve ZWJ/ZWNJ or Indic conjuncts shatter (our Assignment-2 lesson), and dedup at byte level — word-level MinHash fails agglutinative morphology."
+            claim="Most quality comes from what you remove — each bucket gets its own pipeline."
+            takeaway="Two India-specific rules generic pipelines get wrong: preserve ZWJ/ZWNJ (else conjuncts shatter — our Assignment-2 lesson) and dedup at byte level (word-level MinHash fails agglutination)."
           >
             <div className="panel p-5">
               <Table
                 head={['Bucket', 'Pipeline']}
                 rows={[
-                  ['All data', 'Exact + MinHash-LSH dedup → PII scrub incl. Aadhaar/PAN/UPI formats → 13-gram decontamination vs the ENTIRE eval suite, Indic benchmarks included'],
-                  ['English web', 'Educational-value classifier + AI-slop / content-farm detector'],
-                  ['Indic', 'Triple language-ID (reject wrong-script) · Unicode NFC preserving ZWJ/ZWNJ · byte-level MinHash on char 5-grams · per-language perplexity gates · natively-built casteist/communal slur lexicons · romanized text kept and tagged · MT-quality gate on all synthetic'],
-                  ['Code', 'License allowlist · secrets scrub · repo-level dedup · AST/lint/compile filters · PR/issue threads kept intact'],
-                  ['Agentic traces', 'Replay in sandbox; keep only success or valid error-recovery'],
-                  ['Math / science', 'LaTeX-preserving extraction; answer-verifiable subset tagged for RL reuse'],
+                  ['All data', 'exact + MinHash-LSH dedup → PII scrub incl. Aadhaar/PAN/UPI formats → 13-gram decontamination vs the ENTIRE eval suite'],
+                  ['English web', 'educational-value classifier + AI-slop / content-farm detector'],
+                  ['Indic', 'triple language-ID (reject wrong-script) · NFC preserving ZWJ/ZWNJ · byte-level MinHash char-5-grams · per-language perplexity gates · natively-built casteist/communal slur lexicons · romanized kept + tagged · MT-quality gate on synthetic'],
+                  ['Code', 'license allowlist · secrets scrub · repo dedup · AST/lint/compile filters · PR/issue threads intact'],
+                  ['Agentic traces', 'sandbox replay; keep success or valid error-recovery only'],
+                  ['Math / science', 'LaTeX-preserving extraction; answer-verifiable subset tagged for RL'],
                 ]}
               />
             </div>
           </ClaimCard>
 
-          {/* ---------------- A3-3 EVALUATION ---------------- */}
+          {/* ---------------- A3-4 EVALUATION ---------------- */}
           <ClaimCard
-            id="a3-3"
-            code="A3-3"
-            accent="var(--claim-3)"
+            id="a3-4"
+            code="A3-4"
+            accent="var(--claim-4)"
             title="Testing against the objectives"
-            claim="Each objective gets a numeric bar on benchmarks that resist contamination and gaming — plus private held-out agent environments, because public agentic benchmarks are exploitable."
-            takeaway="The two India-first tests most suites lack: romanization robustness (native vs roman script, <5% gap) and refusal-balance parity across religion, caste, and region."
+            claim="Each objective gets a numeric bar on contamination-resistant benchmarks — plus private held-out agent environments, because public agentic benchmarks are gameable."
+            takeaway="The two India-first tests most suites lack: romanization robustness (<5% gap) and refusal-balance parity across religion, caste, region."
           >
             <div className="panel p-5">
               <Table
                 head={['Objective', 'Suite → bar']}
                 rows={[
-                  ['General parity', 'MMLU-Pro, GPQA-D, IFEval, Arena-Hard → within ~2–3 pts of latest same-size Gemma'],
-                  ['Coding', 'LiveCodeBench (contamination-resistant) + SWE-bench Verified ≥ 40% + RepoBench; HumanEval as smoke test only'],
-                  ['Agentic', 'BFCL v3 ≥ 70%, tau-bench, terminal-bench, OSWorld subset — score success AND steps/cost; private held-out environments'],
-                  ['Indic', 'MILU (11 languages) — must beat same-size Gemma; IndicGenBench; IN22 chrF++; romanization-robustness gap < 5%; Hinglish QA'],
-                  ['India-first', '3-layer custom eval: (1) factuality — polity/schemes/GST/railways, UPSC-style; (2) default-perspective probes — which currency/law/examples does it assume when unspecified; (3) fairness — IndiBias + refusal-balance parity across religion/caste/region; quarterly Indian-rater human eval'],
-                  ['Continuous', 'Per-domain loss dashboards; tokenizer-fertility regression in CI; decontamination audit before any reported number'],
+                  ['General parity', 'MMLU-Pro, GPQA-D, IFEval, Arena-Hard → within ~2–3 pts of same-size Gemma'],
+                  ['Coding', 'LiveCodeBench + SWE-bench Verified ≥ 40% + RepoBench (HumanEval = smoke only)'],
+                  ['Agentic', 'BFCL v3 ≥ 70%, tau-bench, terminal-bench, OSWorld subset → success AND steps/cost; private held-out environments'],
+                  ['Indic', 'MILU (beat same-size Gemma) · IndicGenBench · IN22 chrF++ · romanization-robustness gap < 5% · Hinglish QA'],
+                  ['India-first', 'factuality (polity/schemes/GST, UPSC-style) · default-perspective probes · IndiBias + refusal-balance parity · quarterly Indian-rater human eval'],
+                  ['Continuous', 'per-domain loss dashboards · tokenizer-fertility regression in CI · decontamination audit before any reported number'],
                 ]}
               />
             </div>
           </ClaimCard>
 
-          {/* ---------------- A3-4 FERTILITY & TOKENIZER ---------------- */}
+          {/* ---------------- A3-5 FERTILITY & TOKENIZER ---------------- */}
           <ClaimCard
-            id="a3-4"
-            code="A3-4"
-            accent="var(--claim-4)"
+            id="a3-5"
+            code="A3-5"
+            accent="var(--color-brand-500)"
             title="Fertility targets → tokenizer size"
-            claim={
-              <>
-                Targets anchored to measured tokenizers (Sarvam-1: 1.4–2.1 across Indic; 200K Indic-weighted vocabs
-                reach Hindi ≈1.2; Llama-class tokenizers cost Indic users 3–8× English). Principle:{' '}
-                <b>an Indian-language user pays ≤ 1.4× English tokens for the same content.</b>
-              </>
-            }
-            takeaway="Vocab = 262,144 (2^18) byte-fallback BPE: ~110K en+code+math+symbols, ~108K across 12 Indic scripts, ~15K romanized/code-mix, ~20K other. The vocabulary scaling law puts a 40B model's optimum at 200–300K; Gemma 3 ships exactly 262K; tied embeddings hold the cost to ~4% of parameters — and a larger vocab directly cuts Indic serving cost."
+            claim={<>Targets anchored to measured tokenizers (Sarvam-1: 1.4–2.1 across Indic; 200K Indic-weighted vocabs reach Hindi ≈1.2; Llama-class tokenizers cost Indic users 3–8× English). <b>Principle: an Indian-language user pays ≤ 1.4× English tokens for the same content.</b></>}
+            takeaway="Vocab = 262,144 (2^18) byte-fallback BPE: ~110K en+code+math+symbols + ~108K across 12 Indic scripts + ~15K romanized/code-mix + ~20K other. Scaling law puts a 40B optimum at 200–300K; Gemma 3 ships exactly 262K; tied embeddings ≈ 4% of params; larger vocab = cheaper Indic serving."
           >
             <div className="panel p-5">
               <Table
                 head={['Domain / language', 'Fertility target', 'Note']}
                 rows={[
-                  ['English', '≤ 1.30 tokens/word', 'o200k-class reality; ≤1.05 claims are unattainable'],
-                  ['Hindi, Marathi (Devanagari)', '≤ 1.45', '1.2 proven possible at 200K with Indic-heavy training'],
+                  ['English', '≤ 1.30 tokens/word', '≤ 1.05 claims are unattainable (no production tokenizer is close)'],
+                  ['Hindi, Marathi (Devanagari)', '≤ 1.45', '≈1.2 proven at 200K with Indic-heavy training'],
                   ['Bengali, Urdu', '≤ 1.55', ''],
                   ['Gujarati, Punjabi, Odia, Assamese', '≤ 1.70', ''],
-                  ['Tamil, Telugu, Kannada, Malayalam', '≤ 1.85', 'agglutinative (sandhi); Sarvam-1 band'],
-                  ['Romanized Hinglish', '≤ 1.35', 'first-class data — majority of Hindi UGC'],
-                  ['Code', '≥ 3.3 chars/token', 'whole-token identifiers and keywords'],
-                  ['Math', '≥ 3.0 chars/token', 'digits split 0–9: arithmetic accuracy > fertility'],
+                  ['Tamil, Telugu, Kannada, Malayalam', '≤ 1.85', 'agglutinative (sandhi)'],
+                  ['Romanized Hinglish', '≤ 1.35', 'majority of Hindi UGC'],
+                  ['Code / Math', '≥ 3.3 / ≥ 3.0 chars per token', 'digits split 0–9: arithmetic accuracy > fertility'],
                 ]}
               />
-              <Note>
-                Tokenizer training mix ≈ 35% en+code · 45% Indic (fertility-driven upsample) · 10% math · 10%
-                other, with a ZWJ/ZWNJ-preserving pre-tokenizer; per-language fertility tracked in CI on every
-                release — the exact machinery built and verified in Assignment 2.
-              </Note>
+              <p className="mt-3 rounded-lg bg-zinc-100 px-3 py-2 text-[13px] leading-relaxed text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200">
+                Tokenizer training mix ≈ 35% en+code · 45% Indic (fertility-driven upsample) · 10% math · 10% other,
+                with a ZWJ/ZWNJ-preserving pre-tokenizer; per-language fertility tracked in CI on every release —
+                the exact machinery built and verified in Assignment 2.
+              </p>
             </div>
           </ClaimCard>
         </div>
       </main>
-      <Footer note="ERA-V5 · Assignment 3 — Bharat-40B design brief: data, cleaning, evaluation, and a fertility-derived 262K tokenizer for a 40B India-first coding & agentic model." />
+      <Footer note="ERA-V5 · Assignment 3 — design brief for a 40B India-first coding & agentic model: data, cleaning, evaluation, and a fertility-derived 262K tokenizer." />
     </div>
   )
 }
