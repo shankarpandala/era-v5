@@ -125,7 +125,10 @@ export default function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         label="Assignment 2"
-        crossLink={{ href: `${import.meta.env.BASE_URL}`, text: '← Assignment 1' }}
+        crossLinks={[
+          { href: `${import.meta.env.BASE_URL}`, text: 'Assignment 1' },
+          { href: `${import.meta.env.BASE_URL}data-collection/`, text: 'Assignment 3' },
+        ]}
       />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4">
         <Hero stats={stats} />

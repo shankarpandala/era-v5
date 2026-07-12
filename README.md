@@ -7,6 +7,7 @@ under `/era-v5/`:
 |---|---|---|
 | **1** | [/era-v5/](https://www.pandala.in/era-v5/) | Interactive, in-browser proofs of why activations, depth, embeddings and data matter. |
 | **2** | [/era-v5/tokenizer/](https://www.pandala.in/era-v5/tokenizer/) | A from-scratch 10k-vocab multilingual BPE tokenizer with live fertility ratios, self-score, and a downloadable tokenizer. |
+| **3** | [/era-v5/data-collection/](https://www.pandala.in/era-v5/data-collection/) | The Bharat-40B design brief: data, cleaning, evaluation, and a fertility-derived 262K tokenizer for a 40B India-first coding & agentic model. |
 
 Single Vite multi-page build; each assignment is its own static page. Everything
 runs client-side.
