@@ -1,9 +1,11 @@
 # ERA-V5 Assignment 2 (resubmission) — shared multilingual tokenizer, grader-compatible
 
 One shared **10,000-token** tokenizer for the **wiki-faithful Markdown** India pages in
-**English, Hindi, Telugu, Maithili** — the exact corpus recipe, tokenizer interface, and
-scoring of the published course reference, with the per-language weights searched instead of
-hand-picked.
+**English, Hindi, Telugu, Marathi** (4th language: our choice per the assignment) — the exact
+corpus recipe, tokenizer interface, and scoring of the published course reference, with the
+per-language weights searched instead of hand-picked. The corpus also ships **Maithili**, so
+the instructor's published evaluator (which hardcodes en/hi/te/mai) runs on these artifacts
+unchanged and reports an equally strong score.
 
 Live widget: **https://www.pandala.in/era-v5/tokenizer/**
 
@@ -18,28 +20,32 @@ ships a **standard HuggingFace tokenizer.json** — the instructor's published
 
 - Corpus: Wikipedia REST HTML → strip script/style/meta only → **markdownify** (links, URLs,
   tables, references, categories preserved). Snapshots committed under
-  `../public/tokenizer/corpus/`. Our snapshots match the instructor's published snapshots
-  unit-for-unit (en 186,367 · hi 88,359 · te 36,292 · mai 5,808 faithful units).
+  `../public/tokenizer/corpus/` (en 186,367 · hi 88,359 · te 36,292 · mr 29,766 · mai 5,808
+  faithful units; the en/hi/te/mai snapshots match the instructor's published ones exactly).
 - Tokenizer: HuggingFace **BPE**, vocab 10,000, min_frequency 1, `[UNK]`, **NFKC**,
   **Metaspace(▁, prepend_scheme="never")** pre-tokenizer + decoder → punctuation, brackets,
   URL characters, apostrophes and number separators all **round-trip exactly**.
-- Weights: **searched** (coordinate descent, ~40 trainings) to minimize the fertility spread
-  subject to Hindi ≤ 1.2. Winner: `{en: 2, hi: 2, te: 4, mai: 4}`.
+- Weights: **searched** to minimize the submission-set spread (tie-break: instructor-set
+  spread) subject to Hindi ≤ 1.2. Winner: `{"en": 1, "hi": 2, "te": 4, "mr": 3, "mai": 3}`.
 
 ## Result (the grader's own formula, reproduced by their evaluator drop-in)
 
 | Language | Tokens | Faithful units | Fertility |
 |---|---:|---:|---:|
-| English  | 112,786 | 186,367 | 0.605182 |
-| Hindi    | 54,395 | 88,359 | 0.615614 |
-| Telugu   | 21,896 | 36,292 | 0.603329 |
-| Maithili | 3,547 | 5,808 | 0.610709 |
+| English  | 126,256 | 186,367 | 0.677459 |
+| Hindi    | 51,691 | 88,359 | 0.585011 |
+| Telugu   | 21,293 | 36,292 | 0.586713 |
+| Marathi  | 19,745 | 29,766 | 0.663341 |
 
-`spread = 0.615614 − 0.603329 = 0.012285` → **score = 1000 / 0.012285 = 81,399.95**
-(reference solution: 6,502.56). Hindi penalty factor `exp(max(0, hi/1.2 − 1))` = **1.0** →
-adjusted score identical. All four fertilities ≤ 1.2.
+`spread = 0.092448` → **score = 1000 / 0.092448 = 10,816.91**
+(reference solution: 6,502.56). Hindi penalty factor = **1.0** → adjusted score identical.
+All four fertilities ≤ 1.2.
 
-**Faithfulness:** `decode(encode(x))` preserves visible text on all four corpora, and the
+**Instructor-set robustness:** the published evaluator's hardcoded set (en/hi/te/mai) scores
+**10,816.91** on these same artifacts (spread 0.092448) — it runs unchanged
+because the mai corpus ships alongside.
+
+**Faithfulness:** `decode(encode(x))` preserves visible text on all corpora, and the
 grader's sample round-trips exactly:
 `"India's population is 1,428,627,663."` → encode → decode → `"India's population is 1,428,627,663."`
 

@@ -6,7 +6,7 @@ under `/era-v5/`:
 | Assignment | Live | What it is |
 |---|---|---|
 | **1** | [/era-v5/](https://www.pandala.in/era-v5/) | Interactive, in-browser proofs of why activations, depth, embeddings and data matter. |
-| **2** | [/era-v5/tokenizer/](https://www.pandala.in/era-v5/tokenizer/) | A shared 10k-token tokenizer for the wiki-faithful Markdown India pages (en/hi/te/mai) — grader-compatible HuggingFace format, live fertility ratios, self-score 81,400, downloadable. |
+| **2** | [/era-v5/tokenizer/](https://www.pandala.in/era-v5/tokenizer/) | A shared 10k-token tokenizer for the wiki-faithful Markdown India pages (en/hi/te/mr) — grader-compatible HuggingFace format, live fertility ratios, self-score 10,817, downloadable. |
 | **3** | [/era-v5/data-collection/](https://www.pandala.in/era-v5/data-collection/) | Design brief for a 40B India-first coding & agentic model: data, cleaning, evaluation, and a fertility-derived 262K tokenizer. |
 
 Single Vite multi-page build; each assignment is its own static page. Everything
@@ -45,7 +45,7 @@ hold or break.
 ## Assignment 2 — Multilingual BPE Tokenizer (resubmission)
 
 One shared **10,000-token HuggingFace BPE** tokenizer (NFKC + Metaspace) for the
-**wiki-faithful Markdown** India pages in English, Hindi, Telugu and Maithili — the exact
+**wiki-faithful Markdown** India pages in English, Hindi, Telugu and Marathi — the exact
 corpus and scoring pipeline of the published course reference. `tokenizer.json` loads with
 `tokenizers.Tokenizer.from_file`, `decode(encode(x))` preserves all visible text, and the
 instructor's published evaluator reproduces our numbers drop-in.
@@ -54,13 +54,14 @@ instructor's published evaluator reproduces our numbers drop-in.
 
 | Language | Fertility (tokens / faithful units) |
 |---|---:|
-| English | 0.605182 |
-| Hindi | 0.615614 |
-| Telugu | 0.603329 |
-| Maithili | 0.610709 |
+| English | 0.677459 |
+| Hindi | 0.585011 |
+| Telugu | 0.586713 |
+| Marathi | 0.663341 |
 
-`spread = 0.012285` → **self-score = 81,399.95** (reference solution: 6,502.56); Hindi
-penalty ×1.0. Full method, reproduce commands, and parity proof: [`tokenizer/README.md`](tokenizer/README.md).
+`spread = 0.092448` → **self-score = 10,816.91** (reference solution: 6,502.56);
+Hindi penalty ×1.0; the instructor's published evaluator (hardcoded en/hi/te/mai) also runs
+unchanged on these artifacts and scores 10,816.91. Full method, reproduce commands, and parity proof: [`tokenizer/README.md`](tokenizer/README.md).
 
 ```bash
 npm run parity                        # JS == HuggingFace tokenizers (ids, decode, units)

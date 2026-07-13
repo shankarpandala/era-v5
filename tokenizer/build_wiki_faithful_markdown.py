@@ -5,8 +5,9 @@ Follows the course reference pipeline exactly: Wikipedia REST HTML ->
 BeautifulSoup (strip only script/style/meta/link machinery, keep links, URLs,
 tables, references, image links, navboxes, categories) -> markdownify.
 
-Languages: English, Hindi, Telugu, Maithili (matches the published grader
-harness, so the instructor's evaluator re-runs on this corpus unchanged).
+Languages: English, Hindi, Telugu, Marathi (the submission set — the 4th
+language is our choice per the assignment) plus Maithili, kept so the
+instructor's published evaluator (which hardcodes mai) also runs unchanged.
 
     python build_wiki_faithful_markdown.py
 
@@ -33,6 +34,7 @@ PAGES = {
     "en": ("English", "India"),
     "hi": ("Hindi", "भारत"),
     "te": ("Telugu", "భారతదేశం"),
+    "mr": ("Marathi", "भारत"),
     "mai": ("Maithili", "भारत"),
 }
 

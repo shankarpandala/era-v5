@@ -25,7 +25,8 @@ from tokenizers import Tokenizer
 
 ROOT = Path(__file__).resolve().parent.parent / "public" / "tokenizer"
 CORPUS = ROOT / "corpus"
-LANGS = ["en", "hi", "te", "mai"]
+LANGS = ["en", "hi", "te", "mr"]          # submission set (4th language: our choice)
+INSTRUCTOR_SET = ["en", "hi", "te", "mai"]  # the published evaluator's hardcoded set
 FAITHFUL_UNIT_RE = regex.compile(r"[\p{L}\p{M}\p{N}]+|[^\s\p{L}\p{M}\p{N}]")
 SAMPLE = "India's population is 1,428,627,663."
 
@@ -67,6 +68,15 @@ def main() -> int:
     spread = max(ratios) - min(ratios)
     score = 1000 / spread
     hindi_penalty = math.exp(max(0.0, rows["hi"]["ratio"] / 1.2 - 1.0))
+
+    # Transparency: also report the instructor-set (mai) numbers, since the
+    # published evaluator hardcodes en/hi/te/mai and ships in this corpus dir.
+    irows = {}
+    for code in INSTRUCTOR_SET:
+        text = (CORPUS / f"{code}.faithful.txt").read_text(encoding="utf-8")
+        irows[code] = len(tokenizer.encode(text).ids) / faithful_units(text)
+    ispread = max(irows.values()) - min(irows.values())
+
     result = {
         "faithfulness": checks,
         "rows": rows,
@@ -74,6 +84,7 @@ def main() -> int:
         "score": score,
         "hindi_exp1_penalty_factor": hindi_penalty,
         "hindi_exp1_adjusted_score": score / hindi_penalty,
+        "instructor_set": {"ratios": irows, "spread": ispread, "score": 1000 / ispread},
     }
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

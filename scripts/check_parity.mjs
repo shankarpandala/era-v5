@@ -19,7 +19,7 @@ const tok = HFTokenizer.fromJSON(JSON.parse(fs.readFileSync(path.join(PUB, 'toke
 const golden = JSON.parse(fs.readFileSync(path.join(PUB, 'parity_golden.json'), 'utf8'))
 const metrics = JSON.parse(fs.readFileSync(path.join(PUB, 'metrics.json'), 'utf8'))
 
-const LANGS = ['en', 'hi', 'te', 'mai']
+const LANGS = ['en', 'hi', 'te', 'mr', 'mai'] // submission set + instructor-set extra
 let ok = true
 for (const lang of LANGS) {
   const text = fs.readFileSync(path.join(PUB, 'corpus', `${lang}.faithful.txt`), 'utf8')
@@ -29,10 +29,11 @@ for (const lang of LANGS) {
   const decHash = crypto.createHash('sha256').update(tok.decode(ids), 'utf8').digest('hex')
   const decEq = decHash === g.decode_sha256
   const units = faithfulUnits(text)
-  const unitsEq = units === metrics.faithful_units[lang]
+  const pyUnits = metrics.faithful_units[lang] // only the submission set is in metrics.json
+  const unitsEq = pyUnits === undefined || units === pyUnits
   console.log(
     `${lang}: ids ${idsEq ? 'OK ' : 'MISMATCH'} (js=${ids.length} py=${g.ids.length})` +
-      `  decode ${decEq ? 'OK ' : 'MISMATCH'}  units ${unitsEq ? 'OK ' : 'MISMATCH'} (js=${units} py=${metrics.faithful_units[lang]})`,
+      `  decode ${decEq ? 'OK ' : 'MISMATCH'}  units ${unitsEq ? 'OK ' : 'MISMATCH'} (js=${units} py=${pyUnits ?? 'n/a'})`,
   )
   if (!idsEq) {
     ok = false
