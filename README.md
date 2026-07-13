@@ -6,7 +6,7 @@ under `/era-v5/`:
 | Assignment | Live | What it is |
 |---|---|---|
 | **1** | [/era-v5/](https://www.pandala.in/era-v5/) | Interactive, in-browser proofs of why activations, depth, embeddings and data matter. |
-| **2** | [/era-v5/tokenizer/](https://www.pandala.in/era-v5/tokenizer/) | A shared 10k-token tokenizer for the wiki-faithful Markdown India pages (en/hi/te/mr) — grader-compatible HuggingFace format, live fertility ratios, self-score 10,817, downloadable. |
+| **2** | [/era-v5/tokenizer/](https://www.pandala.in/era-v5/tokenizer/) | A shared 10k-token tokenizer for the wiki-faithful Markdown India pages (en/hi/te/mr) — grader-compatible HuggingFace format, live fertility ratios, self-score 33,445, downloadable. |
 | **3** | [/era-v5/data-collection/](https://www.pandala.in/era-v5/data-collection/) | Design brief for a 40B India-first coding & agentic model: data, cleaning, evaluation, and a fertility-derived 262K tokenizer. |
 
 Single Vite multi-page build; each assignment is its own static page. Everything
@@ -54,14 +54,14 @@ instructor's published evaluator reproduces our numbers drop-in.
 
 | Language | Fertility (tokens / faithful units) |
 |---|---:|
-| English | 0.677459 |
-| Hindi | 0.585011 |
-| Telugu | 0.586713 |
-| Marathi | 0.663341 |
+| English | 0.621918 |
+| Hindi | 0.650528 |
+| Telugu | 0.623691 |
+| Marathi | 0.651818 |
 
-`spread = 0.092448` → **self-score = 10,816.91** (reference solution: 6,502.56);
+`spread = 0.029899` → **self-score = 33,445.41** (reference solution: 6,502.56);
 Hindi penalty ×1.0; the instructor's published evaluator (hardcoded en/hi/te/mai) also runs
-unchanged on these artifacts and scores 10,816.91. Full method, reproduce commands, and parity proof: [`tokenizer/README.md`](tokenizer/README.md).
+unchanged on these artifacts and scores 33,207.55. Full method, reproduce commands, and parity proof: [`tokenizer/README.md`](tokenizer/README.md).
 
 ```bash
 npm run parity                        # JS == HuggingFace tokenizers (ids, decode, units)

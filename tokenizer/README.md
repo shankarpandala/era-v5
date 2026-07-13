@@ -26,23 +26,23 @@ ships a **standard HuggingFace tokenizer.json** — the instructor's published
   **Metaspace(▁, prepend_scheme="never")** pre-tokenizer + decoder → punctuation, brackets,
   URL characters, apostrophes and number separators all **round-trip exactly**.
 - Weights: **searched** to minimize the submission-set spread (tie-break: instructor-set
-  spread) subject to Hindi ≤ 1.2. Winner: `{"en": 1, "hi": 2, "te": 4, "mr": 3, "mai": 3}`.
+  spread) subject to Hindi ≤ 1.2. Winner: `{"en": 3, "hi": 2, "te": 6, "mr": 6, "mai": 4}`.
 
 ## Result (the grader's own formula, reproduced by their evaluator drop-in)
 
 | Language | Tokens | Faithful units | Fertility |
 |---|---:|---:|---:|
-| English  | 126,256 | 186,367 | 0.677459 |
-| Hindi    | 51,691 | 88,359 | 0.585011 |
-| Telugu   | 21,293 | 36,292 | 0.586713 |
-| Marathi  | 19,745 | 29,766 | 0.663341 |
+| English  | 115,905 | 186,367 | 0.621918 |
+| Hindi    | 57,480 | 88,359 | 0.650528 |
+| Telugu   | 22,635 | 36,292 | 0.623691 |
+| Marathi  | 19,402 | 29,766 | 0.651818 |
 
-`spread = 0.092448` → **score = 1000 / 0.092448 = 10,816.91**
+`spread = 0.029899` → **score = 1000 / 0.029899 = 33,445.41**
 (reference solution: 6,502.56). Hindi penalty factor = **1.0** → adjusted score identical.
 All four fertilities ≤ 1.2.
 
 **Instructor-set robustness:** the published evaluator's hardcoded set (en/hi/te/mai) scores
-**10,816.91** on these same artifacts (spread 0.092448) — it runs unchanged
+**33,207.55** on these same artifacts (spread 0.030114) — it runs unchanged
 because the mai corpus ships alongside.
 
 **Faithfulness:** `decode(encode(x))` preserves visible text on all corpora, and the
