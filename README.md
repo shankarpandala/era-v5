@@ -6,7 +6,7 @@ under `/era-v5/`:
 | Assignment | Live | What it is |
 |---|---|---|
 | **1** | [/era-v5/](https://www.pandala.in/era-v5/) | Interactive, in-browser proofs of why activations, depth, embeddings and data matter. |
-| **2** | [/era-v5/tokenizer/](https://www.pandala.in/era-v5/tokenizer/) | A from-scratch 10k-vocab multilingual BPE tokenizer with live fertility ratios, self-score, and a downloadable tokenizer. |
+| **2** | [/era-v5/tokenizer/](https://www.pandala.in/era-v5/tokenizer/) | A shared 10k-token tokenizer for the wiki-faithful Markdown India pages (en/hi/te/mai) — grader-compatible HuggingFace format, live fertility ratios, self-score 81,400, downloadable. |
 | **3** | [/era-v5/data-collection/](https://www.pandala.in/era-v5/data-collection/) | Design brief for a 40B India-first coding & agentic model: data, cleaning, evaluation, and a fertility-derived 262K tokenizer. |
 
 Single Vite multi-page build; each assignment is its own static page. Everything
@@ -42,45 +42,29 @@ hold or break.
 
 ---
 
-## Assignment 2 — Multilingual BPE Tokenizer
+## Assignment 2 — Multilingual BPE Tokenizer (resubmission)
 
-A single **byte-level BPE** tokenizer, built from scratch, with a shared vocabulary of
-**10,000 tokens** for **English, Hindi, Telugu, and Marathi**, trained on the **full**
-India Wikipedia article in each (the text the course grades on). Fertility
-`X = tokens / words`; the assignment's hard constraint is **English ≤ 1.2**; score
-`1000 / (X_max − X_min)`.
+One shared **10,000-token HuggingFace BPE** tokenizer (NFKC + Metaspace) for the
+**wiki-faithful Markdown** India pages in English, Hindi, Telugu and Maithili — the exact
+corpus and scoring pipeline of the published course reference. `tokenizer.json` loads with
+`tokenizers.Tokenizer.from_file`, `decode(encode(x))` preserves all visible text, and the
+instructor's published evaluator reproduces our numbers drop-in.
 
 🔗 **Live:** https://www.pandala.in/era-v5/tokenizer/
 
-**Result** (full articles; weights `{en:8,hi:1,te:2,mr:1}`; both word counts shown):
+| Language | Fertility (tokens / faithful units) |
+|---|---:|
+| English | 0.605182 |
+| Hindi | 0.615614 |
+| Telugu | 0.603329 |
+| Maithili | 0.610709 |
 
-| Language | X (`\w+` count · class-standard) | X (whitespace words) |
-|---|---:|---:|
-| English | **0.9802 ✓** | **1.0037 ✓** |
-| Hindi | 0.9829 ✓ | 1.9115 |
-| Telugu | 0.9744 ✓ | 2.8598 |
-| Marathi | 0.9525 ✓ | 2.5240 |
-
-**English ≤ 1.2 under both counts** (the binding gate). Self-score: **32,820** under the
-class-standard `\w+` count (all four ≤ 1.2, spread 0.0305), **538.7** under strict whitespace
-words. Both rulers are shown because `\w` drops Indic combining marks and splits words at
-matras (2–3× Indic denominator inflation); under real word counts the Indic three provably
-can't all reach ≤ 1.2 at a shared 10k vocab (devoting every merge to them still floors
-max X ≈ 1.58). The widget lets you **paste/upload your own India-page text** and recomputes
-both tables live.
-
-- **`tokenizer/`** — the from-scratch Python pipeline (trainer, encoder, evaluator). See
-  [`tokenizer/README.md`](tokenizer/README.md) for the method and exact reproduce commands.
-- **`src/tokenizer/`** — the React widget: live per-language ratios, self-score, a paste-and-tokenize
-  playground, and tokenizer download. It re-implements the encoder in JS and **recomputes every
-  number live in the browser** from the shipped tokenizer + corpora — nothing is hardcoded.
-- **Trust:** `npm run parity` proves the JS encoder produces the *identical* token stream to the
-  Python reference on every corpus, so the widget's numbers equal the numbers a grader gets
-  running our Python tokenizer.
+`spread = 0.012285` → **self-score = 81,399.95** (reference solution: 6,502.56); Hindi
+penalty ×1.0. Full method, reproduce commands, and parity proof: [`tokenizer/README.md`](tokenizer/README.md).
 
 ```bash
-npm run parity                       # JS == Python token streams (uses committed artifacts)
-cd tokenizer && pip install -r requirements.txt && python evaluate.py   # reproduce the table
+npm run parity                        # JS == HuggingFace tokenizers (ids, decode, units)
+cd tokenizer && pip install -r requirements.txt && python evaluate_tokenizer.py
 ```
 
 ## Develop

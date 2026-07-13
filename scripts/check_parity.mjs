@@ -1,56 +1,56 @@
-// Parity proof: the JS encoder (src/tokenizer/lib/bpe.js) must produce the
-// EXACT token stream the Python reference produced (public/tokenizer/parity_golden.json)
-// on every frozen eval corpus. Nonzero exit on any mismatch.
+// Parity proof for the resubmission pipeline: the JS reimplementation
+// (src/tokenizer/lib/hfbpe.js) must produce the EXACT token-id stream and the
+// EXACT decoded text (SHA-256) that the HuggingFace `tokenizers` library
+// produces (public/tokenizer/parity_golden.json), on every corpus file.
+// Also re-checks the grader's faithfulness sample. Nonzero exit on mismatch.
 //
 //   node scripts/check_parity.mjs
-//
-// This is what backs the claim "the widget's live numbers equal the numbers a
-// grader gets running our Python tokenizer".
 
 import fs from 'node:fs'
 import path from 'node:path'
+import crypto from 'node:crypto'
 import { fileURLToPath } from 'node:url'
-import { BPE, wordCountSplit } from '../src/tokenizer/lib/bpe.js'
+import { HFTokenizer, faithfulUnits } from '../src/tokenizer/lib/hfbpe.js'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const PUB = path.join(HERE, '..', 'public', 'tokenizer')
 
-const tok = JSON.parse(fs.readFileSync(path.join(PUB, 'tokenizer.json'), 'utf8'))
+const tok = HFTokenizer.fromJSON(JSON.parse(fs.readFileSync(path.join(PUB, 'tokenizer.json'), 'utf8')))
 const golden = JSON.parse(fs.readFileSync(path.join(PUB, 'parity_golden.json'), 'utf8'))
-const stats = JSON.parse(fs.readFileSync(path.join(PUB, 'stats.json'), 'utf8'))
-const bpe = BPE.fromJSON(tok)
+const metrics = JSON.parse(fs.readFileSync(path.join(PUB, 'metrics.json'), 'utf8'))
 
-const LANGS = ['en', 'hi', 'te', 'mr']
+const LANGS = ['en', 'hi', 'te', 'mai']
 let ok = true
 for (const lang of LANGS) {
-  const text = fs.readFileSync(path.join(PUB, 'corpora', `${lang}.txt`), 'utf8')
-  // (1) token-stream parity vs Python golden
-  const ids = bpe.encode(text)
+  const text = fs.readFileSync(path.join(PUB, 'corpus', `${lang}.faithful.txt`), 'utf8')
+  const ids = tok.encode(text)
   const g = golden[lang]
-  const tokEq = ids.length === g.length && ids.every((v, i) => v === g[i])
-  // (2) word-count parity for BOTH metrics:
-  //     primary: JS whitespace split == Python len(text.split())
-  //     secondary: JS [\p{L}\p{N}]+ == Python \w+
-  const jsSplit = wordCountSplit(text)
-  const pySplit = stats.primary.per_language[lang].words
-  const jsWplus = bpe.countWords(text)
-  const pyWplus = stats.wplus.per_language[lang].words
-  const wordEq = jsSplit === pySplit && jsWplus === pyWplus
+  const idsEq = ids.length === g.ids.length && ids.every((v, i) => v === g.ids[i])
+  const decHash = crypto.createHash('sha256').update(tok.decode(ids), 'utf8').digest('hex')
+  const decEq = decHash === g.decode_sha256
+  const units = faithfulUnits(text)
+  const unitsEq = units === metrics.faithful_units[lang]
   console.log(
-    `${lang}: tokens ${tokEq ? 'OK ' : 'MISMATCH'} (js=${ids.length} py=${g.length})` +
-      `  words ${wordEq ? 'OK ' : 'MISMATCH'} (split js=${jsSplit}/py=${pySplit}, \\w+ js=${jsWplus}/py=${pyWplus})`,
+    `${lang}: ids ${idsEq ? 'OK ' : 'MISMATCH'} (js=${ids.length} py=${g.ids.length})` +
+      `  decode ${decEq ? 'OK ' : 'MISMATCH'}  units ${unitsEq ? 'OK ' : 'MISMATCH'} (js=${units} py=${metrics.faithful_units[lang]})`,
   )
-  if (!tokEq) {
+  if (!idsEq) {
     ok = false
-    const n = Math.max(ids.length, g.length)
-    for (let i = 0; i < n; i++) {
-      if (ids[i] !== g[i]) {
-        console.log(`   first token diff @ ${i}: js=${ids[i]} py=${g[i]}`)
+    for (let i = 0; i < Math.max(ids.length, g.ids.length); i++) {
+      if (ids[i] !== g.ids[i]) {
+        console.log(`   first id diff @ ${i}: js=${ids[i]} py=${g.ids[i]}`)
         break
       }
     }
   }
-  if (!wordEq) ok = false
+  if (!decEq || !unitsEq) ok = false
 }
-console.log(ok ? '\nPARITY OK — JS == Python (tokens AND word counts) on all corpora' : '\nPARITY FAILED')
+
+// Grader's faithfulness sample must round-trip exactly.
+const SAMPLE = "India's population is 1,428,627,663."
+const dec = tok.decode(tok.encode(SAMPLE))
+console.log(`sample round-trip exact: ${dec === SAMPLE}  ("${dec}")`)
+if (dec !== SAMPLE) ok = false
+
+console.log(ok ? '\nPARITY OK — JS == HuggingFace tokenizers on all corpora' : '\nPARITY FAILED')
 process.exit(ok ? 0 : 1)
