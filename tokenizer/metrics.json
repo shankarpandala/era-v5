@@ -4,13 +4,12 @@
     "en": "English",
     "hi": "Hindi",
     "te": "Telugu",
-    "mr": "Marathi"
+    "mai": "Maithili"
   },
   "weights": {
-    "en": 3,
+    "en": 2,
     "hi": 2,
-    "te": 6,
-    "mr": 6,
+    "te": 4,
     "mai": 4
   },
   "vocab_size": 10000,
@@ -18,39 +17,23 @@
     "en": 186367,
     "hi": 88359,
     "te": 36292,
-    "mr": 29766
+    "mai": 5808
   },
   "unit_policy": "Counts each contiguous Unicode letter/mark/number run as one unit and each visible non-space punctuation/symbol character as one unit.",
   "token_counts": {
-    "en": 115905,
-    "hi": 57480,
-    "te": 22635,
-    "mr": 19402
+    "en": 112786,
+    "hi": 54395,
+    "te": 21896,
+    "mai": 3547
   },
   "ratios": {
-    "en": 0.6219180434304357,
-    "hi": 0.6505279598003599,
-    "te": 0.6236911716080679,
-    "mr": 0.6518175099106363
+    "en": 0.6051822479301593,
+    "hi": 0.6156135764325082,
+    "te": 0.6033285572577979,
+    "mai": 0.6107093663911846
   },
-  "spread": 0.029899466480200587,
-  "score": 33445.4128357842,
+  "spread": 0.012285019174710365,
+  "score": 81399.95434916171,
   "hindi_exp1_penalty_factor": 1.0,
-  "hindi_exp1_adjusted_score": 33445.4128357842,
-  "instructor_set": {
-    "languages": [
-      "en",
-      "hi",
-      "te",
-      "mai"
-    ],
-    "ratios": {
-      "en": 0.6219180434304357,
-      "hi": 0.6505279598003599,
-      "te": 0.6236911716080679,
-      "mai": 0.6520316804407713
-    },
-    "spread": 0.030113637010335648,
-    "score": 33207.5464566694
-  }
+  "hindi_exp1_adjusted_score": 81399.95434916171
 }
