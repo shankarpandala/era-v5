@@ -5,7 +5,7 @@ import ClaimCard from '../components/ClaimCard.jsx'
 import useTheme from '../hooks/useTheme.js'
 
 const SECTIONS = [
-  { id: 'a3-1', code: 'A3-1', title: 'Data — what, how much, why', color: 'var(--claim-1)' },
+  { id: 'a3-1', code: 'A3-1', title: 'Data — pre-training, post-training, RL/alignment', color: 'var(--claim-1)' },
   { id: 'a3-2', code: 'A3-2', title: 'India-first by construction', color: 'var(--claim-2)' },
   { id: 'a3-3', code: 'A3-3', title: 'Cleaning for the objectives', color: 'var(--claim-3)' },
   { id: 'a3-4', code: 'A3-4', title: 'Testing against the objectives', color: 'var(--claim-4)' },
@@ -91,16 +91,18 @@ export default function App() {
             Assignment 3 — A 40B India-First Model: Data &amp; Design
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
-            Design brief for a 40B-parameter model matching the latest Gemma class — top-tier coding, agentic work,
-            Indic languages, and a world view that defaults to the Indian perspective. Five decisions, each a table.
+            Design brief for a 40B-parameter model that matches <b>Gemma-4-31B</b> — the dense, same-size quality
+            frontier of the Gemma 4 family — on general benchmarks and <i>beats</i> it on coding, agentic work, and
+            Indic languages, defaulting to an Indian view of the world. Five decisions, each a table; every number
+            source-grounded.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-3">
-            <Tile label="Shape · budget" value="40B dense · 16T + distillation" />
+            <Tile label="Shape · budget" value="40B dense · 16T + KD" />
             <Tile label="Tokenizer vocab" value="262,144 (2¹⁸)" />
             <Tile
               label="Cost-equity principle"
-              value="Indic ≤ 1.4× English tokens"
+              value="Indic ≤ ~1.4× English tokens"
               accent="text-emerald-600 dark:text-emerald-400"
             />
             <Button variant="ghost" onClick={downloadBrief}>
@@ -108,26 +110,16 @@ export default function App() {
             </Button>
           </div>
 
-          {/* Model shape: dense vs MoE — a conditional decision */}
+          {/* Model shape: dense vs MoE — settled in one paragraph by Gemma 4's own split */}
           <div className="panel mt-6 p-5">
-            <Label>Model shape — why dense and not MoE (a conditional decision, not dogma)</Label>
-            <Table
-              minW={620}
-              head={['At a FIXED 40B total', 'Dense 40B', 'MoE @ 40B total (~8B active)']}
-              rows={[
-                ['Quality ceiling', 'Highest — all params active (Gemma-4’s 31B dense outranks its own 26B MoE)', 'Capped near ~8B-active quality'],
-                ['Training cost / token', '1×', '~0.25×'],
-                ['Serving', 'More FLOPs/token; either way all 40B must sit in memory', 'Cheaper FLOPs, plus routing complexity'],
-                ['RL / RLVR stability', 'Well-trodden', 'Router load-balancing fights RL'],
-                ['Community finetuning', 'Easy (LoRA)', 'Harder'],
-              ]}
-            />
-            <p className="mt-3 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-              The assignment fixes <b>total</b> parameters at 40B and the bar is the best same-size dense Gemma — so
-              dense maximizes quality inside the cap. <b>MoE becomes the right call</b> if the constraint were
-              serving throughput, or if the total budget could grow (e.g. ~120B-total / 17B-active). Budget:{' '}
-              <b>16T tokens (~400/param) + distillation from a stronger teacher</b> — Gemma-3-27B needed 14T + KD for
-              this class; 8T does not reach it.
+            <Label>Model shape — dense, not MoE</Label>
+            <p className="text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+              Gemma 4 itself ships both a <b>31B dense</b> (quality frontier) and a <b>26B MoE</b> (~3.8B active,
+              throughput frontier). At a <b>fixed</b> 40B total, with the bar set by the best same-size dense, an
+              all-active dense model maximizes quality inside the cap and keeps RLVR and community LoRA simple. MoE would
+              win only if the constraint were serving throughput or the total budget could grow (e.g. ~120B-total /
+              17B-active). Budget: <b>16T tokens (~400/param) + knowledge distillation</b> from a stronger teacher —
+              Gemma-3-27B needed 14T + KD to reach this class; under-8T does not.
             </p>
           </div>
 
@@ -158,34 +150,40 @@ export default function App() {
             id="a3-1"
             code="A3-1"
             accent="var(--claim-1)"
-            title="Data — what, how much, why"
-            claim={<><b>16T pre-training tokens in 3 stages + knowledge distillation.</b> Signal-per-token beats raw scale.</>}
-            takeaway="An honest real-vs-synthetic Indic ledger; agentic priors injected from pre-training onward; native-authored (never translated) Indic post-training."
+            title="Data — pre-training, post-training, RL/alignment"
+            claim={<><b>16T pre-training tokens in 3 stages + KD, then SFT, then RL/alignment.</b> Signal-per-token beats raw scale.</>}
+            takeaway="An honest native-vs-synthetic Indic ledger (native supply is the binding constraint, not token count); agentic priors from pre-training onward; RL/alignment is its own pillar with verifiable rewards and an Indian preference signal."
           >
             <div className="panel space-y-5 p-5">
               <div>
-                <Label>Stage A · breadth — 12.5T</Label>
+                <Label>Pre-training · Stage A breadth — 12.5T</Label>
                 <Table
                   head={['Bucket', '%', '~Tokens', 'Why']}
                   rows={[
-                    ['High-quality English web (Indian-authored upweighted)', '38%', '4.75T', 'general capability; the English distribution itself becomes India-centric'],
+                    ['English web (Indian-authored upweighted)', '38%', '4.75T', 'general capability; the English distribution itself skews Indian'],
                     ['Code + PR/issue threads', '20%', '2.5T', 'SE patterns; agentic priors start here'],
-                    ['Math + science', '10%', '1.25T', 'structured reasoning'],
-                    ['Indic — 12 scheduled languages', '17%', '2.1T', 'ledger below'],
-                    ['Other multilingual · books · verified synthetic reasoning', '15%', '1.9T', 'transfer · coherence · reasoning'],
+                    ['Math + science', '10%', '1.25T', 'structured reasoning; LaTeX/units preserved'],
+                    ['Indic — 12 languages', '17%', '2.1T', 'ledger below'],
+                    ['Other multilingual · books · verified synthetic reasoning', '15%', '1.9T', 'transfer · coherence'],
                   ]}
                 />
+                <p className="mt-3 text-[13px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+                  <b>Which 12 languages, and why —</b> the highest-speaker, highest-digital-availability of the 22
+                  scheduled languages, across both families: <b>Hindi, Bengali, Marathi, Telugu, Tamil, Gujarati, Urdu,
+                  Kannada, Odia, Malayalam, Punjabi, Assamese</b> — together ~95% of Indian first-language speakers.
+                  Weights ∝ speakers × digital text: hi ~35%; bn/te/mr/ta 8–10% each; gu/ur/kn/ml/pa/or/as the rest.
+                </p>
               </div>
 
               <div>
-                <Label>The Indic ledger — 2.1T from a 275B-token reality</Label>
+                <Label>The Indic ledger — 2.1T from a ~100–150B native base</Label>
                 <Table
-                  head={['Component', 'Tokens', 'Note']}
+                  head={['Component', 'Amount', 'Note']}
                   rows={[
-                    ['Real native Indic (all that exists, cleaned)', '≈275B × ~2.5 epochs', 'Sangraha 251B (itself 65% machine-translated; 64B human-verified) + IndicCorp v2 ~21B + legal/govt'],
-                    ['Quality-gated synthetic', '~1.3T', 'en→Indic educational translation · transliteration pairs · native-script textbook-style'],
-                    ['Romanized / code-mixed (Hinglish)', '~15% of bucket', '52% of Hindi UGC online is romanized — data, not noise'],
-                    ['Language weights', '—', '∝ speakers × digital availability: hi ~35%; bn/te/mr/ta 8–10% each; gu/ur/kn/ml/pa/or/as rest'],
+                    ['Native cleaned Indic that exists (deduplicated)', '~100–150B', 'Sangraha native core 64B verified + 24B unverified; IndicCorp v2 ~21B, CulturaX-Indic ~45B, Varta ~9B — heavily overlapping crawls'],
+                    ['Sangraha 251B headline', '65% synthetic', 'MT + transliteration, NOT native — the field’s own tell that native supply is the binding constraint'],
+                    ['Bucket plan', '~120B ×~4 epochs (~0.5T) + ~1.3T synthetic', 'quality-gated en→Indic MT · transliteration pairs · native-script textbook-style'],
+                    ['Romanized / code-mixed (Hinglish)', '~15% of bucket', '≈50–56% of Hindi social-media users prefer romanized — data, not noise'],
                   ]}
                 />
               </div>
@@ -202,13 +200,13 @@ export default function App() {
               </div>
 
               <div>
-                <Label>Post-training</Label>
+                <Label>Post-training (SFT ~1M) &nbsp;·&nbsp; RL &amp; alignment</Label>
                 <Table
-                  head={['Component', 'Content']}
+                  head={['Pillar', 'Content']}
                   rows={[
-                    ['SFT ~1M', '35% agentic/code (sandbox-verified trajectories + verified tool-calls) · 25% reasoning CoT · 25% Indic authored natively — never translated · 15% India-domain + safety'],
-                    ['RL step 1 — verifiable', 'GRPO on unit tests, math answers, tool-call schemas, ~5K sandboxed SWE/tool environments (pure RL at 32B is proven >40% SWE-bench Verified)'],
-                    ['RL step 2 — preference', 'Indian annotator pool (language/region/gender/caste-balanced); no reward for verbosity'],
+                    ['SFT ~1M', '35% agentic/code (sandbox-verified trajectories + verified tool-calls, both JSON-tool and code-action formats) · 25% reasoning CoT (math/science) · 25% Indic authored natively — never translated · 15% India-domain + safety'],
+                    ['RL step 1 — RLVR (GRPO)', 'verifiable rewards: unit tests (code), exact-answer (math), tool-call schema/execution (agentic) over ~4.5K sandboxed SWE/tool envs (R2E-Gym-style). Precedent: DeepSWE lifted a 32B ~23% → 42.2% SWE-bench Verified with RL alone'],
+                    ['RL step 2 — preference & constitutional', 'Indian annotator pool (language/region/gender/caste-balanced) IS the preference signal; constitution from Indian constitutional values (plural, non-partisan); refusals track Indian law; no verbosity reward'],
                   ]}
                 />
               </div>
@@ -229,12 +227,12 @@ export default function App() {
                 minW={640}
                 head={['Lever', 'Mechanism', 'Default it produces']}
                 rows={[
-                  ['Pre-training corpus', 'Indian-authored English upweighted (press, textbooks, .in domains); India injections ×2–4: Constitution + BNS, SC/HC judgments, Parliament debates, RBI/SEBI, NCERT/NPTEL, Census, UPI/ONDC docs; quality classifiers calibrated on Indian English so idiom isn’t filtered as “low quality”', '“the Constitution” → India’s'],
+                  ['Pre-training corpus', 'Indian-authored English upweighted (press, textbooks, .in domains); India injections ×2–4: Constitution + BNS, SC/HC judgments, RBI/SEBI, NCERT/NPTEL, Census, UPI/ONDC docs; quality classifiers calibrated on Indian English so idiom isn’t filtered as “low quality”', '“the Constitution” → India’s'],
                   ['Knowledge frame', 'NCERT / BNS / RBI / Census treated as canonical for civics, law, finance, geography', 'tax → GST & IT Act, not IRS'],
-                  ['SFT', 'Native-written Indian daily-life scenarios: UPI dispute, IRCTC booking, ration card, monsoon sowing, board exams', '₹/lakh/crore, Indian names & examples'],
-                  ['RL reward', 'Indian annotators ARE the preference signal; constitution derived from Indian constitutional values (plural, non-partisan); judge models trained on Indian-perspective rubrics', 'refusal norms per Indian law; Survey-of-India borders'],
+                  ['SFT', 'Native-written Indian daily-life scenarios: UPI dispute, IRCTC booking, ration card, board exams', '₹/lakh/crore, Indian names & examples'],
+                  ['Alignment', 'Indian annotators ARE the preference signal; constitution derived from Indian constitutional values (plural, non-partisan)', 'Survey-of-India borders; refusal norms per Indian law'],
                   ['Inference', 'Locale-default system prompt', 'DD-MM-YYYY, IST, Indian units'],
-                  ['Eval', 'Default-perspective probes — a question with unspecified locale must resolve to the Indian frame; refusal-balance parity across religion/caste/region; quarterly Indian-rater human eval', 'measurable, not vibes'],
+                  ['Eval', 'Unspecified-locale probes must resolve to the Indian frame; refusal-balance parity across religion/caste/region', 'measurable, not vibes'],
                 ]}
               />
             </div>
@@ -255,10 +253,10 @@ export default function App() {
                 rows={[
                   ['All data', 'exact + MinHash-LSH dedup → PII scrub incl. Aadhaar/PAN/UPI formats → 13-gram decontamination vs the ENTIRE eval suite'],
                   ['English web', 'educational-value classifier + AI-slop / content-farm detector'],
-                  ['Indic', 'triple language-ID (reject wrong-script) · NFC preserving ZWJ/ZWNJ · byte-level MinHash char-5-grams · per-language perplexity gates · natively-built casteist/communal slur lexicons · romanized kept + tagged · MT-quality gate on synthetic'],
-                  ['Code', 'license allowlist · secrets scrub · repo dedup · AST/lint/compile filters · PR/issue threads intact'],
+                  ['Indic', 'triple language-ID (reject wrong-script) · NFC preserving ZWJ/ZWNJ · byte-level MinHash · per-language perplexity gates · natively-built casteist/communal slur lexicons · MT-quality gate on synthetic · romanized kept + tagged'],
+                  ['Code', 'license allowlist · secrets scrub · repo dedup · AST/lint/compile filters'],
                   ['Agentic traces', 'sandbox replay; keep success or valid error-recovery only'],
-                  ['Math / science', 'LaTeX-preserving extraction; answer-verifiable subset tagged for RL'],
+                  ['Math / science', 'LaTeX- and units-preserving extraction; answer-verifiable subset tagged for RLVR'],
                 ]}
               />
             </div>
@@ -277,12 +275,13 @@ export default function App() {
               <Table
                 head={['Objective', 'Suite → bar']}
                 rows={[
-                  ['General parity', 'MMLU-Pro, GPQA-D, IFEval, Arena-Hard → within ~2–3 pts of same-size Gemma'],
-                  ['Coding', 'LiveCodeBench + SWE-bench Verified ≥ 40% + RepoBench (HumanEval = smoke only)'],
-                  ['Agentic', 'BFCL v3 ≥ 70%, tau-bench, terminal-bench, OSWorld subset → success AND steps/cost; private held-out environments'],
+                  ['General parity', 'MMLU-Pro, GPQA-Diamond, IFEval, Arena-Hard → within ~2–3 pts of Gemma-4-31B'],
+                  ['Math / science', 'MATH-500, AIME, GPQA-Diamond → ≥ same-size Gemma'],
+                  ['Coding', 'LiveCodeBench + SWE-bench Verified ≥ 42% (Pass@1) + RepoBench (HumanEval = smoke only)'],
+                  ['Agentic', 'BFCL v3 ≥ 70%, τ²-bench, terminal-bench, OSWorld subset → success AND steps/cost; private held-out environments'],
                   ['Indic', 'MILU (beat same-size Gemma) · IndicGenBench · IN22 chrF++ · romanization-robustness gap < 5% · Hinglish QA'],
                   ['India-first', 'factuality (polity/schemes/GST, UPSC-style) · default-perspective probes · IndiBias + refusal-balance parity · quarterly Indian-rater human eval'],
-                  ['Continuous', 'per-domain loss dashboards · tokenizer-fertility regression in CI · decontamination audit before any reported number'],
+                  ['Continuous', 'per-domain loss dashboards · per-language & per-domain fertility regression in CI · decontamination audit before any reported number'],
                 ]}
               />
             </div>
@@ -294,26 +293,33 @@ export default function App() {
             code="A3-5"
             accent="var(--color-brand-500)"
             title="Fertility targets → tokenizer size"
-            claim={<>Targets anchored to measured tokenizers (Sarvam-1: 1.4–2.1 across Indic; 200K Indic-weighted vocabs reach Hindi ≈1.2; Llama-class tokenizers cost Indic users 3–8× English). <b>Principle: an Indian-language user pays ≤ 1.4× English tokens for the same content.</b></>}
-            takeaway="Vocab = 262,144 (2^18) byte-fallback BPE: ~110K en+code+math+symbols + ~108K across 12 Indic scripts + ~15K romanized/code-mix + ~20K other. Scaling law puts a 40B optimum at 200–300K; Gemma 3 ships exactly 262K; tied embeddings ≈ 4% of params; larger vocab = cheaper Indic serving."
+            claim={<>Targets anchored to measured tokenizers (Sarvam-1 avg ~2.0 tok/word over Indic at a 68K vocab; a 200K Indic-heavy vocab reaches Hindi ~1.2; Llama-3 costs Indic users ~2× on Hindi up to ~10–13× on Dravidian). <b>Principle: an Indian-language user pays ≤ ~1.4× English tokens for the same content.</b></>}
+            takeaway="Vocab = 262,144 (2¹⁸) — deliberately ABOVE the ~170K compute-optimal for 40B, bought by heavy over-training + Indic/code/science/agentic coverage + Gemma-4 parity; tied embeddings cost only ~3.4–4% of params."
           >
             <div className="panel p-5">
               <Table
                 head={['Domain / language', 'Fertility target', 'Note']}
                 rows={[
-                  ['English', '≤ 1.30 tokens/word', '≤ 1.05 claims are unattainable (no production tokenizer is close)'],
-                  ['Hindi, Marathi (Devanagari)', '≤ 1.45', '≈1.2 proven at 200K with Indic-heavy training'],
-                  ['Bengali, Urdu', '≤ 1.55', ''],
-                  ['Gujarati, Punjabi, Odia, Assamese', '≤ 1.70', ''],
-                  ['Tamil, Telugu, Kannada, Malayalam', '≤ 1.85', 'agglutinative (sandhi)'],
-                  ['Romanized Hinglish', '≤ 1.35', 'majority of Hindi UGC'],
-                  ['Code / Math', '≥ 3.3 / ≥ 3.0 chars per token', 'digits split 0–9: arithmetic accuracy > fertility'],
+                  ['English', '≤ 1.30 tokens/word', 'needs a vocab > Sarvam’s 68K — we have 262K'],
+                  ['Hindi, Marathi (Devanagari)', '≤ 1.45', '~1.2 proven at 200K Indic-heavy'],
+                  ['Bengali, Assamese, Urdu, Gujarati, Punjabi, Odia', '≤ 1.65', ''],
+                  ['Tamil, Telugu, Kannada', '≤ 1.85', 'agglutination + sandhi'],
+                  ['Malayalam', '≤ 2.05', 'most agglutinative — persistent outlier'],
+                  ['Romanized Hinglish', '≤ 1.50', 'orthographic variance (measured ~1.46)'],
+                  ['Code', '≥ 3.4 chars/token', 'merge whitespace/indent runs (~25% of code tokens)'],
+                  ['Math', '≥ 3.0 chars/token (prose)', 'digits split 0–9 → numeric runs = 1.0 by design; RTL number formatting in prep'],
+                  ['Science', '≥ 3.0 chars/token (prose)', 'single-token element symbols / SI units / Greek / operators; formulae & SMILES below target by design'],
+                  ['Agentic / tool-call', '≥ 3.0 chars/token', '≥256 reserved special tokens + single-token tool boundaries + JSON-punct merges; code-action ≈ code fertility'],
                 ]}
               />
               <p className="mt-3 rounded-lg bg-zinc-100 px-3 py-2 text-[13px] leading-relaxed text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-200">
-                Tokenizer training mix ≈ 35% en+code · 45% Indic (fertility-driven upsample) · 10% math · 10% other,
-                with a ZWJ/ZWNJ-preserving pre-tokenizer; per-language fertility tracked in CI on every release —
-                the exact machinery built and verified in Assignment 2.
+                <b>Vocab = 262,144 (2¹⁸), byte-fallback BPE.</b> The vocabulary scaling law (Tao et al., NeurIPS 2024)
+                puts a 40B <i>compute-optimal</i> vocab near ~170K; we go deliberately above it because (a) 16T tokens
+                ≈ 400/param is heavily over-trained, which raises the optimum and cures rare-token undertraining;
+                (b) 12 Indic scripts + code/math/science/agentic are exactly where extra vocab buys lower fertility and
+                cheaper serving; (c) 262K matches Gemma 4 and is matmul-friendly. Budget ≈ 110K en+code+math+science+symbols
+                · 108K across 12 Indic scripts · 15K romanized/code-mix · 256 reserved special (agentic) · remainder rare.
+                ZWJ/ZWNJ-preserving pre-tokenizer; per-language fertility gated in CI — the Assignment-2 machinery.
               </p>
             </div>
           </ClaimCard>

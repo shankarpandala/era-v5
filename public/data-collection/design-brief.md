@@ -1,88 +1,87 @@
 # A 40B India-first model — data, cleaning, evaluation, tokenizer
 
-Goal: 40B params, latest-Gemma-class quality; top-tier coding, agentic work, Indic languages; views the world from an Indian perspective.
+**Goal.** A 40B model that matches **Gemma-4-31B** — the dense, same-size quality frontier of the Gemma 4 family — on general benchmarks, and *beats* it on coding, agentic work, and Indic languages, while defaulting to an Indian view of the world.
 
-## Model shape: dense — a conditional decision, not dogma
+**Shape & budget.** Dense, not MoE. Gemma 4 itself ships both a **31B dense** (quality frontier) and a **26B MoE** (~3.8B active, throughput frontier) — so at a *fixed* 40B total, with the bar set by the best same-size dense, all-active dense maximizes quality and keeps RLVR and community LoRA simple. MoE would win only if the constraint were serving throughput or the total budget could grow. Budget: **16T pre-training tokens (~400/param) + knowledge distillation** from a stronger teacher — Gemma-3-27B needed 14T + KD to reach this class; under-8T does not.
 
-| At a FIXED 40B total | Dense 40B | MoE @ 40B total (~8B active) |
-|---|---|---|
-| Quality ceiling | Highest — all params active (Gemma-4's 31B **dense** outranks its own 26B MoE) | Capped near ~8B-active quality |
-| Training cost/token | 1× | ~0.25× |
-| Serving | More FLOPs/token; either way all 40B must sit in memory | Cheaper FLOPs; + routing complexity |
-| RL / RLVR stability | Well-trodden | Router load-balancing fights RL |
-| Community finetuning | Easy (LoRA) | Harder |
+## 1. Data — three pillars
 
-The assignment fixes **total** params and the quality bar is the best same-size dense Gemma → dense wins inside the cap. **MoE becomes right** if the constraint were serving throughput or the total budget could grow (e.g. ~120B-total/17B-active). Budget: **16T tokens (~400/param) + distillation from a stronger teacher** — Gemma-3-27B needed 14T + KD for this class; 8T does not reach it.
+### Pre-training — 16T, 3 stages
 
-## 1. Data
+Stage A · breadth · 12.5T:
 
-**Pre-training, 16T in 3 stages.** Stage A — breadth, 12.5T:
+| Bucket | % | ~Tok | Why |
+|---|--:|--:|---|
+| English web, Indian-authored upweighted | 38% | 4.75T | general capability; the English distribution itself skews Indian |
+| Code + PR/issue threads | 20% | 2.5T | SE patterns; agentic priors begin in pre-training |
+| Math + science | 10% | 1.25T | structured reasoning; LaTeX/units preserved |
+| Indic — 12 languages | 17% | 2.1T | ledger below |
+| Other multilingual · books · verified synthetic reasoning | 15% | 1.9T | transfer · coherence |
 
-| Bucket | % | Why |
-|---|--:|---|
-| High-quality English web (Indian-authored upweighted) | 38% | general capability; the *English* distribution itself becomes India-centric |
-| Code (+ PR/issue threads) | 20% | SE patterns; agentic priors start in pretraining |
-| Math + science | 10% | structured reasoning |
-| Indic, 12 scheduled languages | 17% | ledger below |
-| Other multilingual / books / verified synthetic reasoning | 15% | transfer · coherence · reasoning |
+**Which 12 Indic languages, and why.** The highest-speaker, highest-digital-availability of the 22 scheduled languages, across both families: **Hindi, Bengali, Marathi, Telugu, Tamil, Gujarati, Urdu, Kannada, Odia, Malayalam, Punjabi, Assamese** — together ~95% of Indian first-language speakers. Weights ∝ speakers × digital text: hi ~35%; bn/te/mr/ta 8–10% each; gu/ur/kn/ml/pa/or/as the rest.
 
-**Indic ledger (2.1T):** all cleaned native Indic text in existence ≈ **275B tokens** (Sangraha 251B — itself 65% machine-translated — + IndicCorp v2 ~21B + legal/govt). Plan: 275B × ~2.5 epochs + ~1.3T quality-gated synthetic (en→Indic educational translation, transliteration pairs, native-script textbook-style) + **15% romanized/code-mixed** (52% of Hindi UGC is romanized — Hinglish is data, not noise). Weights ∝ speakers × digital availability: hi ~35%; bn/te/mr/ta 8–10% each; gu/ur/kn/ml/pa/or/as rest.
+**Indic ledger (2.1T from a scarce base).** Genuinely-native, cleaned, *deduplicated* Indic web text that exists is only **~100–150B tokens** (Sangraha's native core = 64B verified + 24B unverified; IndicCorp v2 ~21B, CulturaX-Indic ~45B, Varta ~9B — heavily overlapping crawls). Sangraha's 251B headline is **65% synthetic** (machine-translation + transliteration), not native — the field's own tell that native supply is the binding constraint. Plan: **~120B unique native × ~4 epochs (≈0.5T)** + **~1.3T quality-gated synthetic** (en→Indic educational MT, transliteration pairs, native-script textbook-style) + **~15% romanized/code-mixed** Hinglish (≈50–56% of Hindi social-media users prefer it — data, not noise).
 
-**Stage B — mid-train 3T:** code→30% (repo-level), math→20% (verified solutions), **~300B agentic-trace tokens** (tool-call logs, terminal sessions, SWE trajectories from PR-issue-patch triples), top-decile Indic; anneal on best data. **Stage C — 0.5T:** context 8k→128k (repos, case law, multi-doc).
+Stage B · mid-train 3T: code→30% (repo-level) · math→20% (verified solutions) · **~300B agentic-trace tokens** (tool-call logs, terminal sessions, SWE trajectories from PR-issue-patch triples) · top-decile Indic; anneal on the best data. Stage C · 0.5T: context 8k→128k (full repos, case law, multi-doc).
 
-**Post-training:**
+### Post-training — SFT ~1M
 
-| Component | Content |
-|---|---|
-| SFT ~1M | 35% agentic/code (sandbox-verified trajectories, verified tool-calls) · 25% reasoning CoT · **25% Indic authored natively — never translated** · 15% India-domain + safety |
-| RL step 1 | GRPO on verifiable rewards: unit tests, math answers, tool-call schemas, ~5K sandboxed SWE/tool envs (pure RL at 32B is proven >40% SWE-bench Verified) |
-| RL step 2 | Preference RL — Indian annotator pool (language/region/gender/caste-balanced); no verbosity reward |
+35% agentic/code (sandbox-verified trajectories + verified tool-calls, in **both** JSON-tool and code-action formats) · 25% reasoning CoT (math/science) · **25% Indic authored natively — never translated** · 15% India-domain + safety.
 
-## 2. India-first by construction (not an RLHF patch)
+### RL & alignment — two stages
+
+- **RLVR (verifiable rewards), GRPO:** unit tests (code), exact-answer (math), tool-call schema/execution (agentic), over **~4.5K sandboxed SWE/tool environments** (R2E-Gym-style). Precedent: DeepSWE lifted a 32B from ~23% → **42.2% SWE-bench Verified with RL alone**.
+- **Preference & constitutional alignment:** an Indian annotator pool (language/region/gender/caste-balanced) *is* the preference signal; the constitution is derived from Indian constitutional values (plural, non-partisan); refusals track Indian law. No verbosity reward.
+
+## 2. India-first by construction — engineered at every layer, not an RLHF patch
 
 | Lever | Mechanism | Default it produces |
 |---|---|---|
-| Pretraining corpus | Indian-authored English upweighted; India injections ×2–4 (Constitution+BNS, SC/HC judgments, Parliament, RBI/SEBI, NCERT/NPTEL, Census, newspapers, UPI/ONDC docs); quality classifiers calibrated on Indian English so idiom isn't filtered as "low quality" | "the Constitution" → India's |
-| Knowledge frame | NCERT / BNS / RBI / Census as canonical for civics, law, finance, geography | tax → GST & IT Act, not IRS |
-| SFT | Native-written Indian daily-life scenarios: UPI dispute, IRCTC, ration card, monsoon sowing, board exams | ₹/lakh/crore, Indian names & examples |
-| RL reward | Indian annotators ARE the preference signal; constitution from Indian constitutional values (plural, non-partisan); judge models on Indian-perspective rubrics | refusal norms per Indian law; Survey-of-India borders |
+| Pre-training | Indian-authored English upweighted; India sources ×2–4 (Constitution + BNS, SC/HC judgments, RBI/SEBI, NCERT/NPTEL, Census, UPI/ONDC); quality classifiers calibrated on Indian English so idiom isn't filtered as "low quality" | "the Constitution" → India's |
+| Knowledge frame | NCERT / BNS / RBI / Census canonical for civics, law, finance, geography | tax → GST & IT Act, not IRS |
+| SFT | Native Indian daily-life scenarios (UPI dispute, IRCTC, ration card, board exams) | ₹ / lakh / crore, Indian names |
+| Alignment | Indian annotators + Indian-values constitution | Survey-of-India borders; Indian-law refusals |
 | Inference | Locale-default system prompt | DD-MM-YYYY, IST, Indian units |
-| Eval | Perspective probes: unspecified locale must resolve to the Indian frame | measurable, not vibes |
+| Eval | Unspecified-locale probes must resolve to the Indian frame | measurable, not vibes |
 
-## 3. Cleaning
+## 3. Cleaning — per objective
 
 | Bucket | Pipeline |
 |---|---|
-| All | exact + MinHash-LSH dedup → PII scrub incl. **Aadhaar/PAN/UPI formats** → 13-gram decontamination vs the **entire** eval suite |
-| English web | edu-value classifier + AI-slop detector |
-| Indic | triple language-ID (reject wrong-script) · NFC **preserving ZWJ/ZWNJ** (else conjuncts shatter) · **byte-level** MinHash char-5-grams (word-level fails agglutination) · per-language perplexity gates · natively-built casteist/communal slur lexicons · romanized kept + tagged · MT-quality gate on synthetic |
-| Code | license allowlist · secrets scrub · repo dedup · AST/lint/compile filters · PR/issue threads intact |
+| All | exact + MinHash-LSH dedup → PII scrub (incl. Aadhaar / PAN / UPI) → 13-gram decontamination vs the **entire** eval suite |
+| English web | educational-value classifier + AI-slop / content-farm detector |
+| Indic | triple language-ID (reject wrong-script) · NFC **preserving ZWJ/ZWNJ** (else conjuncts shatter) · **byte-level** MinHash (word-level fails agglutination) · per-language perplexity gates · natively-built casteist/communal slur lexicons · MT-quality gate on synthetic · romanized kept + tagged |
+| Code | license allowlist · secrets scrub · repo dedup · AST/lint/compile filters |
 | Agentic traces | sandbox replay; keep success or valid error-recovery only |
-| Math/science | LaTeX-preserving; answer-verifiable subset tagged for RL |
+| Math / science | LaTeX- and units-preserving; answer-verifiable subset tagged for RLVR |
 
-## 4. Evaluation
+## 4. Evaluation — a numeric bar per objective
 
 | Objective | Suite → bar |
 |---|---|
-| General parity | MMLU-Pro, GPQA-D, IFEval, Arena-Hard → within ~2–3 pts of same-size Gemma |
-| Coding | LiveCodeBench + **SWE-bench Verified ≥ 40%** + RepoBench (HumanEval = smoke only) |
-| Agentic | BFCL v3 ≥ 70%, tau-bench, terminal-bench, OSWorld subset → success **and** steps/cost; private held-out envs (public agent benchmarks are gameable) |
-| Indic | MILU (beat same-size Gemma), IndicGenBench, IN22 chrF++, **romanization-robustness gap < 5%**, Hinglish QA |
-| India-first | factuality (polity/schemes/GST, UPSC-style) · default-perspective probes · IndiBias + **refusal-balance parity across religion/caste/region** · quarterly Indian-rater human eval |
-| Continuous | per-domain loss dashboards; tokenizer-fertility regression in CI; decontamination audit before any reported number |
+| General parity | MMLU-Pro, GPQA-Diamond, IFEval, Arena-Hard → within ~2–3 pts of Gemma-4-31B |
+| Math / science | MATH-500, AIME, GPQA-Diamond → ≥ same-size Gemma |
+| Coding | LiveCodeBench + **SWE-bench Verified ≥ 42%** (Pass@1) + RepoBench (HumanEval = smoke only) |
+| Agentic | BFCL v3 ≥ 70%, τ²-bench, terminal-bench, OSWorld subset → success **and** steps/cost; private held-out envs (public agent benchmarks are gameable) |
+| Indic | MILU (beat same-size Gemma) · IndicGenBench · IN22 chrF++ · **romanization-robustness gap < 5%** · Hinglish QA |
+| India-first | polity / schemes / GST factuality (UPSC-style) · default-perspective probes · IndiBias + **refusal-balance parity across religion / caste / region** · quarterly Indian-rater human eval |
+| Continuous | per-domain loss dashboards · per-language & per-domain **fertility regression in CI** · decontamination audit before any reported number |
 
 ## 5. Fertility targets → tokenizer size
 
-Anchored to measured tokenizers (Sarvam-1: 1.4–2.1 across Indic; 200K Indic-weighted vocabs reach Hindi ≈1.2; Llama-class tokenizers cost Indic users 3–8× English). **Principle: an Indian-language user pays ≤ 1.4× English tokens for the same content.**
+Anchored to measured tokenizers (Sarvam-1 avg ~2.0 tok/word over Indic at a 68K vocab; a 200K Indic-heavy vocab reaches Hindi ~1.2; Llama-3 costs Indic users ~2× on Hindi up to ~10–13× on Dravidian). **Principle: an Indian-language user pays ≤ ~1.4× English tokens for the same content** — Dravidian agglutinative scripts land ~1.4–1.6×, an accepted script-morphology floor.
 
-| Domain / language | Target (tokens/word) |
-|---|---|
-| English | ≤ 1.30 |
-| Hindi, Marathi | ≤ 1.45 |
-| Bengali, Urdu | ≤ 1.55 |
-| Gujarati, Punjabi, Odia, Assamese | ≤ 1.70 |
-| Tamil, Telugu, Kannada, Malayalam (agglutinative) | ≤ 1.85 |
-| Romanized Hinglish | ≤ 1.35 |
-| Code / Math | ≥ 3.3 / ≥ 3.0 chars per token; digits split 0–9 (arithmetic > fertility) |
+| Domain / language | Target | Note |
+|---|---|---|
+| English | ≤ 1.30 tok/word | needs a vocab > Sarvam's 68K — we have 262K |
+| Hindi, Marathi (Devanagari) | ≤ 1.45 | ~1.2 proven at 200K Indic-heavy |
+| Bengali, Assamese, Urdu, Gujarati, Punjabi, Odia | ≤ 1.65 | |
+| Tamil, Telugu, Kannada | ≤ 1.85 | agglutination + sandhi |
+| Malayalam | ≤ 2.05 | most agglutinative — persistent outlier |
+| Romanized Hinglish | ≤ 1.50 | orthographic variance (measured ~1.46) |
+| Code | ≥ 3.4 chars/token | merge whitespace/indent runs (~25% of code tokens) |
+| Math | ≥ 3.0 chars/token (prose) | digits split 0–9 → numeric runs = 1.0 *by design*; right-to-left number formatting in data prep |
+| Science | ≥ 3.0 chars/token (prose) | single-token element symbols / SI units / Greek / operators; formulae & SMILES tokenize below target by design |
+| Agentic / tool-call | ≥ 3.0 chars/token | ≥ 256 reserved special tokens + single-token tool boundaries + JSON-punctuation merges; in code-action mode ≈ code fertility |
 
-**Vocab = 262,144 (2^18) byte-fallback BPE:** ~110K en+code+math+symbols + 12 Indic scripts × ~9K ≈ 108K + ~15K romanized/code-mix + ~20K other. Cross-checks: vocab scaling law puts a 40B optimum at 200–300K; Gemma 3 ships exactly 262K; **tied embeddings ≈ 4% of params**; larger vocab = fewer tokens/request = cheaper Indic serving. Tokenizer mix ≈ 35% en+code / 45% Indic / 10% math / 10% other; ZWJ/ZWNJ-preserving pre-tokenizer; per-language fertility in CI (the Assignment-2 machinery).
+**Vocab = 262,144 (2¹⁸), byte-fallback BPE.** The vocabulary scaling law (Tao et al., NeurIPS 2024) puts a 40B *compute-optimal* vocab near **~170K**; we go deliberately above it because (a) 16T tokens ≈ 400/param is heavily over-trained, which raises the optimum and cures rare-token undertraining; (b) 12 Indic scripts + code / math / science / agentic are exactly where extra vocab buys lower fertility and cheaper serving; (c) 262K matches Gemma 4 and is matmul-friendly (2¹⁸); (d) **tied embeddings cost only ~3.4–4% of params** at hidden dim ≈ 5120–6144. Budget: ~110K en+code+math+science+symbols · ~108K across 12 Indic scripts · ~15K romanized/code-mix · 256 reserved special (agentic) · remainder rare/other. ZWJ/ZWNJ-preserving pre-tokenizer; per-language fertility gated in CI — the Assignment-2 machinery.
