@@ -2,8 +2,6 @@ import { useMemo } from 'react'
 import ClaimCard from '../../components/ClaimCard.jsx'
 import Button from '../../components/ui/Button.jsx'
 
-const _dec = new TextDecoder('utf-8', { fatal: false })
-
 async function downloadFrom(url, filename, type) {
   const res = await fetch(url)
   const content = await res.text()
@@ -18,19 +16,15 @@ async function downloadFrom(url, filename, type) {
   URL.revokeObjectURL(href)
 }
 
-export default function Downloads({ tok, bpe }) {
+export default function Downloads({ tok, metrics }) {
   const base = import.meta.env.BASE_URL
-  const nMerges = tok.merges.length
 
-  // Preview the most "word-like" learned tokens (longest byte sequences).
+  // Peek at the most word-like learned tokens (longest strings).
   const preview = useMemo(() => {
-    const ids = bpe.vocab.map((_, i) => i).filter((i) => i >= 256)
-    ids.sort((a, b) => bpe.vocab[b].length - bpe.vocab[a].length)
-    return ids.slice(0, 60).map((id) => ({
-      id,
-      display: _dec.decode(new Uint8Array(bpe.vocab[id])).replace(/ /g, '·').replace(/\n/g, '↵'),
-    }))
-  }, [bpe])
+    const idx = tok.idToToken.map((t, id) => ({ id, t })).filter((x) => x.t && x.t !== '[UNK]')
+    idx.sort((a, b) => b.t.length - a.t.length)
+    return idx.slice(0, 60)
+  }, [tok])
 
   return (
     <ClaimCard
@@ -40,28 +34,39 @@ export default function Downloads({ tok, bpe }) {
       title="Download the tokenizer"
       claim={
         <>
-          The full tokenizer is downloadable — a plain <b>vocab.txt</b> (all {tok.vocab_size.toLocaleString()}{' '}
-          tokens) and the <b>tokenizer.json</b> (pattern + ordered merges) that the Python reference and this widget
-          both load.
+          The shipped <b>tokenizer.json</b> is standard HuggingFace format —{' '}
+          <code>tokenizers.Tokenizer.from_file("tokenizer.json")</code> gives you <code>.encode()</code> and{' '}
+          <code>.decode()</code> directly. <b>vocab.txt</b> lists all {tok.vocabSize.toLocaleString()} tokens.
         </>
       }
-      takeaway="Load tokenizer.json with the shipped Python BPETokenizer (or this widget's JS encoder) and you reproduce every number above exactly."
+      takeaway={
+        <>
+          Reproduce end-to-end: <code>python build_wiki_faithful_markdown.py && python train_tokenizer.py && python
+          evaluate_tokenizer.py</code> — or run the instructor's published evaluator directly on these files.
+        </>
+      }
     >
       <div className="panel p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <Button onClick={() => downloadFrom(`${base}tokenizer/vocab.txt`, 'vocab.txt', 'text/plain;charset=utf-8')}>
-            ↓ vocab.txt ({tok.vocab_size.toLocaleString()} tokens)
+          <Button
+            onClick={() => downloadFrom(`${base}tokenizer/tokenizer.json`, 'tokenizer.json', 'application/json;charset=utf-8')}
+          >
+            ↓ tokenizer.json (HF format)
           </Button>
           <Button
             variant="ghost"
-            onClick={() =>
-              downloadFrom(`${base}tokenizer/tokenizer.json`, 'tokenizer.json', 'application/json;charset=utf-8')
-            }
+            onClick={() => downloadFrom(`${base}tokenizer/vocab.txt`, 'vocab.txt', 'text/plain;charset=utf-8')}
           >
-            ↓ tokenizer.json
+            ↓ vocab.txt ({tok.vocabSize.toLocaleString()} tokens)
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => downloadFrom(`${base}tokenizer/metrics.json`, 'metrics.json', 'application/json;charset=utf-8')}
+          >
+            ↓ metrics.json
           </Button>
           <span className="font-mono text-xs text-zinc-500">
-            256 base bytes + {nMerges.toLocaleString()} merges = {tok.vocab_size.toLocaleString()} tokens
+            weights {Object.entries(metrics.weights).map(([k, v]) => `${k}=${v}`).join(' ')}
           </span>
         </div>
 
@@ -70,13 +75,13 @@ export default function Downloads({ tok, bpe }) {
             Longest learned tokens (a peek at the vocabulary)
           </div>
           <div className="flex flex-wrap gap-1">
-            {preview.map((t) => (
+            {preview.map((x) => (
               <span
-                key={t.id}
-                title={`id ${t.id}`}
+                key={x.id}
+                title={`id ${x.id}`}
                 className="whitespace-pre rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-xs text-zinc-700 dark:bg-zinc-800 dark:text-zinc-200"
               >
-                {t.display}
+                {x.t}
               </span>
             ))}
           </div>

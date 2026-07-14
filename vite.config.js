@@ -21,6 +21,7 @@ export default defineConfig({
       input: {
         main: 'index.html',
         tokenizer: 'tokenizer/index.html',
+        dataCollection: 'data-collection/index.html',
       },
     },
   },

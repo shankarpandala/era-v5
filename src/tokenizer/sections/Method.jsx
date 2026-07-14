@@ -9,12 +9,8 @@ function Formula({ children }) {
   )
 }
 
-export default function Method({ stats, tok }) {
-  const p = stats.primary
-  const corpus = tok.corpus || {}
-  const wsplit = corpus.words_split || {}
-  const weights = tok.mixing_weights || {}
-
+export default function Method({ stats, metrics, tok, sample }) {
+  const dec = tok.decode(tok.encode(sample))
   return (
     <ClaimCard
       id="a2-1"
@@ -23,18 +19,16 @@ export default function Method({ stats, tok }) {
       title="The method & the metric"
       claim={
         <>
-          A single, from-scratch, byte-level BPE tokenizer with a shared vocabulary of{' '}
-          <b>{tok.vocab_size.toLocaleString()} tokens</b> encodes the <b>full</b> India Wikipedia article in four
-          languages, meeting the assignment's hard constraint — <b>English fertility ≤ 1.2</b> — under both word
-          counts, with the tightest cross-language spread the 10k budget allows.
+          A single shared <b>{tok.vocabSize.toLocaleString()}-token</b> tokenizer over the{' '}
+          <b>wiki-faithful Markdown</b> India pages (links, URLs, tables, references preserved) that is{' '}
+          <b>faithful</b>: decode(encode(text)) keeps every visible character.
         </>
       }
       takeaway={
         <>
-          The tokenizer is graded by running it on the full India article, so we train and report on the full
-          article. The training weights are searched to <b>equalize the four fertilities</b> under the class-standard{' '}
-          <code>\w+</code> count (the spread determines the score) while keeping{' '}
-          <b>English ≤ 1.2 under both word counts</b> — the assignment's hard constraint.
+          Grader-compatible by construction: the shipped tokenizer.json loads with{' '}
+          <code>tokenizers.Tokenizer.from_file</code>, and the published course evaluator re-runs on these exact
+          artifacts unchanged.
         </>
       }
     >
@@ -42,62 +36,66 @@ export default function Method({ stats, tok }) {
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-3">
             <p>
-              <b>Byte-Pair Encoding (BPE)</b> starts from raw UTF-8 bytes and repeatedly merges the most frequent
-              adjacent pair into a new token. We train <b>one</b> tokenizer on all four languages at once, so the{' '}
-              {tok.vocab_size.toLocaleString()}-token vocabulary is <b>shared</b> across English (Latin), Hindi &amp;
-              Marathi (Devanagari) and Telugu (Telugu script). Trainer and encoder are hand-written (no{' '}
-              <code>tokenizers</code>/<code>tiktoken</code>), and the encoder is byte-level so it never emits an{' '}
-              <code>UNK</code> on any input.
+              <b>Corpus.</b> Wikipedia REST HTML → strip only script/style/meta → <b>markdownify</b>. Links, URLs,
+              tables, reference lists, image links and categories all stay — the tokenizer must represent the page
+              faithfully, not a clipped version. The exact snapshots are committed and downloadable.
             </p>
-            <p>The assignment's metric, exactly as we compute it:</p>
-            <Formula>word = a whitespace-delimited run &nbsp;(len(text.split()))&nbsp; — primary</Formula>
-            <Formula>X(lang) = total&nbsp;tokens(lang) / total&nbsp;words(lang)</Formula>
-            <Formula>
-              hard constraint: X(English) ≤ 1.2 &nbsp;·&nbsp; score = 1000 / (X_max − X_min)
-            </Formula>
             <p>
-              The ≤ 1.2 requirement binds <b>English</b> (X1 in the assignment); X2–X4 are defined "similarly" and
-              enter through the spread. We also show every number under the{' '}
-              <code>\w+</code>-style count some classmates use — with the caveat that <code>\w</code> drops Indic
-              combining marks and so counts syllable fragments, not words.{' '}
-              <b>Nothing is hardcoded:</b> ratios are recomputed in your browser by running the downloadable
-              tokenizer over the downloadable corpora, and the Python reference (<code>evaluate.py</code>) reproduces
-              the identical numbers.
+              <b>Tokenizer.</b> HuggingFace BPE, vocab 10,000, min_frequency 1, <code>[UNK]</code>; NFKC normalizer;
+              Metaspace(<span className="font-mono">▁</span>, prepend="never") pre-tokenizer and decoder — so
+              punctuation, brackets, URL characters, apostrophes and number separators round-trip exactly. Trained on
+              the four pages with searched per-language weights{' '}
+              <span className="font-mono">
+                {LANGS.map((l) => `${l.code}=${metrics.weights[l.code]}`).join(' ')}
+              </span>
+              .
             </p>
-            <p className="text-[13px] text-zinc-500">
-              Why not all four ≤ 1.2? Under true word counts it is provably out of reach here: giving the{' '}
-              <i>entire</i> 9,744-merge budget to the Indic languages still leaves max&nbsp;X ≈ 1.58 on the full
-              articles. Claims of all-≤ 1.2 on full pages are artifacts of the <code>\w+</code> denominator.
-            </p>
+            <p>The grader's scoring, exactly as we compute it live below:</p>
+            <Formula>faithful unit = one letter/mark/number run OR one visible punctuation character</Formula>
+            <Formula>fertility(lang) = tokens(lang) / faithful_units(lang)</Formula>
+            <Formula>
+              score = 1000 / (max − min) &nbsp;·&nbsp; hindi_penalty = exp(max(0, hi/1.2 − 1)) — ours: ×
+              {stats.hindiPenalty.toFixed(3)}
+            </Formula>
           </div>
 
           <div className="space-y-3">
             <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
-              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Corpus</div>
-              <p className="text-[13px] leading-relaxed">
-                The <b>full</b> India Wikipedia article per language (MediaWiki plain-text extract) — the same text
-                the course evaluates on. The exact frozen text is shipped and downloadable, so the numbers reproduce.
-              </p>
-              <div className="mt-2 grid grid-cols-2 gap-1 font-mono text-[12px]">
-                {LANGS.map((l) => (
-                  <div key={l.code} className="flex justify-between rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
-                    <span>{l.name}</span>
-                    <span className="font-semibold">{(wsplit[l.code] || 0).toLocaleString()}w</span>
-                  </div>
-                ))}
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                Faithfulness gate (live)
               </div>
+              <p className="text-[13px]">
+                <span className="font-mono text-[12px]">"{sample}"</span>
+                <br />
+                decodes to
+                <br />
+                <span className="font-mono text-[12px]">"{dec}"</span>
+              </p>
+              <p
+                className={`mt-2 font-mono text-sm font-bold ${
+                  dec === sample ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
+                }`}
+              >
+                {dec === sample ? 'EXACT ROUND-TRIP ✓' : 'ROUND-TRIP FAILED ✗'}
+              </p>
             </div>
-            <div className="rounded-lg border border-zinc-200 p-3 text-[13px] dark:border-zinc-700">
-              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
-                Per-language training weights
+            <div className="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+                Corpus (faithful units)
               </div>
-              <p className="font-mono">
-                {LANGS.map((l) => `${l.name.slice(0, 2)}=${weights[l.code] ?? 1}×`).join('  ·  ')}
-              </p>
-              <p className="mt-1 text-[12px] text-zinc-500">
-                Chosen by search to equalize the four fertilities (minimize the spread) under the class-standard
-                count while keeping English ≤ 1.2 under both counts (per-language weighting is allowed).
-              </p>
+              <div className="grid grid-cols-2 gap-1 font-mono text-[12px]">
+                {LANGS.map((l) => {
+                  // Live count from the fetched corpus — always consistent with
+                  // LANGS, never stale even if a cached metrics.json lags behind.
+                  const units = stats.per[l.code]?.units ?? metrics.faithful_units[l.code] ?? 0
+                  return (
+                    <div key={l.code} className="flex justify-between rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+                      <span>{l.name}</span>
+                      <span className="font-semibold">{units.toLocaleString()}</span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </div>
