@@ -84,12 +84,17 @@ export default function Method({ stats, metrics, tok, sample }) {
                 Corpus (faithful units)
               </div>
               <div className="grid grid-cols-2 gap-1 font-mono text-[12px]">
-                {LANGS.map((l) => (
-                  <div key={l.code} className="flex justify-between rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
-                    <span>{l.name}</span>
-                    <span className="font-semibold">{(metrics.faithful_units[l.code] || 0).toLocaleString()}</span>
-                  </div>
-                ))}
+                {LANGS.map((l) => {
+                  // Live count from the fetched corpus — always consistent with
+                  // LANGS, never stale even if a cached metrics.json lags behind.
+                  const units = stats.per[l.code]?.units ?? metrics.faithful_units[l.code] ?? 0
+                  return (
+                    <div key={l.code} className="flex justify-between rounded bg-zinc-100 px-2 py-1 dark:bg-zinc-800">
+                      <span>{l.name}</span>
+                      <span className="font-semibold">{units.toLocaleString()}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </div>

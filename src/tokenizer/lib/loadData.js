@@ -12,13 +12,18 @@ export const LANGS = [
 
 export async function loadTokenizerData() {
   const base = import.meta.env.BASE_URL
+  // tokenizer.json / metrics.json / corpus files have fixed (non-hashed) names,
+  // so a new deploy reuses the same URLs. Force a revalidation (conditional
+  // request, cheap 304 when unchanged) so a browser can never serve a stale
+  // copy from an earlier deploy — the class of bug that showed a language as
+  // "0 corpus" after a corpus/language change.
   const getJSON = async (p) => {
-    const r = await fetch(base + p)
+    const r = await fetch(base + p, { cache: 'no-cache' })
     if (!r.ok) throw new Error(`fetch ${p} -> ${r.status}`)
     return r.json()
   }
   const getText = async (p) => {
-    const r = await fetch(base + p)
+    const r = await fetch(base + p, { cache: 'no-cache' })
     if (!r.ok) throw new Error(`fetch ${p} -> ${r.status}`)
     return r.text()
   }
