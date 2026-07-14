@@ -36,15 +36,10 @@ from tokenizers.trainers import BpeTrainer
 
 ROOT = Path(__file__).resolve().parent.parent / "public" / "tokenizer"
 CORPUS = ROOT / "corpus"
-# Scored submission set (4th language = Marathi, our choice per the assignment).
-LANGS = ["en", "hi", "te", "mr"]
-# Training also includes Maithili so the instructor's published evaluator
-# (which hardcodes mai) still reports a tight spread on these artifacts.
-TRAIN_LANGS = ["en", "hi", "te", "mr", "mai"]
-INSTRUCTOR_SET = ["en", "hi", "te", "mai"]
+LANGS = ["en", "hi", "te", "mai"]
 FAITHFUL_UNIT_RE = regex.compile(r"[\p{L}\p{M}\p{N}]+|[^\s\p{L}\p{M}\p{N}]")
 
-START_WEIGHTS = {"en": 3, "hi": 2, "te": 6, "mr": 6, "mai": 3}
+START_WEIGHTS = {"en": 3, "hi": 4, "te": 4, "mai": 2}  # reference starting point
 WEIGHT_GRID = [1, 2, 3, 4, 5, 6, 8]
 SEARCH_ROUNDS = 3
 
@@ -76,46 +71,35 @@ def train_with(texts: dict[str, str], weights: dict[str, int]) -> Tokenizer:
 
 
 def ratios_of(tokenizer: Tokenizer, texts: dict[str, str], units: dict[str, int]) -> dict[str, float]:
-    return {c: len(tokenizer.encode(texts[c]).ids) / units[c] for c in TRAIN_LANGS}
-
-
-def spread_over(r: dict[str, float], langs: list[str]) -> float:
-    vals = [r[c] for c in langs]
-    return max(vals) - min(vals)
+    return {c: len(tokenizer.encode(texts[c]).ids) / units[c] for c in LANGS}
 
 
 def cost(r: dict[str, float]) -> tuple:
     viol = max(0.0, r["hi"] - 1.2)  # keep the Hindi penalty factor at exactly 1
-    # Primary: submission-set spread; tie-break: instructor-set spread.
-    return (
-        1 if viol > 0 else 0,
-        round(viol, 6),
-        round(spread_over(r, LANGS), 6),
-        round(spread_over(r, INSTRUCTOR_SET), 6),
-    )
+    spread = max(r.values()) - min(r.values())
+    return (1 if viol > 0 else 0, round(viol, 6), round(spread, 6))
 
 
 def main() -> int:
-    texts = {c: (CORPUS / f"{c}.faithful.txt").read_text(encoding="utf-8") for c in TRAIN_LANGS}
-    units = {c: faithful_units(texts[c]) for c in TRAIN_LANGS}
+    texts = {c: (CORPUS / f"{c}.faithful.txt").read_text(encoding="utf-8") for c in LANGS}
+    units = {c: faithful_units(texts[c]) for c in LANGS}
 
     seen: dict[tuple, tuple] = {}
 
     def evaluate(w: dict[str, int]) -> tuple:
-        key = tuple(w[c] for c in TRAIN_LANGS)
+        key = tuple(w[c] for c in LANGS)
         if key not in seen:
             r = ratios_of(train_with(texts, w), texts, units)
             seen[key] = (cost(r), r)
-            sp = spread_over(r, LANGS)
-            sp_i = spread_over(r, INSTRUCTOR_SET)
-            print(f"  w={w} mr-set spread={sp:.6f} score={1000/sp:,.0f} | mai-set spread={sp_i:.6f} | hi={r['hi']:.4f}")
+            sp = max(r.values()) - min(r.values())
+            print(f"  w={w} spread={sp:.6f} score={1000/sp:,.0f} hi={r['hi']:.4f}")
         return seen[key]
 
     best_w = dict(START_WEIGHTS)
     best_c, best_r = evaluate(best_w)
     for rnd in range(SEARCH_ROUNDS):
         improved = False
-        for code in TRAIN_LANGS:
+        for code in LANGS:
             for v in WEIGHT_GRID:
                 if v == best_w[code]:
                     continue
@@ -124,7 +108,7 @@ def main() -> int:
                 if c < best_c:
                     best_c, best_r, best_w = c, r, cand
                     improved = True
-        print(f"round {rnd}: best={best_w} mr-set spread={best_c[2]:.6f} mai-set spread={best_c[3]:.6f}")
+        print(f"round {rnd}: best={best_w} spread={best_c[2]:.6f}")
         if not improved:
             break
 
@@ -133,34 +117,27 @@ def main() -> int:
     tokenizer.save(str(ROOT / "tokenizer.json"))
 
     r = ratios_of(tokenizer, texts, units)
-    spread = spread_over(r, LANGS)
+    spread = max(r.values()) - min(r.values())
     score = 1000 / spread
-    spread_i = spread_over(r, INSTRUCTOR_SET)
     import math
 
     hindi_penalty = math.exp(max(0.0, r["hi"] / 1.2 - 1.0))
     metrics = {
         "variant": "wiki_faithful_markdown",
-        "languages": {"en": "English", "hi": "Hindi", "te": "Telugu", "mr": "Marathi"},
+        "languages": {"en": "English", "hi": "Hindi", "te": "Telugu", "mai": "Maithili"},
         "weights": best_w,
         "vocab_size": tokenizer.get_vocab_size(),
-        "faithful_units": {c: units[c] for c in LANGS},
+        "faithful_units": units,
         "unit_policy": (
             "Counts each contiguous Unicode letter/mark/number run as one unit "
             "and each visible non-space punctuation/symbol character as one unit."
         ),
         "token_counts": {c: len(tokenizer.encode(texts[c]).ids) for c in LANGS},
-        "ratios": {c: r[c] for c in LANGS},
+        "ratios": r,
         "spread": spread,
         "score": score,
         "hindi_exp1_penalty_factor": hindi_penalty,
         "hindi_exp1_adjusted_score": score / hindi_penalty,
-        "instructor_set": {
-            "languages": INSTRUCTOR_SET,
-            "ratios": {c: r[c] for c in INSTRUCTOR_SET},
-            "spread": spread_i,
-            "score": 1000 / spread_i,
-        },
     }
     (ROOT / "metrics.json").write_text(
         json.dumps(metrics, ensure_ascii=False, indent=2), encoding="utf-8"
@@ -175,7 +152,7 @@ def main() -> int:
 
     # Parity golden for the JS reimplementation: full ids + decode hash.
     golden = {}
-    for c in TRAIN_LANGS:
+    for c in LANGS:
         enc = tokenizer.encode(texts[c])
         dec = tokenizer.decode(enc.ids)
         golden[c] = {

@@ -29,7 +29,7 @@ function Hero({ stats, faithful }) {
       </h1>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
         One shared <span className="font-mono font-semibold text-zinc-900 dark:text-zinc-100">10,000-token</span>{' '}
-        tokenizer for the <b>wiki-faithful Markdown</b> India pages in English, Hindi, Telugu and Marathi — the
+        tokenizer for the <b>wiki-faithful Markdown</b> India pages in English, Hindi, Telugu and Maithili — the
         exact corpus and scoring the course grader uses. The shipped <code>tokenizer.json</code> loads with{' '}
         <code>tokenizers.Tokenizer.from_file</code>, and every number below is recomputed{' '}
         <b>live in your browser</b> from the same files.
@@ -159,7 +159,7 @@ export default function App() {
           </div>
         )}
       </main>
-      <Footer note="ERA-V5 · Assignment 2 (resubmission) — a shared 10k tokenizer for the wiki-faithful Markdown India pages in English, Hindi, Telugu & Marathi. Loads with tokenizers.Tokenizer.from_file; every ratio recomputed live in your browser; decode(encode(x)) preserves visible text." />
+      <Footer note="ERA-V5 · Assignment 2 (resubmission) — a shared 10k tokenizer for the wiki-faithful Markdown India pages in English, Hindi, Telugu & Maithili. Loads with tokenizers.Tokenizer.from_file; every ratio recomputed live in your browser; decode(encode(x)) preserves visible text." />
     </div>
   )
 }
