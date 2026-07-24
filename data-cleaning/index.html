@@ -224,7 +224,6 @@
     <a href="#extras">5 · Other concerns</a>
     <a href="#sample">6 · Sample cleaned doc</a>
     <a href="#stats">7 · Final statistics</a>
-    <a href="#limitations">8 · Residual concerns</a>
   </nav>
 </header>
 
@@ -548,75 +547,6 @@
     The manifests carry source, license, contributor, cleaning-script hash, content hash, token
     counts and language breakdown — the lesson’s gating rule: <b>no manifest, no entry into the corpus</b>.
   </p>
-</section>
-
-<!-- ============================================================ 8 · LIMITATIONS -->
-<section id="limitations">
-  <div class="sec-head"><span class="sec-num">08</span><h2>Pipeline v1.1 fixes · residual concerns</h2></div>
-  <p class="sub">
-    Three score-critical precision bugs from the v1.0 review are fixed in
-    <code>clean.py</code> (pipeline <b>1.1.0</b>). Remaining items are scope honesty, not defects.
-  </p>
-  <div class="grid2">
-    <div class="strategy">
-      <span class="num" style="color: var(--good-text);">FIXED · PII</span>
-      <h3>Version-like dotted quads no longer over-masked</h3>
-      <div class="what">
-        v1.0 examples such as <code>7.2.1.3</code> / bare <code>1.1.1.1</code> were masked as
-        <code>[IP]</code>. v1.1 exempts version-like quads (attached <code>v</code> / version keywords,
-        low-octet quads without network context) and RFC 5737 TEST-NET ranges. Real
-        <code>ping 1.1.1.1</code> / <code>server 8.8.8.8</code> contexts still mask.
-      </div>
-    </div>
-    <div class="strategy">
-      <span class="num" style="color: var(--good-text);">FIXED · DECONTAM</span>
-      <h3>Template false positives reduced</h3>
-      <div class="what">
-        v1.0 rare-13-gram hits sometimes matched shared problem <em>templates</em> (factorial
-        reminders, plane phrasing) across different items. v1.1 excludes multi-item template grams,
-        tightens DF cap (10→5), requires ≥3 rare grams at ≥35% containment, and confirms with
-        full-item word Jaccard ≥0.22. Template rejects are counted in the stats.
-      </div>
-    </div>
-    <div class="strategy">
-      <span class="num" style="color: var(--good-text);">FIXED · QUALITY</span>
-      <h3>Domain-aware heuristics for math/code</h3>
-      <div class="what">
-        English stop-word / mean-length / symbol-ratio rules no longer hard-drop math or code docs
-        (the “Martians measure angles in clerts” trap). Soft-rule would-fires are still measured and
-        reported. Structural rules (empty, lorem, extreme length, non-printable, heavy line dupes)
-        still apply. FineWeb-Edu gate remains 1.5 after the measured LaTeX-density bias.
-      </div>
-    </div>
-    <div class="strategy">
-      <span class="num">SCOPE</span>
-      <h3>Telugu decontam is honest zero, not complete</h3>
-      <div class="what">
-        0 hits vs English math benchmarks is expected for Telugu web text — and stated as such.
-        A full Indic pool needs MILU / IndicQA / translated-benchmark fingerprints in the same scan.
-        The Telugu slice is a <b>deterministic first-N</b> of verified/tel — enough to prove every
-        India-first rule without claiming full-corpus cleaning.
-      </div>
-    </div>
-    <div class="strategy">
-      <span class="num">NEAR-DUP UNIT</span>
-      <h3>0 full-doc near-dups is a dataset fact, not a failure</h3>
-      <div class="what">
-        MinHash found 0 doc-level near-dup clusters; the real duplication lived at the <b>prompt</b>
-        level (same-problem, different-trace collapses at J≥0.9). Reporting both is the lesson:
-        choose the right unit of dedup for the genre.
-      </div>
-    </div>
-    <div class="strategy">
-      <span class="num">REPRODUCE COST</span>
-      <h3>Classifier labeling is the long pole</h3>
-      <div class="what">
-        Stages 1–2 + 4–8 are minutes on CPU; FineWeb-Edu scoring is ~1–2 h and is cached by content
-        hash so re-runs stay deterministic. Pipeline version <b>1.1.0</b>; seed 42;
-        <code>--verify</code> proves bit-identical content hashes.
-      </div>
-    </div>
-  </div>
 </section>
 
 </main>
