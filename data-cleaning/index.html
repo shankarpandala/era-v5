@@ -411,7 +411,6 @@
 (function () {
   "use strict";
   const $ = (s, el) => (el || document).querySelector(s);
-  const D = JSON.parse($("#data").textContent);
 
   /* ---------- theme toggle (data-theme wins over OS) ---------- */
   $("#themeBtn").addEventListener("click", () => {
@@ -420,6 +419,15 @@
       (!r.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
     r.dataset.theme = dark ? "light" : "dark";
   });
+
+  /* ---------- data island (graceful pre-injection fallback) ---------- */
+  let D;
+  try { D = JSON.parse($("#data").textContent); }
+  catch (e) { D = null; }
+  if (!D || !D.strategies) {
+    document.querySelectorAll(".n[data-d]").forEach((el) => { el.textContent = "…"; });
+    return;
+  }
 
   /* ---------- number helpers + data-path filler ---------- */
   const fmt = (n) => typeof n === "number" ? n.toLocaleString("en-US") : n;
