@@ -27,3 +27,7 @@ dist-ssr
 # Python
 __pycache__/
 *.pyc
+
+# Assignment 4 pipeline outputs (large; stats/manifests are committed under public/)
+data-cleaning/pipeline/out/
+lid.176.bin

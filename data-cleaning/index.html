@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="ERA-V5 Assignment 4 — the eight cleaning strategies of Session 4, applied end-to-end to Bespoke-Stratos-17k (≈85M tokens) and an ai4bharat/sangraha Telugu slice, with the full measured statistics." />
+<meta name="theme-color" content="#2a78d6" />
+<title>ERA-V5 · Assignment 4 — Data Cleaning &amp; Deduplication</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb; --plane: #f9f9f7;
+    --ink-1: #0b0b0b; --ink-2: #52514e; --ink-3: #898781;
+    --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+    --good: #0ca30c; --good-text: #006300; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+    --wash1: rgba(42,120,214,0.12); --wash2: rgba(235,104,52,0.13);
+    --card: #ffffff; --code-bg: #f4f3ef;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1: #1a1a19; --plane: #0d0d0d;
+      --ink-1: #ffffff; --ink-2: #c3c2b7; --ink-3: #898781;
+      --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+      --good-text: #0ca30c;
+      --wash1: rgba(57,135,229,0.18); --wash2: rgba(217,89,38,0.20);
+      --card: #232322; --code-bg: #262624;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --plane: #0d0d0d;
+    --ink-1: #ffffff; --ink-2: #c3c2b7; --ink-3: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --good-text: #0ca30c;
+    --wash1: rgba(57,135,229,0.18); --wash2: rgba(217,89,38,0.20);
+    --card: #232322; --code-bg: #262624;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--plane); color: var(--ink-1);
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--s1); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; }
+  code { background: var(--code-bg); border-radius: 4px; padding: 1px 5px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header.top {
+    position: sticky; top: 0; z-index: 20; backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--plane) 82%, transparent);
+    border-bottom: 1px solid var(--grid);
+  }
+  .topbar { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+  .topbar .brand { font-weight: 700; letter-spacing: 0.02em; }
+  .topbar .links { margin-left: auto; display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+  .topbar button {
+    background: none; border: 1px solid var(--grid); color: var(--ink-2);
+    border-radius: 8px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 13px;
+  }
+  .kicker { font-family: ui-monospace, Menlo, monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--s1); }
+  h1 { font-size: clamp(26px, 4vw, 36px); line-height: 1.15; margin: 8px 0 10px; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+  .sub { color: var(--ink-2); max-width: 72ch; }
+  section { padding: 34px 0 8px; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .sec-num { font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--ink-3); }
+  .panel {
+    background: var(--card); border: 1px solid var(--ring); border-radius: 14px;
+    padding: 18px; margin: 12px 0;
+  }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
+  .tile {
+    background: var(--card); border: 1px solid var(--ring); border-radius: 12px;
+    padding: 10px 14px; min-width: 128px;
+  }
+  .tile .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+  .tile .val { font-weight: 650; font-size: 20px; margin-top: 2px; }
+  .tile .val.good { color: var(--good-text); }
+  .hero-num { font-size: 64px; font-weight: 700; line-height: 1; color: var(--s1); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .strategy {
+    background: var(--card); border: 1px solid var(--ring); border-radius: 14px; padding: 14px 16px;
+  }
+  .strategy .num { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--s1); }
+  .strategy h3 { margin: 2px 0 4px; }
+  .strategy .what { color: var(--ink-2); font-size: 13.5px; }
+  .strategy .fix { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; border-top: 1px dashed var(--grid); padding-top: 8px; }
+  .strategy .here { font-size: 13px; margin-top: 8px; }
+  .strategy .here b { color: var(--good-text); }
+  .note {
+    border-left: 3px solid var(--s1); background: var(--wash1);
+    padding: 10px 14px; border-radius: 0 10px 10px 0; font-size: 13.5px; margin: 12px 0;
+  }
+  .note.orange { border-left-color: var(--s2); background: var(--wash2); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); font-weight: 600; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--grid); }
+  td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  .scrollx { overflow-x: auto; }
+  .funnel-row { display: grid; grid-template-columns: 170px 1fr 108px; gap: 10px; align-items: center; margin: 3px 0; cursor: pointer; border-radius: 8px; padding: 3px 6px; }
+  .funnel-row:hover, .funnel-row.active { background: var(--wash1); }
+  .funnel-row.te:hover, .funnel-row.te.active { background: var(--wash2); }
+  .funnel-label { font-size: 13px; color: var(--ink-2); text-align: right; }
+  .funnel-track { position: relative; height: 22px; background: transparent; }
+  .funnel-bar { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0; }
+  .funnel-lost { position: absolute; top: 0; bottom: 0; border-radius: 0 4px 4px 0; }
+  .funnel-val { font-size: 12px; font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; color: var(--ink-2); }
+  .stage-detail { border-top: 1px solid var(--grid); margin-top: 12px; padding-top: 12px; font-size: 13.5px; }
+  .stage-detail h3 { display: flex; gap: 8px; align-items: baseline; }
+  .example {
+    background: var(--code-bg); border: 1px solid var(--ring); border-radius: 10px;
+    padding: 10px 12px; margin: 8px 0; font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .example .tag { color: var(--critical); font-weight: 600; }
+  .example .keep { color: var(--good-text); font-weight: 600; }
+  .pill { display: inline-block; border: 1px solid var(--ring); border-radius: 999px; padding: 1px 10px; font-size: 12px; color: var(--ink-2); margin: 2px 3px 2px 0; background: var(--card); }
+  .pill.ok { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 40%, transparent); }
+  .legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--ink-2); margin: 6px 0 2px; flex-wrap: wrap; }
+  .legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .bar-pair { display: grid; grid-template-columns: 130px 1fr 64px; gap: 10px; align-items: center; margin: 4px 0; font-size: 13px; }
+  .bar-pair .track { height: 18px; position: relative; }
+  .bar-pair .bar { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0; }
+  footer { border-top: 1px solid var(--grid); margin-top: 44px; padding: 22px 0 44px; font-size: 13px; color: var(--ink-3); }
+  footer .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .toc a { border: 1px solid var(--ring); background: var(--card); color: var(--ink-2); border-radius: 999px; padding: 3px 12px; font-size: 12.5px; }
+  .toc a:hover { color: var(--s1); text-decoration: none; border-color: var(--s1); }
+  @media (max-width: 640px) {
+    .funnel-row { grid-template-columns: 110px 1fr 84px; }
+    .funnel-label { font-size: 11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<script id="data" type="application/json">__DATA_JSON__</script>
+
+<header class="top"><div class="wrap topbar">
+  <span class="brand">ERA-V5 · Assignment 4</span>
+  <nav class="links">
+    <a href="https://www.pandala.in/era-v5/">Assignment 1</a>
+    <a href="https://www.pandala.in/era-v5/tokenizer/">Assignment 2</a>
+    <a href="https://www.pandala.in/era-v5/data-collection/">Assignment 3</a>
+    <button id="themeBtn" title="Toggle theme">◐ theme</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+
+<header id="top" style="padding-top: 40px;">
+  <p class="kicker">ERA-V5 · The School of AI · Session 4 — Data Cleaning &amp; Deduplication</p>
+  <h1>Eight strategies, two corpora, one reproducible pipeline</h1>
+  <p class="sub">
+    Session 4 defines <b>8 cleaning strategies</b> that turn collected data into training data.
+    This page applies all eight — for real, end to end — to a 10–100M-token reasoning dataset
+    (<a href="https://huggingface.co/datasets/bespokelabs/Bespoke-Stratos-17k">Bespoke-Stratos-17k</a>,
+    <span class="n" data-d="en.tokens_raw_m"></span>M raw tokens) and, because everything we build views the
+    world from India first, to a verified Telugu slice of
+    <a href="https://huggingface.co/datasets/ai4bharat/sangraha">AI4Bharat Sangraha</a>
+    (<span class="n" data-d="te.tokens_raw_m"></span>M tokens) through the <em>same</em> pipeline.
+    Every number below is measured, seeded, and reproducible — the pipeline was run twice and
+    produced bit-identical manifests.
+  </p>
+  <div class="tiles">
+    <div class="tile"><div class="lab">Strategies</div><div class="val">8</div></div>
+    <div class="tile"><div class="lab">Stratos tokens, raw → final</div><div class="val"><span class="n" data-d="en.tokens_raw_m"></span>M → <span class="n" data-d="en.tokens_final_m"></span>M</div></div>
+    <div class="tile"><div class="lab">Telugu tokens, raw → final</div><div class="val"><span class="n" data-d="te.tokens_raw_m"></span>M → <span class="n" data-d="te.tokens_final_m"></span>M</div></div>
+    <div class="tile"><div class="lab">Ghost markers removed</div><div class="val"><span class="n" data-d="en.markers_k"></span>k</div></div>
+    <div class="tile"><div class="lab">Benchmark leaks removed</div><div class="val"><span class="n" data-d="en.contam_total"></span></div></div>
+    <div class="tile"><div class="lab">Determinism</div><div class="val good">✓ verified</div></div>
+  </div>
+  <nav class="toc">
+    <a href="#strategies">1 · The 8 strategies</a>
+    <a href="#dataset">2 · Dataset picked</a>
+    <a href="#funnel">3 · What was cleaned</a>
+    <a href="#sovereign">4 · The India-first proof</a>
+    <a href="#extras">5 · Other concerns</a>
+    <a href="#stats">6 · Final statistics</a>
+  </nav>
+</header>
+
+<!-- ============================================================ 1 · STRATEGIES -->
+<section id="strategies">
+  <div class="sec-head"><span class="sec-num">01</span><h2>How many strategies? Eight.</h2></div>
+  <p class="sub">
+    Session 4 §14 names them as “the standing definition of what turns collected data into training
+    data”: <b>normalization, format discipline, quality filtering, deduplication, language
+    validation, PII removal, decontamination, and the manifest</b>. Counted honestly: the pipeline
+    overview (§2) also lists <i>extraction</i>, which Session 3 already built — so it’s
+    <b>9 pipeline stages of which 8 are built in this session</b>. (Deduplication spans two sections
+    — mechanism §6 and at-scale §7 — but is one strategy; and the lesson’s 10 interactive widgets
+    are a different count than its 8 strategies.) One rule sits under all of them:
+    <b>cleaning happens before the content hash is computed</b>, so every ID reflects cleaned text.
+  </p>
+  <div class="grid2" id="strategyCards"></div>
+</section>
+
+<!-- ============================================================ 2 · DATASET -->
+<section id="dataset">
+  <div class="sec-head"><span class="sec-num">02</span><h2>What dataset was picked — and from where</h2></div>
+
+  <div class="panel">
+    <h3>Decoding the assignment’s example</h3>
+    <p class="sub" style="font-size: 13.5px;">
+      The linked example — <a href="https://huggingface.co/lordx64/Qwen3.6-35B-A3B-Claude-4.7-Opus-Reasoning-Distilled">Qwen3.6-35B-A3B-Claude-4.7-Opus-Reasoning-Distilled</a> —
+      is a <em>model</em>, not a dataset: a Qwen3.6 MoE fine-tuned on ≈7,800 conversations distilled
+      from Claude Opus 4.7 with <code>&lt;think&gt;</code> reasoning traces. So “a 10–100M dataset
+      like this” means a <b>reasoning-distillation conversation dataset in the 10–100M-token band</b>
+      — the kind of data that trained that model. (Its own raw dataset,
+      <code>reasoning-distill-claude-opus-4-7-max</code>, is only ≈8M tokens — below the band.)
+    </p>
+  </div>
+
+  <div class="grid2">
+    <div class="panel" style="border-left: 3px solid var(--s1);">
+      <h3>Main pick · Bespoke-Stratos-17k</h3>
+      <p style="font-size: 13.5px; color: var(--ink-2); margin: 6px 0;">
+        16,710 conversations distilled from DeepSeek-R1 (same genre as the example’s Claude-Opus
+        distill): 10k math (NuminaMATH: AIME, MATH, Olympiads), 5k coding (APPs + TACO), 1k science
+        &amp; puzzles (STILL-2). Apache-2.0. Measured here:
+        <b><span class="n" data-d="en.tokens_raw_m"></span>M Qwen-2.5 tokens</b> — inside 10–100M.
+      </p>
+      <p style="font-size: 13.5px; color: var(--ink-2); margin: 6px 0;">
+        Why it’s perfect for <i>this</i> assignment: it arrives dirty in exactly the ways Session 4
+        teaches — literal <span class="mono">&lt;|begin_of_thought|&gt;</span> ghost tags in every
+        assistant turn, cross-source near-duplicate problems, real overlap with math benchmarks, and
+        a conversation format that needs unifying.
+      </p>
+    </div>
+    <div class="panel" style="border-left: 3px solid var(--s2);">
+      <h3>Sovereign companion · Sangraha <span class="mono">verified/tel</span></h3>
+      <p style="font-size: 13.5px; color: var(--ink-2); margin: 6px 0;">
+        The Session 3 sovereign corpus: 251B tokens over 22 Indic languages, with the honest
+        “verified human-origin” split (Telugu: 16.3B headline → 3.7B verified). We take a
+        deterministic slice — the first <span class="n" data-d="te.docs_raw"></span> verified Telugu
+        docs (<span class="n" data-d="te.tokens_raw_m"></span>M tokens) — and run the <em>same</em> 8
+        stages, because an India-first pipeline must be proven on Indic text, not asserted on
+        English. CC-BY-4.0.
+      </p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>The sourcing shelf — where corpora come from, seen from India</h3>
+    <p class="sub" style="font-size: 13.5px; margin-bottom: 10px;">
+      Every serious corpus starts at a handful of public resources.
+      <a href="https://commoncrawl.org/">Common Crawl</a> is the headwater — a nonprofit crawl of the
+      public web since 2008, petabytes per monthly snapshot — and nearly every English pretraining
+      set below is a filtered view of it. The India-first lesson from Session 3: the same headwater
+      yields <i>slivers</i> for Indic languages (CulturaX holds 2,847B English tokens beside a few B
+      per Indic language), so sovereign corpora need native collection, not just better filtering.
+    </p>
+    <div class="scrollx"><table>
+      <thead><tr><th>Global shelf</th><th>What it is</th><th style="border-left:1px solid var(--grid); padding-left:10px;">Indic / India-first shelf</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="https://commoncrawl.org/">Common Crawl</a></td><td>The raw web crawl everything else filters; ~monthly snapshots</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://huggingface.co/datasets/ai4bharat/sangraha">Sangraha</a> (AI4Bharat)</td><td>251B tokens / 22 languages; verified-vs-synthetic splits; cleaned by its own Indic pipeline, <a href="https://github.com/AI4Bharat/IndicLLMSuite">Setu</a></td>
+        </tr>
+        <tr>
+          <td><a href="https://huggingface.co/datasets/HuggingFaceFW/fineweb">FineWeb / FineWeb-Edu</a></td><td>Filtered Common Crawl; the edu-classifier recipe our stage 3 reuses</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://huggingface.co/datasets/ai4bharat/IndicCorpV2">IndicCorp v2</a></td><td>~20B tokens, 23 languages — the earlier IIT-M/AI4Bharat web corpus</td>
+        </tr>
+        <tr>
+          <td><a href="https://huggingface.co/datasets/allenai/dolma">Dolma</a> (AI2)</td><td>Open 3T-token corpus — V4’s base, clean at doc level yet carrying the character-level dirt our stage 1 strips</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://huggingface.co/datasets/ai4bharat/BPCC">BPCC / Samanantar</a></td><td>Parallel En↔Indic sentence pairs — the translation backbone</td>
+        </tr>
+        <tr>
+          <td><a href="https://huggingface.co/datasets/uonlp/CulturaX">CulturaX</a></td><td>167 languages; the 2,847B-English-vs-Indic-slivers comparison</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://bhashini.gov.in/">Bhashini</a></td><td>Government of India language mission — models, corpora and translation APIs for 22+ scheduled languages</td>
+        </tr>
+        <tr>
+          <td>DataComp-LM / Nemotron-CC</td><td>Fixed-budget filtered-vs-raw evidence; real-to-synthetic mix patterns</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://bharatgen.com/">BharatGen</a></td><td>India’s state-funded sovereign LLM mission — 22-language foundational models and the data effort behind them</td>
+        </tr>
+      </tbody>
+    </table></div>
+    <p class="sub" style="font-size: 12.5px; margin-top: 10px;">
+      Considered and passed over for the main run: <b>OpenThoughts-114k</b> (≈0.8–1B tokens — over
+      the band), the example’s own <b>lordx64 repos</b> (≈8M — under the band), and full
+      <b>Sangraha / FineWeb / Dolma</b> (10⁵–10⁷× oversized; only slices are feasible — which is
+      exactly what the Telugu companion run does).
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ 3 · FUNNEL -->
+<section id="funnel">
+  <div class="sec-head"><span class="sec-num">03</span><h2>What was cleaned, why, and how</h2></div>
+  <p class="sub">
+    The lesson’s surviving-token bar, computed for real. Each row is one strategy; the solid bar is
+    what survived it, the tinted stub on the right is what that stage removed or rewrote.
+    <b>Click a row</b> for what happened inside — with real before/after examples from this corpus.
+  </p>
+
+  <div class="panel">
+    <h3>Bespoke-Stratos-17k · <span class="n" data-d="en.tokens_raw_m"></span>M tokens in → <span class="n" data-d="en.tokens_final_m"></span>M out</h3>
+    <div class="legend">
+      <span class="key"><span class="swatch" style="background: var(--s1);"></span>tokens surviving</span>
+      <span class="key"><span class="swatch" style="background: var(--wash1); border: 1px solid var(--ring);"></span>removed by this stage</span>
+    </div>
+    <div id="funnelEN"></div>
+    <div class="stage-detail" id="detailEN" hidden></div>
+  </div>
+
+  <div class="panel">
+    <h3>Sangraha Telugu slice · <span class="n" data-d="te.tokens_raw_m"></span>M tokens in → <span class="n" data-d="te.tokens_final_m"></span>M out</h3>
+    <div class="legend">
+      <span class="key"><span class="swatch" style="background: var(--s2);"></span>tokens surviving</span>
+      <span class="key"><span class="swatch" style="background: var(--wash2); border: 1px solid var(--ring);"></span>removed by this stage</span>
+    </div>
+    <div id="funnelTE"></div>
+    <div class="stage-detail" id="detailTE" hidden></div>
+  </div>
+</section>
+
+<!-- ============================================================ 4 · SOVEREIGN -->
+<section id="sovereign">
+  <div class="sec-head"><span class="sec-num">04</span><h2>The India-first proof — measured, not asserted</h2></div>
+  <p class="sub">
+    The sovereign thread runs to the character level. These are the five places the pipeline had to
+    be script-aware, each with the number that proves it on real Telugu text.
+  </p>
+  <div class="grid2" id="sovereignCards"></div>
+  <div class="panel">
+    <h3>Tokenizer fertility — Session 3’s warning, measured here</h3>
+    <p class="sub" style="font-size: 13.5px;">
+      The same Qwen-2.5 tokenizer that spends <b><span class="n" data-d="fert.en_cpt"></span>
+      characters per token</b> on English spends only
+      <b><span class="n" data-d="fert.te_cpt"></span> chars/token</b> on Telugu — so a fixed token
+      budget buys far fewer Telugu sentences. Tokenizer design and corpus design are one system;
+      this is why Assignment 3 sized an Indic-aware 262K vocabulary.
+    </p>
+    <div id="fertilityBars"></div>
+  </div>
+</section>
+
+<!-- ============================================================ 5 · EXTRAS -->
+<section id="extras">
+  <div class="sec-head"><span class="sec-num">05</span><h2>What else was cleaned up — beyond removal</h2></div>
+  <p class="sub">Strategies and concerns that don’t show up as removed tokens, but decide whether the corpus is usable at all.</p>
+  <div class="grid2" id="extraCards"></div>
+</section>
+
+<!-- ============================================================ 6 · STATS -->
+<section id="stats">
+  <div class="sec-head"><span class="sec-num">06</span><h2>Final statistics</h2></div>
+  <div class="tiles" id="statTiles"></div>
+  <div class="panel">
+    <h3>Bespoke-Stratos-17k — stage by stage</h3>
+    <div class="scrollx"><table id="tableEN"></table></div>
+  </div>
+  <div class="panel">
+    <h3>Sangraha Telugu slice — stage by stage</h3>
+    <div class="scrollx"><table id="tableTE"></table></div>
+  </div>
+  <p class="sub" style="font-size: 13px;">
+    Full machine-readable records:
+    <a href="manifest.json" download>manifest.json</a> ·
+    <a href="stats.json" download>stats.json</a> ·
+    <a href="manifest_tel.json" download>manifest_tel.json</a> ·
+    <a href="stats_tel.json" download>stats_tel.json</a> ·
+    <a href="sample_cleaned.jsonl" download>sample_cleaned.jsonl</a> (12 cleaned docs).
+    The manifests carry source, license, contributor, cleaning-script hash, content hash, token
+    counts and language breakdown — the lesson’s gating rule: <b>no manifest, no entry into the corpus</b>.
+  </p>
+</section>
+
+</main>
+
+<footer><div class="wrap">
+  <div class="cols">
+    <div>
+      <b style="color: var(--ink-2);">Sources — course</b><br />
+      <a href="https://axiom.theschoolofai.in/courses/cmq97i5kn032208o8xu5dab4q/sessions/cmroc28350a8409qv5c8pm2a0/lesson">Session 4 · Data Cleaning &amp; Deduplication</a><br />
+      <a href="https://axiom.theschoolofai.in/courses/cmq97i5kn032208o8xu5dab4q/sessions/cmr4ji9vx00xy09pl509rpl86/lesson">Session 3 · Data Collection &amp; Sourcing</a>
+    </div>
+    <div>
+      <b style="color: var(--ink-2);">Sources — data</b><br />
+      <a href="https://huggingface.co/datasets/bespokelabs/Bespoke-Stratos-17k">Bespoke-Stratos-17k</a> ·
+      <a href="https://huggingface.co/datasets/ai4bharat/sangraha">Sangraha</a><br />
+      <a href="https://huggingface.co/datasets/HuggingFaceH4/MATH-500">MATH-500</a> ·
+      <a href="https://huggingface.co/datasets/Maxwell-Jia/AIME_2024">AIME-2024</a> ·
+      <a href="https://huggingface.co/datasets/yentinglin/aime_2025">AIME-2025</a> ·
+      <a href="https://huggingface.co/datasets/openai/gsm8k">GSM8K</a><br />
+      <a href="https://huggingface.co/HuggingFaceFW/fineweb-edu-classifier">FineWeb-Edu classifier</a> ·
+      <a href="https://fasttext.cc/docs/en/language-identification.html">fastText lid.176</a> ·
+      <a href="https://commoncrawl.org/">Common Crawl</a>
+    </div>
+    <div>
+      <b style="color: var(--ink-2);">ERA V5 · Session 4 assignment</b><br />
+      Shankar · <span class="n" data-d="meta.date"></span><br />
+      Pipeline: <a href="https://github.com/shankarpandala/era-v5/tree/main/data-cleaning/pipeline">data-cleaning/pipeline</a> ·
+      seed 42 · determinism <span style="color: var(--good-text);">verified ✓</span>
+    </div>
+  </div>
+</div></footer>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (s, el) => (el || document).querySelector(s);
+  const D = JSON.parse($("#data").textContent);
+
+  /* ---------- theme toggle (data-theme wins over OS) ---------- */
+  $("#themeBtn").addEventListener("click", () => {
+    const r = document.documentElement;
+    const dark = r.dataset.theme === "dark" ||
+      (!r.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+    r.dataset.theme = dark ? "light" : "dark";
+  });
+
+  /* ---------- number helpers + data-path filler ---------- */
+  const fmt = (n) => typeof n === "number" ? n.toLocaleString("en-US") : n;
+  const get = (path) => path.split(".").reduce((o, k) => (o ? o[k] : undefined), D);
+  document.querySelectorAll(".n[data-d]").forEach((el) => {
+    const v = get(el.dataset.d);
+    el.textContent = v === undefined ? "—" : fmt(v);
+  });
+
+  /* ---------- 1 · strategy cards ---------- */
+  $("#strategyCards").innerHTML = D.strategies.map((s, i) => `
+    <div class="strategy">
+      <span class="num">STRATEGY ${i + 1} · §${s.sec}</span>
+      <h3>${s.name}</h3>
+      <div class="what">${s.what}</div>
+      <div class="fix"><b>V4 defect it fixes:</b> ${s.fixes}</div>
+      <div class="here">Here: ${s.here}</div>
+    </div>`).join("");
+
+  /* ---------- 3 · funnels ---------- */
+  function renderFunnel(rootId, detailId, corpus, teFlag) {
+    const root = $(rootId), detail = $(detailId);
+    const t0 = corpus.stages[0].tokens_in;
+    root.innerHTML = corpus.stages.map((st, i) => {
+      const keptPct = 100 * st.tokens_out / t0;
+      const inPct = 100 * st.tokens_in / t0;
+      const lostPct = Math.max(0, inPct - keptPct);
+      const lostLeft = keptPct;
+      return `
+      <div class="funnel-row ${teFlag ? "te" : ""}" data-i="${i}" role="button" tabindex="0"
+           aria-label="${st.label}: ${fmt(st.tokens_out)} tokens survive">
+        <div class="funnel-label">${i + 1} · ${st.label}</div>
+        <div class="funnel-track">
+          <div class="funnel-bar" style="width: ${keptPct}%; background: var(${teFlag ? "--s2" : "--s1"});"></div>
+          ${lostPct > 0.05 ? `<div class="funnel-lost" style="left: ${lostLeft}%; width: ${Math.max(lostPct, 0.35)}%; background: var(${teFlag ? "--wash2" : "--wash1"});"></div>` : ""}
+        </div>
+        <div class="funnel-val">${(st.tokens_out / 1e6).toFixed(2)}M ${st.delta ? `<span style="color: var(--ink-3);">(${st.delta})</span>` : ""}</div>
+      </div>`;
+    }).join("");
+    let active = -1;
+    const activate = (i) => {
+      root.querySelectorAll(".funnel-row").forEach((r) => r.classList.toggle("active", +r.dataset.i === i));
+      if (i === active) { detail.hidden = true; active = -1; return; }
+      active = i;
+      const st = corpus.stages[i];
+      detail.hidden = false;
+      detail.innerHTML = `<h3><span class="num" style="color: var(${teFlag ? "--s2" : "--s1"}); font-family: ui-monospace, Menlo, monospace; font-size: 12px;">STAGE ${i + 1}</span> ${st.label}</h3>${st.detail}`;
+    };
+    root.addEventListener("click", (e) => {
+      const row = e.target.closest(".funnel-row");
+      if (row) activate(+row.dataset.i);
+    });
+    root.addEventListener("keydown", (e) => {
+      const row = e.target.closest(".funnel-row");
+      if (row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); activate(+row.dataset.i); }
+    });
+  }
+  renderFunnel("#funnelEN", "#detailEN", D.en, false);
+  renderFunnel("#funnelTE", "#detailTE", D.te, true);
+
+  /* ---------- 4 · sovereign cards + fertility ---------- */
+  $("#sovereignCards").innerHTML = D.sovereign.map((c) => `
+    <div class="strategy">
+      <span class="num">${c.tag}</span>
+      <h3>${c.name}</h3>
+      <div class="what">${c.body}</div>
+      <div class="here">${c.proof}</div>
+    </div>`).join("");
+
+  const f = D.fert;
+  $("#fertilityBars").innerHTML = `
+    <div class="legend">
+      <span class="key"><span class="swatch" style="background: var(--s1);"></span>English (Stratos)</span>
+      <span class="key"><span class="swatch" style="background: var(--s2);"></span>Telugu (Sangraha)</span>
+    </div>
+    <div class="bar-pair"><div>chars / token</div><div class="track"><div class="bar" style="width: ${100 * f.en_cpt / f.max_cpt}%; background: var(--s1);"></div></div><div class="num mono">${f.en_cpt}</div></div>
+    <div class="bar-pair"><div></div><div class="track"><div class="bar" style="width: ${100 * f.te_cpt / f.max_cpt}%; background: var(--s2);"></div></div><div class="num mono">${f.te_cpt}</div></div>
+    <div class="bar-pair" style="margin-top: 10px;"><div>tokens / word</div><div class="track"><div class="bar" style="width: ${100 * f.en_tpw / f.max_tpw}%; background: var(--s1);"></div></div><div class="num mono">${f.en_tpw}</div></div>
+    <div class="bar-pair"><div></div><div class="track"><div class="bar" style="width: ${100 * f.te_tpw / f.max_tpw}%; background: var(--s2);"></div></div><div class="num mono">${f.te_tpw}</div></div>
+    <p class="sub" style="font-size: 12.5px; margin-top: 8px;">${f.note}</p>`;
+
+  /* ---------- 5 · extras ---------- */
+  $("#extraCards").innerHTML = D.extras.map((c) => `
+    <div class="strategy">
+      <span class="num">${c.tag}</span>
+      <h3>${c.name}</h3>
+      <div class="what">${c.body}</div>
+    </div>`).join("");
+
+  /* ---------- 6 · stats tables + tiles ---------- */
+  const pct = (a, b) => b ? (100 * (b - a) / b) : 0;
+  function renderTable(id, corpus) {
+    const rows = corpus.stages.map((st, i) => {
+      const dTok = st.tokens_in - st.tokens_out;
+      return `<tr>
+        <td>${i + 1} · ${st.label}</td>
+        <td class="num">${fmt(st.docs_in)}</td>
+        <td class="num">${fmt(st.docs_out)}</td>
+        <td class="num">${fmt(st.tokens_in)}</td>
+        <td class="num">${fmt(st.tokens_out)}</td>
+        <td class="num">${dTok ? "−" + fmt(dTok) : "0"}</td>
+        <td class="num">${dTok ? (100 * dTok / st.tokens_in).toFixed(2) + "%" : "—"}</td>
+      </tr>`;
+    }).join("");
+    $(id).innerHTML = `
+      <thead><tr><th>Stage</th><th class="num">docs in</th><th class="num">docs out</th>
+      <th class="num">tokens in</th><th class="num">tokens out</th><th class="num">Δ tokens</th><th class="num">Δ %</th></tr></thead>
+      <tbody>${rows}</tbody>`;
+  }
+  renderTable("#tableEN", D.en);
+  renderTable("#tableTE", D.te);
+
+  $("#statTiles").innerHTML = D.tiles.map((t) => `
+    <div class="tile"><div class="lab">${t.lab}</div><div class="val ${t.good ? "good" : ""}">${t.val}</div></div>`).join("");
+})();
+</script>
+</body>
+</html>
