@@ -6,22 +6,22 @@
  "collected": "HF snapshot, downloaded 2026-07-24",
  "cleaning_script": {
   "file": "clean.py",
-  "sha256": "740dea867571b4f5dce2c66effe0448d4fef3599d6dc7bf477dc4cb004470c32"
+  "sha256": "5a6fa207cfda9f5f267e7162541fe5b5e327cd0ea2bb166c3cfc27dae275d8ff"
  },
- "pipeline_version": "1.0.0",
+ "pipeline_version": "1.1.0",
  "canonical_format": "messages[{role, content, reasoning?}]",
- "content_sha256": "c81f2eefcf3a7fc070a7b4a30a97e2fe2bde051a188a536cfaa337bd24932933",
+ "content_sha256": "ed09997c33d602af594c444e262cd773eae3e4d3cc4ddc9106e731027cbcfdc3",
  "docs": {
   "raw": 16710,
-  "final": 15232
+  "final": 15271
  },
  "tokens": {
   "raw": 92586317,
-  "final": 81307799,
+  "final": 81463326,
   "tokenizer": "Qwen/Qwen2.5-0.5B"
  },
  "language_breakdown": {
-  "en": 81280444,
+  "en": 81435971,
   "ru": 14373,
   "ceb": 12982
  },
@@ -68,63 +68,76 @@
   {
    "name": "quality_filtering",
    "docs_in": 16710,
-   "docs_out": 16536,
-   "docs_removed": 174,
+   "docs_out": 16562,
+   "docs_removed": 148,
    "tokens_in": 88528968,
-   "tokens_out": 87650948,
+   "tokens_out": 87772608,
    "details": {
     "heuristic_rule_fail_counts": {
-     "stop_words": 7,
      "duplicate_lines": 9,
-     "mean_word_length": 10,
-     "symbol_to_word_ratio": 10,
      "lorem_ipsum": 1
     },
-    "heuristic_dropped": 37,
+    "heuristic_dropped": 10,
+    "domain_histogram": {
+     "math": 11221,
+     "code": 5486,
+     "prose": 3
+    },
+    "domain_aware": true,
+    "soft_prose_rules_bypassed_on_math_code": {
+     "stop_words": 7,
+     "mean_word_length": 10,
+     "symbol_to_word_ratio": 10
+    },
+    "soft_prose_rules": [
+     "mean_word_length",
+     "stop_words",
+     "symbol_to_word_ratio"
+    ],
     "edu_classifier": "HuggingFaceFW/fineweb-edu-classifier",
     "edu_threshold": 1.5,
-    "edu_dropped": 137,
+    "edu_dropped": 138,
     "edu_default_gate_note": {
      "default_gate": 2.0,
-     "would_drop_at_default": 1186,
+     "would_drop_at_default": 1190,
      "why_lowered": "inspected low scorers are good competition problems penalized for LaTeX density by a web-prose classifier - the filter-bias trap, measured before gating",
      "domain_means": {
-      "code": 3.258,
-      "math": 2.805
+      "code": 3.257,
+      "math": 2.804
      },
      "domain_below_default": {
-      "code": 176,
-      "math": 1010
+      "code": 177,
+      "math": 1013
      }
     },
     "edu_score_histogram": {
      "0.5": 8,
-     "1.0": 129,
-     "1.5": 1049,
-     "2.0": 2528,
-     "2.5": 4004,
-     "3.0": 5520,
-     "3.5": 3119,
+     "1.0": 130,
+     "1.5": 1052,
+     "2.0": 2535,
+     "2.5": 4009,
+     "3.0": 5529,
+     "3.5": 3121,
      "4.0": 314,
      "4.5": 2
     },
-    "edu_score_mean_kept": 2.9913
+    "edu_score_mean_kept": 2.9909
    }
   },
   {
    "name": "deduplication",
-   "docs_in": 16536,
-   "docs_out": 15300,
-   "docs_removed": 1236,
-   "tokens_in": 87650948,
-   "tokens_out": 81570703,
+   "docs_in": 16562,
+   "docs_out": 15324,
+   "docs_removed": 1238,
+   "tokens_in": 87772608,
+   "tokens_out": 81686408,
    "details": {
     "exact_duplicates": 0,
     "near_dup_doc_clusters": 0,
     "near_dup_docs_removed": 0,
     "near_dup_verified_pairs": 0,
-    "prompt_dup_clusters_j090": 1225,
-    "prompt_dup_docs_removed": 1236,
+    "prompt_dup_clusters_j090": 1227,
+    "prompt_dup_docs_removed": 1238,
     "similarity_histogram": {},
     "prompt_similarity_histogram": {
      "0.0": 30,
@@ -136,8 +149,8 @@
      "0.6": 283,
      "0.7": 125,
      "0.8": 102,
-     "0.9": 101,
-     "1.0": 1223
+     "0.9": 102,
+     "1.0": 1225
     },
     "minhash": {
      "num_perm": 128,
@@ -149,56 +162,56 @@
      ],
      "s_curve": "P(candidate)=1-(1-s^8)^16 @ s=0.8 -> 0.946"
     },
-    "index_memory_note": "16536 docs x 128 perms x 8B = 16.9 MB - local pass == global pass here (whole corpus in one process)"
+    "index_memory_note": "16562 docs x 128 perms x 8B = 17.0 MB - local pass == global pass here (whole corpus in one process)"
    }
   },
   {
    "name": "language_id",
-   "docs_in": 15300,
-   "docs_out": 15287,
+   "docs_in": 15324,
+   "docs_out": 15311,
    "docs_removed": 13,
-   "tokens_in": 81570703,
-   "tokens_out": 81465923,
+   "tokens_in": 81686408,
+   "tokens_out": 81581628,
    "details": {
     "model": "fastText lid.176",
     "claimed_language": "en (dataset card)",
     "language_histogram": {
-     "en": 15284,
+     "en": 15308,
      "ru": 15,
      "ceb": 1
     },
-    "flagged_low_conf_or_non_en": 2047,
+    "flagged_low_conf_or_non_en": 2054,
     "iso_validation": "all labels checked against ISO 639-1/3 set - fail-loud"
    }
   },
   {
    "name": "pii_removal",
-   "docs_in": 15287,
-   "docs_out": 15287,
+   "docs_in": 15311,
+   "docs_out": 15311,
    "docs_removed": 0,
-   "docs_modified": 24,
-   "tokens_in": 81465923,
-   "tokens_out": 81464708,
+   "docs_modified": 21,
+   "tokens_in": 81581628,
+   "tokens_out": 81580907,
    "details": {
     "exempt_code_email": 0,
     "exempt_code_ip": 0,
     "exempt_bare_10digit_no_context": 217,
     "flagged_444_digit_groups_not_masked": 121,
-    "masked_ip": 83,
+    "exempt_version_like_ip": 89,
     "masked_phone": 38,
     "exempt_private_or_invalid_ip": 9,
-    "exempt_ip_task_content": 14,
+    "exempt_ip_task_content": 8,
     "masked_email": 109,
-    "policy": "typed placeholders [EMAIL]/[PHONE]/[IP]/[KEY]; code-fence and fixture (example.com, 555-, private-IP, task-content) occurrences exempted; ML name layer intentionally skipped (Euler/Ramanujan false-positive tension documented)"
+    "policy": "typed placeholders [EMAIL]/[PHONE]/[IP]/[KEY]; code-fence, fixture (example.com, 555-, private-IP, task-content), and version-like dotted quads exempted; ML name layer intentionally skipped (Euler/Ramanujan false-positive tension documented)"
    }
   },
   {
    "name": "decontamination",
-   "docs_in": 15287,
-   "docs_out": 15232,
-   "docs_removed": 55,
-   "tokens_in": 81464708,
-   "tokens_out": 81307799,
+   "docs_in": 15311,
+   "docs_out": 15271,
+   "docs_removed": 40,
+   "tokens_in": 81580907,
+   "tokens_out": 81463326,
    "details": {
     "benchmarks": {
      "MATH-500": 500,
@@ -207,12 +220,17 @@
      "GSM8K-test": 1319
     },
     "hits_by_benchmark": {
-     "MATH-500": 55
+     "MATH-500": 40
     },
-    "method": "13-gram fingerprints on normalized question text, upgraded for competition math: grams in >= 10 training docs are excluded as answer-format boilerplate, then a doc is contaminated when it carries >= 30% of one item's rare grams (>= 2 grams); whole-item exact + 8-gram Jaccard>=0.6 fallback for short items",
+    "method": "13-gram fingerprints on normalized question text. Exclusions: (1) grams in >=5 training docs (answer-format boilerplate); (2) grams shared by >=2 distinct benchmark items (problem templates). Hit = carries >=35% of one item's rare grams (>=3 grams) AND word-Jaccard(doc, item)>=0.22; short items use exact match or 8-gram Jaccard>=0.6.",
     "naive_single_gram_rule_pairs": 724,
-    "boilerplate_grams_excluded": 13,
-    "boilerplate_doc_cap": 10,
+    "boilerplate_grams_excluded": 64,
+    "multi_item_template_grams_excluded": 34,
+    "template_fp_rejected_by_item_jaccard": 0,
+    "boilerplate_doc_cap": 5,
+    "containment_min": 0.35,
+    "rare_match_min": 3,
+    "item_word_jaccard_min": 0.22,
     "boilerplate_examples": [
      "m n where m and n are relatively prime positive integers find m",
      "n where m and n are relatively prime positive integers find m n",
@@ -236,7 +254,7 @@
    "AIME-2025",
    "GSM8K-test"
   ],
-  "hits_removed": 55,
+  "hits_removed": 40,
   "canary_ids": [
    "ERA-V5-CANARY-aa6373e89435d58d",
    "ERA-V5-CANARY-fb42c071c4cd6e3b",
@@ -246,6 +264,6 @@
  "determinism": {
   "seed": 42,
   "id_scheme": "sha256(canonical cleaned messages JSON)",
-  "verified_identical_on_rerun": null
+  "verified_identical_on_rerun": true
  }
 }
