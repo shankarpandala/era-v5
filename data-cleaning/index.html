@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="ERA-V5 Assignment 4 — the eight cleaning strategies of Session 4, applied end-to-end to Bespoke-Stratos-17k (≈85M tokens) and an ai4bharat/sangraha Telugu slice, with the full measured statistics." />
+<meta name="theme-color" content="#2a78d6" />
+<title>ERA-V5 · Assignment 4 — Data Cleaning &amp; Deduplication</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-1: #fcfcfb; --plane: #f9f9f7;
+    --ink-1: #0b0b0b; --ink-2: #52514e; --ink-3: #6e6d67;
+    --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
+    --good: #0ca30c; --good-text: #006300; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+    --wash1: rgba(42,120,214,0.12); --wash2: rgba(235,104,52,0.13);
+    --card: #ffffff; --code-bg: #f4f3ef;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-1: #1a1a19; --plane: #0d0d0d;
+      --ink-1: #ffffff; --ink-2: #c3c2b7; --ink-3: #898781;
+      --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+      --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+      --good-text: #0ca30c;
+      --wash1: rgba(57,135,229,0.18); --wash2: rgba(217,89,38,0.20);
+      --card: #232322; --code-bg: #262624;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --plane: #0d0d0d;
+    --ink-1: #ffffff; --ink-2: #c3c2b7; --ink-3: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70;
+    --good-text: #0ca30c;
+    --wash1: rgba(57,135,229,0.18); --wash2: rgba(217,89,38,0.20);
+    --card: #232322; --code-bg: #262624;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  section[id], header[id] { scroll-margin-top: 64px; }
+  body {
+    margin: 0; background: var(--plane); color: var(--ink-1);
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--s1); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; }
+  code { background: var(--code-bg); border-radius: 4px; padding: 1px 5px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header.top {
+    position: sticky; top: 0; z-index: 20; backdrop-filter: blur(8px);
+    background: color-mix(in srgb, var(--plane) 82%, transparent);
+    border-bottom: 1px solid var(--grid);
+  }
+  .topbar { display: flex; align-items: center; gap: 14px; padding: 10px 0; }
+  .topbar .brand { font-weight: 700; letter-spacing: 0.02em; }
+  .topbar .links { margin-left: auto; display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+  .topbar button {
+    background: none; border: 1px solid var(--grid); color: var(--ink-2);
+    border-radius: 8px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 13px;
+  }
+  .kicker { font-family: ui-monospace, Menlo, monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--s1); }
+  h1 { font-size: clamp(26px, 4vw, 36px); line-height: 1.15; margin: 8px 0 10px; letter-spacing: -0.01em; }
+  h2 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+  .sub { color: var(--ink-2); max-width: 72ch; }
+  section { padding: 34px 0 8px; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .sec-num { font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--ink-3); }
+  .panel {
+    background: var(--card); border: 1px solid var(--ring); border-radius: 14px;
+    padding: 18px; margin: 12px 0;
+  }
+  .tiles { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
+  .tile {
+    background: var(--card); border: 1px solid var(--ring); border-radius: 12px;
+    padding: 10px 14px; min-width: 128px;
+  }
+  .tile .lab { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+  .tile .val { font-weight: 650; font-size: 20px; margin-top: 2px; }
+  .tile .val.good { color: var(--good-text); }
+  .hero-num { font-size: 64px; font-weight: 700; line-height: 1; color: var(--s1); }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .strategy {
+    background: var(--card); border: 1px solid var(--ring); border-radius: 14px; padding: 14px 16px;
+  }
+  .strategy .num { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--s1); }
+  .strategy h3 { margin: 2px 0 4px; }
+  .strategy .what { color: var(--ink-2); font-size: 13.5px; }
+  .strategy .fix { font-size: 12.5px; color: var(--ink-3); margin-top: 8px; border-top: 1px dashed var(--grid); padding-top: 8px; }
+  .strategy .here { font-size: 13px; margin-top: 8px; }
+  .strategy .here b { color: var(--good-text); }
+  .note {
+    border-left: 3px solid var(--s1); background: var(--wash1);
+    padding: 10px 14px; border-radius: 0 10px 10px 0; font-size: 13.5px; margin: 12px 0;
+  }
+  .note.orange { border-left-color: var(--s2); background: var(--wash2); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-3); font-weight: 600; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--grid); }
+  td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
+  .scrollx { overflow-x: auto; }
+  .funnel-row { display: grid; grid-template-columns: 170px 1fr 108px; gap: 10px; align-items: center; margin: 3px 0; cursor: pointer; border-radius: 8px; padding: 3px 6px; }
+  .funnel-row:hover, .funnel-row.active { background: var(--wash1); }
+  .funnel-row.te:hover, .funnel-row.te.active { background: var(--wash2); }
+  .funnel-label { font-size: 13px; color: var(--ink-2); text-align: right; }
+  .funnel-track { position: relative; height: 22px; background: transparent; }
+  .funnel-bar { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0; }
+  .funnel-lost { position: absolute; top: 0; bottom: 0; border-radius: 0 4px 4px 0; }
+  .funnel-val { font-size: 12px; font-variant-numeric: tabular-nums; font-family: ui-monospace, Menlo, monospace; color: var(--ink-2); }
+  .stage-detail { border-top: 1px solid var(--grid); margin-top: 12px; padding-top: 12px; font-size: 13.5px; }
+  .stage-detail h3 { display: flex; gap: 8px; align-items: baseline; }
+  .example {
+    background: var(--code-bg); border: 1px solid var(--ring); border-radius: 10px;
+    padding: 10px 12px; margin: 8px 0; font-family: ui-monospace, Menlo, monospace;
+    font-size: 12px; line-height: 1.5; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  }
+  .example .tag { color: var(--critical); font-weight: 600; }
+  .example .keep { color: var(--good-text); font-weight: 600; }
+  .pill { display: inline-block; border: 1px solid var(--ring); border-radius: 999px; padding: 1px 10px; font-size: 12px; color: var(--ink-2); margin: 2px 3px 2px 0; background: var(--card); }
+  .pill.ok { color: var(--good-text); border-color: color-mix(in srgb, var(--good) 40%, transparent); }
+  .legend { display: flex; gap: 16px; font-size: 12.5px; color: var(--ink-2); margin: 6px 0 2px; flex-wrap: wrap; }
+  .legend .key { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .bar-pair { display: grid; grid-template-columns: 130px 1fr 64px; gap: 10px; align-items: center; margin: 4px 0; font-size: 13px; }
+  .bar-pair .track { height: 18px; position: relative; }
+  .bar-pair .bar { position: absolute; inset: 0 auto 0 0; border-radius: 0 4px 4px 0; }
+  footer { border-top: 1px solid var(--grid); margin-top: 44px; padding: 22px 0 44px; font-size: 13px; color: var(--ink-3); }
+  footer .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .toc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+  .toc a { border: 1px solid var(--ring); background: var(--card); color: var(--ink-2); border-radius: 999px; padding: 3px 12px; font-size: 12.5px; }
+  .toc a:hover { color: var(--s1); text-decoration: none; border-color: var(--s1); }
+  @media (max-width: 640px) {
+    .funnel-row { grid-template-columns: 110px 1fr 84px; }
+    .funnel-label { font-size: 11.5px; }
+  }
+</style>
+</head>
+<body>
+
+<script id="data" type="application/json">{"meta": {"date": "2026-07-24"}, "strategies": [{"sec": "3", "name": "Normalization", "what": "Canonicalize every character: NFC, mojibake repair, HTML unescape, strip noise invisibles, collapse whitespace — while KEEPING ZWJ/ZWNJ, which carry meaning in Brahmic scripts.", "fixes": "46 garbage tokens (zero-width chars, broken bytes, private-use) sat in V4's vocabulary.", "here": "<b>2,332<\/b> fields repaired, <b>56<\/b> garbage chars stripped across both corpora; joiner keep-rule self-tested every run."}, {"sec": "4", "name": "Format discipline", "what": "One canonical conversation format with the tokenizer's real special tokens; literal role markers leave the text — the fix for the ghost-tag trap.", "fixes": "Four sources arrived in four formats; ghost markers leaked into V4's pretraining shards.", "here": "<b>133,680<\/b> literal markers restructured into a clean <code>reasoning<\/code>/<code>content<\/code> schema; residual markers: <b>0<\/b> (asserted)."}, {"sec": "5", "name": "Quality filtering", "what": "Heuristic rules for the obviously broken, then a trained educational-value classifier — and both must be script-aware, or they erase good Indic text.", "fixes": "An English-tuned selector undervalued Indic data so badly V4 needed an always-on channel.", "here": "<b>174<\/b> docs dropped from Stratos; the same English rules would wrongly drop <b>95.6%<\/b> of good Telugu — measured, then avoided."}, {"sec": "6–7", "name": "Deduplication", "what": "Exact hashing catches copies; shingles → MinHash → LSH catches the near-duplicates that are most of real duplication. Local passes are not global — one machine must see the whole corpus.", "fixes": "V4's Indic crawl had no deduplication at any level.", "here": "<b>0<\/b> exact + <b>0<\/b> near-dup docs, and <b>1,236<\/b> same-problem prompts collapsed (J≥0.9)."}, {"sec": "8", "name": "Language ID / validation", "what": "Detect each document's language at runtime instead of trusting folder paths; validate every code; fail loudly.", "fixes": "The Telugu two-vs-three-letter code bug that only worked through a lucky fallback.", "here": "<b>8<\/b> mislabeled docs found inside Sangraha's Telugu split; explicit 639-1↔639-3 mapping, unknown codes raise."}, {"sec": "9", "name": "PII removal", "what": "Regex layer for structured identifiers, typed placeholders, and a precision/recall line drawn deliberately: fixtures and task content stay, real-looking identifiers go.", "fixes": "No PII stage existed at all in the V4 path.", "here": "Emails/keys/IPs masked with <code>[EMAIL]<\/code>-style placeholders; <b>240<\/b> fixture look-alikes correctly left untouched in Stratos."}, {"sec": "10", "name": "Decontamination", "what": "Fingerprint the eval sets, scan every document, remove overlap, record canaries — the firewall that keeps every future score honest.", "fixes": "Session 3's golden rule, now enforced mechanically at cleaning time.", "here": "<b>55<\/b> real benchmark leaks removed (MATH-500: 55) after a measured boilerplate exclusion that dismissed 724 false single-gram pairs."}, {"sec": "11", "name": "Manifest / provenance", "what": "Deterministic content-derived IDs and a per-shard manifest: source, license, script hash, content hash, token counts. No manifest → no entry.", "fixes": "Copy-pasted file sizes, run-to-run identifiers, Indic token counts off by several ×.", "here": "Two manifests emitted (Apache-2.0 corpus, CC-BY-4.0 shard); both pipelines re-run to <b>bit-identical content hashes<\/b> — determinism proven, not promised."}], "en": {"tokens_raw_m": 92.59, "tokens_final_m": 81.31, "docs_raw": 16710, "markers_k": 134, "contam_total": 55, "stages": [{"label": "Normalization", "docs_in": 16710, "docs_out": 16710, "tokens_in": 92586317, "tokens_out": 92488381, "delta": "−0.11%", "detail": "<p><b>Why:<\/b> a byte-level tokenizer sees every stray character; V4's audit found 46 garbage tokens in the vocabulary from exactly this dirt.<\/p><p><b>How:<\/b> ftfy mojibake repair → HTML unescape (twice, for double-escapes) → Unicode NFC → strip noise invisibles → collapse whitespace (code-fence interiors and leading indentation preserved — this is a coding corpus).<\/p><ul style='margin:6px 0 6px 18px; padding:0;'><li><b>2,332<\/b> fields repaired by ftfy (mojibake, width, quote fixes)<\/li><li><b>44<\/b> zero-width spaces and <b>1<\/b> soft hyphens stripped; <b>8<\/b> HTML entities unescaped<\/li><li>ZWJ/ZWNJ keep-rule self-test: <span style='color:var(--good-text)'>PASS<\/span> — noise invisibles stripped, Brahmic joiners preserved, asserted on every run<\/li><\/ul>"}, {"label": "Format discipline", "docs_in": 16710, "docs_out": 16710, "tokens_in": 92488381, "tokens_out": 88528968, "delta": "−4.28%", "detail": "<p><b>Why:<\/b> every assistant turn (and the system prompt) carried literal <span class='mono'>&lt;|begin_of_thought|&gt;<\/span>-style markers as plain text — the ghost-tag trap: pretraining would learn them as language, then fight the real special tokens at SFT.<\/p><p><b>How:<\/b> restructure, don't delete — parse each turn into a <code>reasoning<\/code> field and an <code>answer<\/code> field, emit ONE canonical schema <code>messages[{role, content, reasoning?}]<\/code>, and rewrite the tag-naming system prompt.<\/p><ul style='margin:6px 0 6px 18px; padding:0;'><li><b>133,680<\/b> markers removed (8 per conversation: 4 in the system prompt, 4 in the assistant turn)<\/li><li>parse anomalies: <b>0<\/b> · residual markers after unification: <b>0<\/b> (asserted)<\/li><\/ul><div class='example'><span class='tag'>&lt;|begin_of_thought|&gt;<\/span> Okay, let me try to figure out this problem… <span class='tag'>&lt;|end_of_thought|&gt;<\/span> <span class='tag'>&lt;|begin_of_solution|&gt;<\/span> The value is 2. <span class='tag'>&lt;|end_of_solution|&gt;<\/span><br />→ <span class='keep'>{\"role\":\"assistant\", \"reasoning\":\"Okay, let me try to figure out…\", \"content\":\"The value is 2.\"}<\/span><\/div>"}, {"label": "Quality filtering", "docs_in": 16710, "docs_out": 16536, "tokens_in": 88528968, "tokens_out": 87650948, "delta": "−0.99%", "detail": "<p><b>Why:<\/b> broken or empty documents burn compute; but the lesson's warning holds even here — prose-tuned rules misfire on math.<\/p><p><b>How:<\/b> Gopher/C4-style heuristics (word count, mean word length, symbol ratio, stop-words, duplicate lines) then the FineWeb-Edu classifier — the exact Session 3 recipe — scored on every doc.<\/p><ul style='margin:6px 0 6px 18px; padding:0;'><li>heuristic drops: <b>37<\/b> (stop_words 7, duplicate_lines 9, mean_word_length 10, symbol_to_word_ratio 10, lorem_ipsum 1)<\/li><li>classifier gate (score &lt; 1.5): <b>137<\/b> dropped · mean score of kept docs 2.9913<\/li><li>the FineWeb-Edu default gate of 2.0 would have dropped <b>1,186<\/b> docs — inspected, they are good competition problems penalized for LaTeX density (math mean 2.805, code mean 3.258); the gate was lowered to 1.5 after measuring — the filter-bias trap, caught in English<\/li><\/ul><div class='example'>dropped by <b>stop_words<\/b>: Return your final response within \\boxed{}. Martians measure angles in clerts. There are $500$ clerts in a full circle. How many clerts are there in a right angle? $\\text{(A)}\\ 90 …<br /><span style='color:var(--ink-3)'>— a perfectly good problem (“Martians measure angles in clerts”) failing an English stop-word rule: the same filter-bias the lesson warns erases Indic text<\/span><\/div>"}, {"label": "Deduplication", "docs_in": 16536, "docs_out": 15300, "tokens_in": 87650948, "tokens_out": 81570703, "delta": "−6.94%", "detail": "<p><b>Why:<\/b> near-duplicates are invisible to exact matching; reasoning distills are notorious for the same competition problem appearing with different traces.<\/p><p><b>How:<\/b> sha256 exact pass, then 5-word shingles → 128-perm MinHash (seed 42) → LSH at 16 bands × 8 rows (P(candidate)=1−(1−s⁸)¹⁶), candidates verified with true Jaccard; plus a prompt-only pass at J≥0.9.<\/p><ul style='margin:6px 0 6px 18px; padding:0;'><li>exact duplicates: <b>0<\/b> · near-dup docs removed: <b>0<\/b> (0 clusters)<\/li><li>same-problem prompts collapsed: <b>1236<\/b> docs in 1225 clusters<\/li><li>index memory: 16536 docs x 128 perms x 8B = 16.9 MB - local pass == global pass here (whole corpus in one process)<\/li><\/ul><div class='example'>J=0.91 · A: Return your final response within \\boxed{}. Keiko walks once around a track at exactly the same constant speed every day. The sides of the track are s…<br />B: Return your final response within \\boxed{}. Keiko walks once around a track at the same constant speed every day. The sides of the track are straight,…<\/div>"}, {"label": "Language ID", "docs_in": 15300, "docs_out": 15287, "tokens_in": 81570703, "tokens_out": 81465923, "delta": "−0.13%", "detail": "<p><b>Why:<\/b> folder labels lie — V4's Telugu code bug “worked” only through a lucky fallback.<\/p><p><b>How:<\/b> fastText lid.176 on every doc's prose (code fences stripped), every predicted code validated against an explicit ISO 639-1/3 set — unknown codes raise, they don't fall back.<\/p><ul style='margin:6px 0 6px 18px; padding:0;'><li>language histogram: en 15,284, ru 15, ceb 1<\/li><li>flagged low-confidence/non-English: <b>2047<\/b> (math-symbol-heavy docs — inspected, not blind-dropped); removed: <b>13<\/b><\/li><\/ul>"}, {"label": "PII removal", "docs_in": 15287, "docs_out": 15287, "tokens_in": 81465923, "tokens_out": 81464708, "delta": "−0.00%", "detail": "<p><b>Why:<\/b> people's identifiers don't belong in a training corpus — and the legal usability of the corpus depends on it.<\/p><p><b>How:<\/b> regex layer with typed placeholders (<code>[EMAIL]<\/code>, <code>[PHONE]<\/code>, <code>[IP]<\/code>, <code>[KEY]<\/code>) and precision rules: code-fence content, <code>example.com<\/code>-style fixtures, 555-numbers and private IPs are task content and stay; the ML name layer is deliberately skipped — Euler and Ramanujan must survive.<\/p><ul style='margin:6px 0 6px 18px; padding:0;'><li>masked: masked ip 83, masked phone 38, masked email 109<\/li><li>exempted as fixtures/task content: exempt code email 0, exempt code ip 0, exempt bare 10digit no context 217, flagged 444 digit groups not masked 121, exempt private or invalid ip 9, exempt ip task content 14<\/li><li>docs touched: <b>24<\/b><\/li><\/ul>"}, {"label": "Decontamination", "docs_in": 15287, "docs_out": 15232, "tokens_in": 81464708, "tokens_out": 81307799, "delta": "−0.19%", "detail": "<p><b>Why:<\/b> the eval firewall — MATH-500 is drawn from MATH, and the dataset's sources include AIME; if test items train the model, the scores mean nothing.<\/p><p><b>How:<\/b> 13-gram fingerprints of MATH-500, AIME-2024, AIME-2025 and GSM8K-test scanned against every question — <i>upgraded<\/i> for competition math after measurement: the naive single-13-gram GPT-3 rule fired on <b>724 doc–item pairs<\/b>, almost all answer-format boilerplate (“…where m and n are relatively prime positive integers, find m+n”). Grams in ≥10 docs are excluded as boilerplate; a hit needs ≥30% of one item's <i>rare<\/i> grams.<\/p><ul style='margin:6px 0 6px 18px; padding:0;'><li>hits removed: <b>MATH-500: 55<\/b><\/li><li>boilerplate grams excluded: <b>13<\/b><\/li><li>canary IDs recorded in the manifest (never injected into training text)<\/li><\/ul><div class='example'>[MATH-500 · rare-13gram containment 0.47 (17 grams)]<br />train: Return your final response within \\boxed{}. Line $L$ is the intersection of the planes $x + 2y + 3z = 2$ and $x - y + z = 3.$ A plane $P,$ different f…<br />bench: Find the equation of the plane containing the points $(0,-1,-1),$ $(-4,4,4),$ and $(4,5,1).$ Enter your answer in the form \\[Ax + By + Cz + D = 0,\\]wh…<\/div>"}, {"label": "Manifest", "docs_in": 15232, "docs_out": 15232, "tokens_in": 81307799, "tokens_out": 81307799, "delta": "", "detail": "<p><b>Why:<\/b> a corpus without provenance can't be trusted, published, or reproduced — V4's copy-pasted file sizes and run-to-run IDs are exactly what a manifest catches.<\/p><p><b>How:<\/b> every doc ID is sha256 over the <i>cleaned<\/i> canonical text (the lesson's ordering rule); the manifest records source, license, contributor, cleaning-script hash, content hash, token counts, language breakdown.<\/p><ul style='margin:6px 0 6px 18px; padding:0;'><li>content hash: <code>c81f2eefcf3a7fc070a7…<\/code> · cleaning-script hash: <code>740dea867571b4f5dce2…<\/code><\/li><li>determinism proof: the whole pipeline was re-run and produced an identical content hash<\/li><li>gating rule: no manifest → no entry into the corpus<\/li><\/ul>"}]}, "te": {"tokens_raw_m": 23.17, "tokens_final_m": 23.13, "docs_raw": 7840, "stages": [{"label": "Normalization", "docs_in": 7840, "docs_out": 7840, "tokens_in": 23168604, "tokens_out": 23163746, "delta": "−0.02%", "detail": "<p>The same 15-line normalizer, now on real Telugu web text: <b>8<\/b> replacement characters and <b>3<\/b> private-use characters stripped, <b>2<\/b> mojibake fixes. ZWJ/ZWNJ found: <b>0<\/b> — honestly zero, because Sangraha ships pre-cleaned by AI4Bharat's own script-aware pipeline (Setu) — the upstream corpus already made the joiner decision our keep-rule protects. The rule is still asserted by self-test on every run.<\/p>"}, {"label": "Format discipline", "docs_in": 7840, "docs_out": 7840, "tokens_in": 23163746, "tokens_out": 23163746, "delta": "", "detail": "<p>A plain-text corpus: one canonical document schema <code>{id, text}<\/code>; the ghost-marker scan found <b>0<\/b> conversation markers — clean, as a curated pretraining corpus should be.<\/p>"}, {"label": "Quality filtering", "docs_in": 7840, "docs_out": 7823, "tokens_in": 23163746, "tokens_out": 23139679, "delta": "−0.10%", "detail": "<p>The headline measurement: the English-tuned rule chain would drop <b>95.6%<\/b> of perfectly good Telugu (stop-words: 7,484 docs fail; mean word length: 390). The script-aware gate (structure rules only) removed <b>17<\/b> docs. The English FineWeb-Edu classifier, sampled on 1,000 Telugu docs, scores a mean of <b>0.391<\/b> with <b>100%<\/b> below the English gate of 2.0 — gating on it would erase the language. It is advisory only: the V4 always-on-channel lesson.<\/p>"}, {"label": "Deduplication", "docs_in": 7823, "docs_out": 7823, "tokens_in": 23139679, "tokens_out": 23139679, "delta": "", "detail": "<p>The silent catastrophe, measured: naive English <code>[^a-z0-9]<\/code> shingling reduces <b>1,555<\/b> of 7,823 Telugu docs to an EMPTY shingle set — MinHash would then see them as identical and dedup an Indic crawl into oblivion. With script-aware <code>\\w<\/code> shingles: <b>0<\/b> exact and <b>0<\/b> near-duplicates removed (0 clusters) — the dedup pass V4's Indic crawl never had.<\/p>"}, {"label": "Language ID", "docs_in": 7823, "docs_out": 7819, "tokens_in": 23139679, "tokens_out": 23131090, "delta": "−0.04%", "detail": "<p>fastText says <code>te<\/code> (ISO 639-1); Sangraha's split says <code>tel<\/code> (ISO 639-3) — the exact two-vs-three-letter mismatch behind V4's Telugu code bug. Here the mapping is an explicit table and unmapped codes raise. Found <b>8<\/b> docs in the Telugu split that are actually another language; <b>4<\/b> confidently non-Telugu docs removed.<\/p>"}, {"label": "PII removal", "docs_in": 7819, "docs_out": 7819, "tokens_in": 23131090, "tokens_out": 23131079, "delta": "−0.00%", "detail": "<p>Indian PII formats on real web text: exempt bare 10digit no context <b>28<\/b>, masked email <b>1<\/b>, exempt code email <b>0<\/b>, exempt code ip <b>0<\/b>, masked ip <b>1<\/b>. Docs touched: <b>2<\/b>.<\/p>"}, {"label": "Decontamination", "docs_in": 7819, "docs_out": 7819, "tokens_in": 23131079, "tokens_out": 23131079, "delta": "", "detail": "<p>Hits against the English math benchmarks: <b>0<\/b> — the expected result for a Telugu corpus, stated honestly rather than skipped. The firewall must match the corpus: at scale a Telugu pool needs Indic eval fingerprints (MILU, IndicQA, translated benchmarks) in the same scan.<\/p>"}, {"label": "Manifest", "docs_in": 7819, "docs_out": 7819, "tokens_in": 23131079, "tokens_out": 23131079, "delta": "", "detail": "<p>Its own per-shard manifest — source, CC-BY-4.0 license, slice rule, script hash, content hash <code>480ef2e8b6431af0323f…<\/code> — and its own determinism proof. Fertility recorded: 0.69 chars/token.<\/p>"}]}, "sovereign": [{"tag": "CHARACTER LEVEL", "name": "The joiner keep-rule", "body": "A cleaner that strips every invisible character mangles Brahmic scripts — ZWNJ/ZWJ carry real linguistic information. Our normalizer strips ZWSP/BOM/bidi and keeps the joiners, asserted by a self-test on every run.", "proof": "Found in this Telugu slice: <b>0<\/b> — honestly zero, because Sangraha is pre-cleaned by AI4Bharat's own script-aware Setu pipeline. The rule matters when you clean raw crawls; the corpus that skipped it was V4's."}, {"tag": "FILTER BIAS", "name": "English rules vs Telugu text", "body": "The lesson's §5 warning, quantified: the standard stop-word and word-length rules were run in measure-only mode over every Telugu doc.", "proof": "They would drop <b>95.6%<\/b> of verified-good Telugu (stop-words alone: 7,484 docs). The gate actually used is script-aware; the English chain is reported, not applied."}, {"tag": "CLASSIFIER BIAS", "name": "An English classifier scoring Telugu", "body": "FineWeb-Edu's classifier — trained on English — was sampled on 1,000 Telugu docs as an instrument reading of its own bias.", "proof": "Mean score <b>0.391<\/b>, with <b>100%<\/b> below the English keep-gate of 2.0 — gating would erase the language. Advisory only: the V4 always-on-channel lesson, applied."}, {"tag": "DEDUP", "name": "The shingler that ate a language", "body": "MinHash shingles built with the naive English tokenizer [^a-z0-9] turn Telugu into empty sets — every doc looks identical, and dedup deletes a language silently.", "proof": "Measured: <b>1,555<\/b> of 7,823 docs would collapse to empty shingles. The pipeline uses script-aware \\w shingles instead."}, {"tag": "CODES", "name": "te ≠ tel, handled loudly", "body": "fastText speaks ISO 639-1 (te); Sangraha's splits speak ISO 639-3 (tel) — exactly the mismatch that produced V4's silent Telugu bug.", "proof": "An explicit mapping table with fail-loud validation; <b>8<\/b> docs in the tel split detected as other languages, 4 confidently-foreign docs removed."}, {"tag": "PII", "name": "Indian identifier formats", "body": "+91 phone patterns, 10-digit mobile ranges, and Aadhaar-like 4-4-4 digit groups are scanned with context rules — masked when real, flagged (not destroyed) when they're just numbers.", "proof": "On real Telugu web text: exempt bare 10digit no context <b>28<\/b>, masked email <b>1<\/b>, exempt code email <b>0<\/b>, exempt code ip <b>0<\/b>, masked ip <b>1<\/b>."}], "extras": [{"tag": "RESTRUCTURE ≠ DELETE", "name": "Ghost tags became structure", "body": "The 133,680 markers weren't just stripped — the text between them moved into typed fields (<code>reasoning<\/code>, <code>content<\/code>), so at SFT time the chat template's real special tokens take over. Deleting the tags would have thrown the structure away; restructuring keeps it."}, {"tag": "LICENSE", "name": "The mixture stays usable", "body": "Apache-2.0 (Bespoke-Stratos) + CC-BY-4.0 (Sangraha) — both permissive-with-attribution; the combined corpus carries no share-alike or unknown-provenance poison. Recorded per shard in the manifests, the Session 3 licence-mixture rule."}, {"tag": "DETERMINISM", "name": "Run twice, same hash", "body": "Both pipelines re-ran end-to-end and reproduced identical content hashes (<code>c81f2eefcf3a7fc0…<\/code>, <code>480ef2e8b6431af0…<\/code>). IDs are sha256 of cleaned text — content-derived, never a running counter."}, {"tag": "CANARIES", "name": "Leak detection for later", "body": "Three canary GUIDs are recorded in each manifest (e.g. <code>ERA-V5-CANARY-aa6373e89435d58d<\/code>) — deliberately NOT injected into training text; they belong in held-out material so a future leak is detectable."}, {"tag": "PRECISION / RECALL", "name": "The PII line, drawn on purpose", "body": "<code>alice@example.com<\/code> in a coding problem is task content, not PII — 240 fixture look-alikes were exempted while real-looking identifiers were masked. The ML name layer was skipped deliberately: on this corpus it would maim Euler and Ramanujan more often than it would protect anyone."}, {"tag": "LOCAL = GLOBAL", "name": "The dedup machine, in miniature", "body": "Both corpora fit one process, so the local pass IS the global pass — with 16,536 docs × 128 perms × 8B ≈ 17MB of index. At course scale the same math is why a single large-memory, checkpoint-resumable machine must run the one global pass."}, {"tag": "MEASURED RULES", "name": "Decontamination needed engineering, not just a recipe", "body": "The textbook single-13-gram rule produced 724 matches on competition math — nearly all answer-format boilerplate. The shipped rule (frequency-filtered rare-gram containment ≥30%) was chosen after measuring the full containment distribution; the 55 removed docs include near-verbatim benchmark variants."}, {"tag": "TOKENIZER", "name": "Fertility is a data decision", "body": "Qwen-2.5 spends 0.69 chars/token on Telugu vs 3.267 on English (see §4) — the same lesson as Session 3's minor thread: an English-centric tokenizer taxes every Indic document before training even starts."}], "fert": {"en_cpt": 3.267, "te_cpt": 0.69, "en_tpw": 1.674, "te_tpw": 11.479, "note": "Higher chars/token = cheaper to tokenize. Telugu's low chars/token and high tokens/word mean the same semantic content costs several times the token budget — under a fixed budget the language simply receives less knowledge. Fertility numbers measured on the final cleaned corpora with Qwen/Qwen2.5-0.5B.", "max_cpt": 3.267, "max_tpw": 11.479}, "tiles": [{"lab": "Stratos docs, raw → final", "val": "16,710 → 15,232"}, {"lab": "Stratos tokens removed", "val": "12.18%"}, {"lab": "Telugu docs, raw → final", "val": "7,840 → 7,819"}, {"lab": "Telugu tokens removed", "val": "0.16%"}, {"lab": "Ghost markers unified", "val": "133,680"}, {"lab": "Prompt duplicates collapsed", "val": "1,236"}, {"lab": "Benchmark leaks removed", "val": "55"}, {"lab": "English-filter bias on Telugu", "val": "−95.6%"}, {"lab": "Determinism", "val": "✓ both corpora", "good": true}]}</script>
+
+<header class="top"><div class="wrap topbar">
+  <span class="brand">ERA-V5 · Assignment 4</span>
+  <nav class="links">
+    <a href="https://www.pandala.in/era-v5/">Assignment 1</a>
+    <a href="https://www.pandala.in/era-v5/tokenizer/">Assignment 2</a>
+    <a href="https://www.pandala.in/era-v5/data-collection/">Assignment 3</a>
+    <button id="themeBtn" title="Toggle theme">◐ theme</button>
+  </nav>
+</div></header>
+
+<main class="wrap">
+
+<header id="top" style="padding-top: 40px;">
+  <p class="kicker">ERA-V5 · The School of AI · Session 4 — Data Cleaning &amp; Deduplication</p>
+  <h1>Eight strategies, two corpora, one reproducible pipeline</h1>
+  <p class="sub">
+    Session 4 defines <b>8 cleaning strategies</b> that turn collected data into training data.
+    This page applies all eight — for real, end to end — to a 10–100M-token reasoning dataset
+    (<a href="https://huggingface.co/datasets/bespokelabs/Bespoke-Stratos-17k">Bespoke-Stratos-17k</a>,
+    <span class="n" data-d="en.tokens_raw_m"></span>M raw tokens) and, because everything we build views the
+    world from India first, to a verified Telugu slice of
+    <a href="https://huggingface.co/datasets/ai4bharat/sangraha">AI4Bharat Sangraha</a>
+    (<span class="n" data-d="te.tokens_raw_m"></span>M tokens) through the <em>same</em> pipeline.
+    Every number below is measured, seeded, and reproducible — the pipeline was run twice and
+    produced bit-identical manifests.
+  </p>
+  <div class="tiles">
+    <div class="tile"><div class="lab">Strategies</div><div class="val">8</div></div>
+    <div class="tile"><div class="lab">Stratos tokens, raw → final</div><div class="val"><span class="n" data-d="en.tokens_raw_m"></span>M → <span class="n" data-d="en.tokens_final_m"></span>M</div></div>
+    <div class="tile"><div class="lab">Telugu tokens, raw → final</div><div class="val"><span class="n" data-d="te.tokens_raw_m"></span>M → <span class="n" data-d="te.tokens_final_m"></span>M</div></div>
+    <div class="tile"><div class="lab">Ghost markers removed</div><div class="val"><span class="n" data-d="en.markers_k"></span>k</div></div>
+    <div class="tile"><div class="lab">Benchmark leaks removed</div><div class="val"><span class="n" data-d="en.contam_total"></span></div></div>
+    <div class="tile"><div class="lab">Determinism</div><div class="val good">✓ verified</div></div>
+  </div>
+  <nav class="toc">
+    <a href="#strategies">1 · The 8 strategies</a>
+    <a href="#dataset">2 · Dataset picked</a>
+    <a href="#funnel">3 · What was cleaned</a>
+    <a href="#sovereign">4 · The India-first proof</a>
+    <a href="#extras">5 · Other concerns</a>
+    <a href="#stats">6 · Final statistics</a>
+  </nav>
+</header>
+
+<!-- ============================================================ 1 · STRATEGIES -->
+<section id="strategies">
+  <div class="sec-head"><span class="sec-num">01</span><h2>How many strategies? Eight.</h2></div>
+  <p class="sub">
+    Session 4 §14 names them as “the standing definition of what turns collected data into training
+    data”: <b>normalization, format discipline, quality filtering, deduplication, language
+    validation, PII removal, decontamination, and the manifest</b>. Counted honestly: the pipeline
+    overview (§2) also lists <i>extraction</i>, which Session 3 already built — so it’s
+    <b>9 pipeline stages of which 8 are built in this session</b>. (Deduplication spans two sections
+    — mechanism §6 and at-scale §7 — but is one strategy; and the lesson’s 10 interactive widgets
+    are a different count than its 8 strategies.) One rule sits under all of them:
+    <b>cleaning happens before the content hash is computed</b>, so every ID reflects cleaned text.
+  </p>
+  <div class="grid2" id="strategyCards"></div>
+</section>
+
+<!-- ============================================================ 2 · DATASET -->
+<section id="dataset">
+  <div class="sec-head"><span class="sec-num">02</span><h2>What dataset was picked — and from where</h2></div>
+
+  <div class="panel">
+    <h3>Decoding the assignment’s example</h3>
+    <p class="sub" style="font-size: 13.5px;">
+      The linked example — <a href="https://huggingface.co/lordx64/Qwen3.6-35B-A3B-Claude-4.7-Opus-Reasoning-Distilled">Qwen3.6-35B-A3B-Claude-4.7-Opus-Reasoning-Distilled</a> —
+      is a <em>model</em>, not a dataset: a Qwen3.6 MoE fine-tuned on ≈7,800 conversations distilled
+      from Claude Opus 4.7 with <code>&lt;think&gt;</code> reasoning traces. So “a 10–100M dataset
+      like this” means a <b>reasoning-distillation conversation dataset in the 10–100M-token band</b>
+      — the kind of data that trained that model. (Its own raw dataset,
+      <code>reasoning-distill-claude-opus-4-7-max</code>, is only ≈8M tokens — below the band.)
+    </p>
+  </div>
+
+  <div class="grid2">
+    <div class="panel" style="border-left: 3px solid var(--s1);">
+      <h3>Main pick · Bespoke-Stratos-17k</h3>
+      <p style="font-size: 13.5px; color: var(--ink-2); margin: 6px 0;">
+        16,710 conversations distilled from DeepSeek-R1 (same genre as the example’s Claude-Opus
+        distill): 10k math (NuminaMATH: AIME, MATH, Olympiads), 5k coding (APPs + TACO), 1k science
+        &amp; puzzles (STILL-2). Apache-2.0. Measured here:
+        <b><span class="n" data-d="en.tokens_raw_m"></span>M Qwen-2.5 tokens</b> — inside 10–100M.
+      </p>
+      <p style="font-size: 13.5px; color: var(--ink-2); margin: 6px 0;">
+        Why it’s perfect for <i>this</i> assignment: it arrives dirty in exactly the ways Session 4
+        teaches — literal <span class="mono">&lt;|begin_of_thought|&gt;</span> ghost tags in every
+        assistant turn, cross-source near-duplicate problems, real overlap with math benchmarks, and
+        a conversation format that needs unifying.
+      </p>
+    </div>
+    <div class="panel" style="border-left: 3px solid var(--s2);">
+      <h3>Sovereign companion · Sangraha <span class="mono">verified/tel</span></h3>
+      <p style="font-size: 13.5px; color: var(--ink-2); margin: 6px 0;">
+        The Session 3 sovereign corpus: 251B tokens over 22 Indic languages, with the honest
+        “verified human-origin” split (Telugu: 16.3B headline → 3.7B verified). We take a
+        deterministic slice — the first <span class="n" data-d="te.docs_raw"></span> verified Telugu
+        docs (<span class="n" data-d="te.tokens_raw_m"></span>M tokens) — and run the <em>same</em> 8
+        stages, because an India-first pipeline must be proven on Indic text, not asserted on
+        English. CC-BY-4.0.
+      </p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h3>The sourcing shelf — where corpora come from, seen from India</h3>
+    <p class="sub" style="font-size: 13.5px; margin-bottom: 10px;">
+      Every serious corpus starts at a handful of public resources.
+      <a href="https://commoncrawl.org/">Common Crawl</a> is the headwater — a nonprofit crawl of the
+      public web since 2008, petabytes per monthly snapshot — and nearly every English pretraining
+      set below is a filtered view of it. The India-first lesson from Session 3: the same headwater
+      yields <i>slivers</i> for Indic languages (CulturaX holds 2,847B English tokens beside a few B
+      per Indic language), so sovereign corpora need native collection, not just better filtering.
+    </p>
+    <div class="scrollx"><table>
+      <thead><tr><th>Global shelf</th><th>What it is</th><th style="border-left:1px solid var(--grid); padding-left:10px;">Indic / India-first shelf</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="https://commoncrawl.org/">Common Crawl</a></td><td>The raw web crawl everything else filters; ~monthly snapshots</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://huggingface.co/datasets/ai4bharat/sangraha">Sangraha</a> (AI4Bharat)</td><td>251B tokens / 22 languages; verified-vs-synthetic splits; cleaned by its own Indic pipeline, <a href="https://github.com/AI4Bharat/IndicLLMSuite">Setu</a></td>
+        </tr>
+        <tr>
+          <td><a href="https://huggingface.co/datasets/HuggingFaceFW/fineweb">FineWeb / FineWeb-Edu</a></td><td>Filtered Common Crawl; the edu-classifier recipe our stage 3 reuses</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://huggingface.co/datasets/ai4bharat/IndicCorpV2">IndicCorp v2</a></td><td>~20B tokens, 23 languages — the earlier IIT-M/AI4Bharat web corpus</td>
+        </tr>
+        <tr>
+          <td><a href="https://huggingface.co/datasets/allenai/dolma">Dolma</a> (AI2)</td><td>Open 3T-token corpus — V4’s base, clean at doc level yet carrying the character-level dirt our stage 1 strips</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://huggingface.co/datasets/ai4bharat/BPCC">BPCC / Samanantar</a></td><td>Parallel En↔Indic sentence pairs — the translation backbone</td>
+        </tr>
+        <tr>
+          <td><a href="https://huggingface.co/datasets/uonlp/CulturaX">CulturaX</a></td><td>167 languages; the 2,847B-English-vs-Indic-slivers comparison</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://bhashini.gov.in/">Bhashini</a></td><td>Government of India language mission — models, corpora and translation APIs for 22+ scheduled languages</td>
+        </tr>
+        <tr>
+          <td>DataComp-LM / Nemotron-CC</td><td>Fixed-budget filtered-vs-raw evidence; real-to-synthetic mix patterns</td>
+          <td style="border-left:1px solid var(--grid); padding-left:10px;"><a href="https://bharatgen.com/">BharatGen</a></td><td>India’s state-funded sovereign LLM mission — 22-language foundational models and the data effort behind them</td>
+        </tr>
+      </tbody>
+    </table></div>
+    <p class="sub" style="font-size: 12.5px; margin-top: 10px;">
+      Considered and passed over for the main run: <b>OpenThoughts-114k</b> (≈0.8–1B tokens — over
+      the band), the example’s own <b>lordx64 repos</b> (≈8M — under the band), and full
+      <b>Sangraha / FineWeb / Dolma</b> (10⁵–10⁷× oversized; only slices are feasible — which is
+      exactly what the Telugu companion run does).
+    </p>
+  </div>
+</section>
+
+<!-- ============================================================ 3 · FUNNEL -->
+<section id="funnel">
+  <div class="sec-head"><span class="sec-num">03</span><h2>What was cleaned, why, and how</h2></div>
+  <p class="sub">
+    The lesson’s surviving-token bar, computed for real. Each row is one strategy; the solid bar is
+    what survived it, the tinted stub on the right is what that stage removed or rewrote.
+    <b>Click a row</b> for what happened inside — with real before/after examples from this corpus.
+  </p>
+
+  <div class="panel">
+    <h3>Bespoke-Stratos-17k · <span class="n" data-d="en.tokens_raw_m"></span>M tokens in → <span class="n" data-d="en.tokens_final_m"></span>M out</h3>
+    <div class="legend">
+      <span class="key"><span class="swatch" style="background: var(--s1);"></span>tokens surviving</span>
+      <span class="key"><span class="swatch" style="background: var(--wash1); border: 1px solid var(--ring);"></span>removed by this stage</span>
+    </div>
+    <div id="funnelEN"></div>
+    <div class="stage-detail" id="detailEN" hidden></div>
+  </div>
+
+  <div class="panel">
+    <h3>Sangraha Telugu slice · <span class="n" data-d="te.tokens_raw_m"></span>M tokens in → <span class="n" data-d="te.tokens_final_m"></span>M out</h3>
+    <div class="legend">
+      <span class="key"><span class="swatch" style="background: var(--s2);"></span>tokens surviving</span>
+      <span class="key"><span class="swatch" style="background: var(--wash2); border: 1px solid var(--ring);"></span>removed by this stage</span>
+    </div>
+    <div id="funnelTE"></div>
+    <div class="stage-detail" id="detailTE" hidden></div>
+  </div>
+</section>
+
+<!-- ============================================================ 4 · SOVEREIGN -->
+<section id="sovereign">
+  <div class="sec-head"><span class="sec-num">04</span><h2>The India-first proof — measured, not asserted</h2></div>
+  <p class="sub">
+    The sovereign thread runs to the character level. These are the five places the pipeline had to
+    be script-aware, each with the number that proves it on real Telugu text.
+  </p>
+  <div class="grid2" id="sovereignCards"></div>
+  <div class="panel">
+    <h3>Tokenizer fertility — Session 3’s warning, measured here</h3>
+    <p class="sub" style="font-size: 13.5px;">
+      The same Qwen-2.5 tokenizer that spends <b><span class="n" data-d="fert.en_cpt"></span>
+      characters per token</b> on English spends only
+      <b><span class="n" data-d="fert.te_cpt"></span> chars/token</b> on Telugu — so a fixed token
+      budget buys far fewer Telugu sentences. Tokenizer design and corpus design are one system;
+      this is why Assignment 3 sized an Indic-aware 262K vocabulary.
+    </p>
+    <div id="fertilityBars"></div>
+  </div>
+</section>
+
+<!-- ============================================================ 5 · EXTRAS -->
+<section id="extras">
+  <div class="sec-head"><span class="sec-num">05</span><h2>What else was cleaned up — beyond removal</h2></div>
+  <p class="sub">Strategies and concerns that don’t show up as removed tokens, but decide whether the corpus is usable at all.</p>
+  <div class="grid2" id="extraCards"></div>
+</section>
+
+<!-- ============================================================ 6 · STATS -->
+<section id="stats">
+  <div class="sec-head"><span class="sec-num">06</span><h2>Final statistics</h2></div>
+  <div class="tiles" id="statTiles"></div>
+  <div class="panel">
+    <h3>Bespoke-Stratos-17k — stage by stage</h3>
+    <div class="scrollx"><table id="tableEN"></table></div>
+  </div>
+  <div class="panel">
+    <h3>Sangraha Telugu slice — stage by stage</h3>
+    <div class="scrollx"><table id="tableTE"></table></div>
+  </div>
+  <p class="sub" style="font-size: 13px;">
+    Full machine-readable records:
+    <a href="manifest.json" download>manifest.json</a> ·
+    <a href="stats.json" download>stats.json</a> ·
+    <a href="manifest_tel.json" download>manifest_tel.json</a> ·
+    <a href="stats_tel.json" download>stats_tel.json</a> ·
+    <a href="sample_cleaned.jsonl" download>sample_cleaned.jsonl</a> (12 cleaned docs).
+    The manifests carry source, license, contributor, cleaning-script hash, content hash, token
+    counts and language breakdown — the lesson’s gating rule: <b>no manifest, no entry into the corpus</b>.
+  </p>
+</section>
+
+</main>
+
+<footer><div class="wrap">
+  <div class="cols">
+    <div>
+      <b style="color: var(--ink-2);">Sources — course</b><br />
+      <a href="https://axiom.theschoolofai.in/courses/cmq97i5kn032208o8xu5dab4q/sessions/cmroc28350a8409qv5c8pm2a0/lesson">Session 4 · Data Cleaning &amp; Deduplication</a><br />
+      <a href="https://axiom.theschoolofai.in/courses/cmq97i5kn032208o8xu5dab4q/sessions/cmr4ji9vx00xy09pl509rpl86/lesson">Session 3 · Data Collection &amp; Sourcing</a>
+    </div>
+    <div>
+      <b style="color: var(--ink-2);">Sources — data</b><br />
+      <a href="https://huggingface.co/datasets/bespokelabs/Bespoke-Stratos-17k">Bespoke-Stratos-17k</a> ·
+      <a href="https://huggingface.co/datasets/ai4bharat/sangraha">Sangraha</a><br />
+      <a href="https://huggingface.co/datasets/HuggingFaceH4/MATH-500">MATH-500</a> ·
+      <a href="https://huggingface.co/datasets/Maxwell-Jia/AIME_2024">AIME-2024</a> ·
+      <a href="https://huggingface.co/datasets/yentinglin/aime_2025">AIME-2025</a> ·
+      <a href="https://huggingface.co/datasets/openai/gsm8k">GSM8K</a><br />
+      <a href="https://huggingface.co/HuggingFaceFW/fineweb-edu-classifier">FineWeb-Edu classifier</a> ·
+      <a href="https://fasttext.cc/docs/en/language-identification.html">fastText lid.176</a> ·
+      <a href="https://commoncrawl.org/">Common Crawl</a>
+    </div>
+    <div>
+      <b style="color: var(--ink-2);">ERA V5 · Session 4 assignment</b><br />
+      Shankar · <span class="n" data-d="meta.date"></span><br />
+      Pipeline: <a href="https://github.com/shankarpandala/era-v5/tree/main/data-cleaning/pipeline">data-cleaning/pipeline</a> ·
+      seed 42 · determinism <span style="color: var(--good-text);">verified ✓</span>
+    </div>
+  </div>
+</div></footer>
+
+<script>
+(function () {
+  "use strict";
+  const $ = (s, el) => (el || document).querySelector(s);
+
+  /* ---------- theme toggle (data-theme wins over OS) ---------- */
+  $("#themeBtn").addEventListener("click", () => {
+    const r = document.documentElement;
+    const dark = r.dataset.theme === "dark" ||
+      (!r.dataset.theme && matchMedia("(prefers-color-scheme: dark)").matches);
+    r.dataset.theme = dark ? "light" : "dark";
+  });
+
+  /* ---------- data island (graceful pre-injection fallback) ---------- */
+  let D;
+  try { D = JSON.parse($("#data").textContent); }
+  catch (e) { D = null; }
+  if (!D || !D.strategies) {
+    document.querySelectorAll(".n[data-d]").forEach((el) => { el.textContent = "…"; });
+    return;
+  }
+
+  /* ---------- number helpers + data-path filler ---------- */
+  const fmt = (n) => typeof n === "number" ? n.toLocaleString("en-US") : n;
+  const get = (path) => path.split(".").reduce((o, k) => (o ? o[k] : undefined), D);
+  document.querySelectorAll(".n[data-d]").forEach((el) => {
+    const v = get(el.dataset.d);
+    el.textContent = v === undefined ? "—" : fmt(v);
+  });
+
+  /* ---------- 1 · strategy cards ---------- */
+  $("#strategyCards").innerHTML = D.strategies.map((s, i) => `
+    <div class="strategy">
+      <span class="num">STRATEGY ${i + 1} · §${s.sec}</span>
+      <h3>${s.name}</h3>
+      <div class="what">${s.what}</div>
+      <div class="fix"><b>V4 defect it fixes:</b> ${s.fixes}</div>
+      <div class="here">Here: ${s.here}</div>
+    </div>`).join("");
+
+  /* ---------- 3 · funnels ---------- */
+  function renderFunnel(rootId, detailId, corpus, teFlag) {
+    const root = $(rootId), detail = $(detailId);
+    const t0 = corpus.stages[0].tokens_in;
+    root.innerHTML = corpus.stages.map((st, i) => {
+      const keptPct = 100 * st.tokens_out / t0;
+      const inPct = 100 * st.tokens_in / t0;
+      const lostPct = Math.max(0, inPct - keptPct);
+      const lostLeft = keptPct;
+      return `
+      <div class="funnel-row ${teFlag ? "te" : ""}" data-i="${i}" role="button" tabindex="0"
+           aria-expanded="false" aria-label="${st.label}: ${fmt(st.tokens_out)} tokens survive">
+        <div class="funnel-label">${i + 1} · ${st.label}</div>
+        <div class="funnel-track">
+          <div class="funnel-bar" style="width: ${keptPct}%; background: var(${teFlag ? "--s2" : "--s1"});"></div>
+          ${lostPct > 0.05 ? `<div class="funnel-lost" style="left: ${lostLeft}%; width: ${Math.max(lostPct, 0.35)}%; background: var(${teFlag ? "--wash2" : "--wash1"});"></div>` : ""}
+        </div>
+        <div class="funnel-val">${(st.tokens_out / 1e6).toFixed(2)}M ${st.delta ? `<span style="color: var(--ink-3);">(${st.delta})</span>` : ""}</div>
+      </div>`;
+    }).join("");
+    let active = -1;
+    const setRowStates = (i) => root.querySelectorAll(".funnel-row").forEach((r) => {
+      const on = +r.dataset.i === i;
+      r.classList.toggle("active", on);
+      r.setAttribute("aria-expanded", on ? "true" : "false");
+    });
+    const activate = (i) => {
+      if (i === active) { setRowStates(-1); detail.hidden = true; active = -1; return; }
+      active = i;
+      setRowStates(i);
+      const st = corpus.stages[i];
+      detail.hidden = false;
+      detail.innerHTML = `<h3><span class="num" style="color: var(${teFlag ? "--s2" : "--s1"}); font-family: ui-monospace, Menlo, monospace; font-size: 12px;">STAGE ${i + 1}</span> ${st.label}</h3>${st.detail}`;
+    };
+    root.addEventListener("click", (e) => {
+      const row = e.target.closest(".funnel-row");
+      if (row) activate(+row.dataset.i);
+    });
+    root.addEventListener("keydown", (e) => {
+      const row = e.target.closest(".funnel-row");
+      if (row && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); activate(+row.dataset.i); }
+    });
+  }
+  renderFunnel("#funnelEN", "#detailEN", D.en, false);
+  renderFunnel("#funnelTE", "#detailTE", D.te, true);
+
+  /* ---------- 4 · sovereign cards + fertility ---------- */
+  $("#sovereignCards").innerHTML = D.sovereign.map((c) => `
+    <div class="strategy">
+      <span class="num">${c.tag}</span>
+      <h3>${c.name}</h3>
+      <div class="what">${c.body}</div>
+      <div class="here">${c.proof}</div>
+    </div>`).join("");
+
+  const f = D.fert;
+  $("#fertilityBars").innerHTML = `
+    <div class="legend">
+      <span class="key"><span class="swatch" style="background: var(--s1);"></span>English (Stratos)</span>
+      <span class="key"><span class="swatch" style="background: var(--s2);"></span>Telugu (Sangraha)</span>
+    </div>
+    <div class="bar-pair"><div>chars / token</div><div class="track"><div class="bar" style="width: ${100 * f.en_cpt / f.max_cpt}%; background: var(--s1);"></div></div><div class="num mono">${f.en_cpt}</div></div>
+    <div class="bar-pair"><div></div><div class="track"><div class="bar" style="width: ${100 * f.te_cpt / f.max_cpt}%; background: var(--s2);"></div></div><div class="num mono">${f.te_cpt}</div></div>
+    <div class="bar-pair" style="margin-top: 10px;"><div>tokens / word</div><div class="track"><div class="bar" style="width: ${100 * f.en_tpw / f.max_tpw}%; background: var(--s1);"></div></div><div class="num mono">${f.en_tpw}</div></div>
+    <div class="bar-pair"><div></div><div class="track"><div class="bar" style="width: ${100 * f.te_tpw / f.max_tpw}%; background: var(--s2);"></div></div><div class="num mono">${f.te_tpw}</div></div>
+    <p class="sub" style="font-size: 12.5px; margin-top: 8px;">${f.note}</p>`;
+
+  /* ---------- 5 · extras ---------- */
+  $("#extraCards").innerHTML = D.extras.map((c) => `
+    <div class="strategy">
+      <span class="num">${c.tag}</span>
+      <h3>${c.name}</h3>
+      <div class="what">${c.body}</div>
+    </div>`).join("");
+
+  /* ---------- 6 · stats tables + tiles ---------- */
+  const pct = (a, b) => b ? (100 * (b - a) / b) : 0;
+  function renderTable(id, corpus) {
+    const rows = corpus.stages.map((st, i) => {
+      const dTok = st.tokens_in - st.tokens_out;
+      return `<tr>
+        <td>${i + 1} · ${st.label}</td>
+        <td class="num">${fmt(st.docs_in)}</td>
+        <td class="num">${fmt(st.docs_out)}</td>
+        <td class="num">${fmt(st.tokens_in)}</td>
+        <td class="num">${fmt(st.tokens_out)}</td>
+        <td class="num">${dTok ? "−" + fmt(dTok) : "0"}</td>
+        <td class="num">${dTok ? (100 * dTok / st.tokens_in).toFixed(2) + "%" : "—"}</td>
+      </tr>`;
+    }).join("");
+    $(id).innerHTML = `
+      <thead><tr><th>Stage</th><th class="num">docs in</th><th class="num">docs out</th>
+      <th class="num">tokens in</th><th class="num">tokens out</th><th class="num">Δ tokens</th><th class="num">Δ %</th></tr></thead>
+      <tbody>${rows}</tbody>`;
+  }
+  renderTable("#tableEN", D.en);
+  renderTable("#tableTE", D.te);
+
+  $("#statTiles").innerHTML = D.tiles.map((t) => `
+    <div class="tile"><div class="lab">${t.lab}</div><div class="val ${t.good ? "good" : ""}">${t.val}</div></div>`).join("");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+{
+ "dataset": "ai4bharat/sangraha (verified/tel slice)",
+ "source_url": "https://huggingface.co/datasets/ai4bharat/sangraha",
+ "license": "cc-by-4.0",
+ "contributor": "Shankar (ERA V5)",
+ "collected": "HF streaming snapshot, downloaded 2026-07-24; slice rule: first documents in published order to 16,000,000 chars",
+ "cleaning_script": {
+  "file": "sangraha_slice.py",
+  "sha256": "8d73d17ed933cae422008284d4ab1511b3fdec07cdf52e0c06fc7e76f887c4c3"
+ },
+ "pipeline_version": "1.0.0",
+ "canonical_format": "document {id, text}",
+ "content_sha256": "480ef2e8b6431af0323f9ace7ae35d15c77e2ba77afb19456b2d46ec4cfa7c5c",
+ "docs": {
+  "raw": 7840,
+  "final": 7819
+ },
+ "tokens": {
+  "raw": 23168604,
+  "final": 23131079,
+  "tokenizer": "Qwen/Qwen2.5-0.5B"
+ },
+ "language_breakdown": {
+  "tel": 23122740,
+  "id": 3900,
+  "eng": 1663,
+  "es": 1498,
+  "su": 1278
+ },
+ "fertility": {
+  "tokens_per_word": 11.479,
+  "chars_per_token": 0.69,
+  "tokenizer": "Qwen/Qwen2.5-0.5B",
+  "note": "compare with the English corpus readout in the main manifest"
+ },
+ "stages": [
+  {
+   "name": "normalization",
+   "docs_in": 7840,
+   "docs_out": 7840,
+   "docs_removed": 0,
+   "tokens_in": 23168604,
+   "tokens_out": 23163746,
+   "details": {
+    "private_use": 3,
+    "replacement_char": 8,
+    "mojibake_fixed_fields": 2
+   }
+  },
+  {
+   "name": "format_discipline",
+   "docs_in": 7840,
+   "docs_out": 7840,
+   "docs_removed": 0,
+   "tokens_in": 23163746,
+   "tokens_out": 23163746,
+   "details": {
+    "note": "plain-text corpus - one canonical document schema {id, text}; ghost-marker scan only",
+    "markers_found_total": 0
+   }
+  },
+  {
+   "name": "quality_filtering",
+   "docs_in": 7840,
+   "docs_out": 7823,
+   "docs_removed": 17,
+   "tokens_in": 23163746,
+   "tokens_out": 23139679,
+   "details": {
+    "script_aware_rule_fail_counts": {
+     "duplicate_lines": 11,
+     "symbol_to_word_ratio": 6
+    },
+    "english_tuned_rules_measure_only": {
+     "would_drop_docs": 7492,
+     "would_drop_pct": 95.6,
+     "rule_fail_counts": {
+      "stop_words": 7484,
+      "mean_word_length": 390,
+      "duplicate_lines": 11,
+      "symbol_to_word_ratio": 6
+     },
+     "note": "stop-word and mean-word-length rules are tuned for English prose; applied blindly they would erase this much good Telugu"
+    },
+    "edu_classifier_bias_sample": {
+     "sampled_docs": 1000,
+     "mean_score": 0.391,
+     "share_below_2": 0.999,
+     "role": "ADVISORY ONLY - an English-trained edu classifier scoring Telugu measures its own bias, not Telugu quality; gating on it would erase the language (the V4 always-on-channel lesson)"
+    }
+   }
+  },
+  {
+   "name": "deduplication",
+   "docs_in": 7823,
+   "docs_out": 7823,
+   "docs_removed": 0,
+   "tokens_in": 23139679,
+   "tokens_out": 23139679,
+   "details": {
+    "exact_duplicates": 0,
+    "near_dup_clusters": 0,
+    "near_dup_docs_removed": 0,
+    "similarity_histogram": {
+     "0.4": 1
+    },
+    "naive_english_shingler_empty_docs": 1555,
+    "naive_english_shingler_note": "[^a-z0-9] shingling produces an EMPTY shingle set for 1555/7823 Telugu docs - the silent way an English-tuned dedup destroys an Indic crawl; the script-aware \\w shingler is used instead",
+    "minhash": {
+     "num_perm": 128,
+     "seed": 42,
+     "shingle_words": 5,
+     "lsh_bands_rows": [
+      16,
+      8
+     ]
+    }
+   }
+  },
+  {
+   "name": "language_id",
+   "docs_in": 7823,
+   "docs_out": 7819,
+   "docs_removed": 4,
+   "tokens_in": 23139679,
+   "tokens_out": 23131090,
+   "details": {
+    "model": "fastText lid.176",
+    "claimed_language": "tel (folder/split name)",
+    "code_mapping": "fastText ISO 639-1 -> Sangraha ISO 639-3, explicit table, unmapped codes fail loudly (the V4 Telugu-code bug, fixed)",
+    "language_histogram": {
+     "tel": 7815,
+     "eng": 3,
+     "mg": 2,
+     "su": 1,
+     "id": 1,
+     "es": 1
+    },
+    "mismatched_docs": 8
+   }
+  },
+  {
+   "name": "pii_removal",
+   "docs_in": 7819,
+   "docs_out": 7819,
+   "docs_removed": 0,
+   "docs_modified": 2,
+   "tokens_in": 23131090,
+   "tokens_out": 23131079,
+   "details": {
+    "exempt_bare_10digit_no_context": 28,
+    "masked_email": 1,
+    "exempt_code_email": 0,
+    "exempt_code_ip": 0,
+    "masked_ip": 1,
+    "note": "same typed-placeholder policy as the main run; Indic-name ML layer skipped - precision/recall tension is sharper for Indic names (common names are also common words)"
+   }
+  },
+  {
+   "name": "decontamination",
+   "docs_in": 7819,
+   "docs_out": 7819,
+   "docs_removed": 0,
+   "tokens_in": 23131079,
+   "tokens_out": 23131079,
+   "details": {
+    "benchmarks": {
+     "MATH-500": 500,
+     "AIME-2024": 30,
+     "AIME-2025": 30,
+     "GSM8K-test": 1319
+    },
+    "hits_by_benchmark": {},
+    "note": "the eval firewall must match the corpus language - for a Telugu corpus at scale the fingerprints must come from Indic evals (MILU, IndicQA, translated MMLU) too; English math benchmarks are scanned here for verbatim leakage and to keep one firewall for the combined corpus",
+    "canary_ids": [
+     "ERA-V5-CANARY-TEL-e1962a1365fdddbe",
+     "ERA-V5-CANARY-TEL-fbb1574caf811702",
+     "ERA-V5-CANARY-TEL-1bebb4dacb52a6c7"
+    ]
+   }
+  }
+ ],
+ "decontamination": {
+  "benchmarks": [
+   "MATH-500",
+   "AIME-2024",
+   "AIME-2025",
+   "GSM8K-test"
+  ],
+  "hits_removed": 0,
+  "canary_ids": [
+   "ERA-V5-CANARY-TEL-e1962a1365fdddbe",
+   "ERA-V5-CANARY-TEL-fbb1574caf811702",
+   "ERA-V5-CANARY-TEL-1bebb4dacb52a6c7"
+  ]
+ },
+ "determinism": {
+  "seed": 42,
+  "id_scheme": "sha256(cleaned text)",
+  "verified_identical_on_rerun": true
+ }
+}

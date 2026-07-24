@@ -1,0 +1,12 @@
+# ERA-V5 Assignment 4 cleaning pipeline
+# torch is CPU-only here; install with:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
+datasets>=3.0
+pyarrow>=17.0
+datasketch>=1.6
+ftfy>=6.1
+regex>=2024.0
+transformers>=4.44
+torch>=2.3
+fasttext-wheel>=0.9.2
+numpy>=1.26
