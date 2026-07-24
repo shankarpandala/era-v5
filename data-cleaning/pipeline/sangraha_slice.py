@@ -183,11 +183,21 @@ def run_pipeline(prep_only=False, quiet=False):
         return None
 
     # ---- stage 3: quality filtering - script-aware gate + measured English bias
+    # heuristic_check is conversation-shaped (user, answer); passing answer=""
+    # would fail EVERY doc on empty_or_truncated_answer, so that rule (and
+    # empty_user, meaningless here) is excluded from the bias measurement
+    def english_rules(text):
+        return [r for r in heuristic_check(text, "")
+                if r not in ("empty_or_truncated_answer", "empty_user")]
+
     en_rule_fails = Counter()
+    en_would_drop = 0
     for d in docs:
-        for r in heuristic_check(d["text"], ""):
-            en_rule_fails[r] += 1
-    en_would_drop = sum(1 for d in docs if heuristic_check(d["text"], ""))
+        fails = english_rules(d["text"])
+        if fails:
+            en_would_drop += 1
+            for r in fails:
+                en_rule_fails[r] += 1
 
     kept, sa_fails, drop_examples = [], Counter(), []
     for d in docs:

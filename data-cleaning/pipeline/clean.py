@@ -43,7 +43,13 @@ import numpy as np
 SEED = 42
 OUT = os.environ.get("A4_OUT", os.path.join(os.path.dirname(os.path.abspath(__file__)), "out"))
 DATASET = "bespokelabs/Bespoke-Stratos-17k"
-EDU_THRESHOLD = 2.0
+# The FineWeb-Edu default gate is 2.0 for web prose. Measured on this corpus it
+# would delete 9.8% of the math half - inspected samples are good competition
+# problems penalized for LaTeX density (the lesson's filter-bias trap, in
+# English). Gate set to 1.5: drops only the genuinely degenerate tail; the
+# distribution and the would-drop-at-2.0 count are reported instead.
+EDU_THRESHOLD = 1.5
+EDU_DEFAULT_GATE = 2.0
 PIPELINE_VERSION = "1.0.0"
 
 # ---------------------------------------------------------------- utilities
@@ -185,9 +191,12 @@ LINE_ROLE_RE = re.compile(r"^(Human|Assistant):", re.MULTILINE)
 
 def restructure(system: str, user: str, assistant: str, ctr: Counter, anomalies: list, idx: int):
     for t in STRATOS_TAGS:
-        c = assistant.count(t) + user.count(t) + system.count(t)
+        c = assistant.count(t) + system.count(t)
         if c:
-            ctr["tag " + t] += c
+            ctr["tag " + t] += c  # these leave the text (restructure + system rewrite)
+        cu = user.count(t)
+        if cu:  # a tag inside a user problem statement is task content, not structure
+            ctr["flagged_fixture stratos-tag-in-user"] += cu
     for m in GENERIC_MARKERS:
         c = user.count(m) + assistant.count(m)
         if c:
@@ -224,8 +233,12 @@ def restructure(system: str, user: str, assistant: str, ctr: Counter, anomalies:
 
 
 def residual_tags(messages) -> int:
+    # asserted zero on the fields the restructure controls (system + assistant);
+    # user text is preserved verbatim, so tags there are flagged, not fatal
     n = 0
     for m in messages:
+        if m["role"] == "user":
+            continue
         for t in STRATOS_TAGS:
             n += m.get("content", "").count(t) + m.get("reasoning", "").count(t)
     return n
@@ -430,10 +443,11 @@ EMAIL_RE = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
 FIXTURE_DOMAINS = ("example.com", "example.org", "example.net", "email.com", "domain.com",
                    "test.com", "foo.com", "bar.com", "localhost")
 PHONE_IN_RE = re.compile(r"\+91[\s-]?[6-9]\d{4}[\s-]?\d{5}\b")
-PHONE_US_RE = re.compile(r"\(?\b\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}\b")
+PHONE_US_RE = re.compile(r"\(?(?<![\d.])\d{3}\)?[\s.-]\d{3}[\s.-]\d{4}(?![\d.])")
 PHONE_555_RE = re.compile(r"\b\d{3}[\s.\-)]*555[\s.-]?\d{4}\b")
-PHONE_BARE_RE = re.compile(r"\b[6-9]\d{9}\b")
-PHONE_CONTEXT_RE = re.compile(r"(phone|mobile|call|contact|whatsapp|tel)[^\n]{0,40}$", re.IGNORECASE)
+# lookarounds keep this off decimal fractions ("0.8333333333") and longer runs
+PHONE_BARE_RE = re.compile(r"(?<![\d.])[6-9]\d{9}(?![\d.])")
+PHONE_CONTEXT_RE = re.compile(r"\b(phone|mobile|call|contact|whatsapp|tel)\b[^\n]{0,40}$", re.IGNORECASE)
 IPV4_RE = re.compile(r"\b(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})\b")
 IPV6_RE = re.compile(r"\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b")
 KEY_RES = [re.compile(p) for p in (
@@ -547,8 +561,7 @@ def scrub_pii(text: str, ip_task: bool, stats: Counter, examples: list) -> str:
             stats["masked_ssn"] += 1
             return "[SSN]"
 
-        if not ip_task:
-            seg = SSN_RE.sub(ssn_sub, seg)
+        seg = SSN_RE.sub(ssn_sub, seg)
         parts[i] = seg
     return "".join(parts)
 
@@ -742,11 +755,17 @@ def run_pipeline(prep_only=False, quiet=False):
         kept.append(d)
     score_hist = Counter()
     edu_dropped = 0
+    would_drop_default = 0
+    domain_scores = {"code": [], "math": []}
+    code_re = re.compile(r"```|\bdef \b|#include|\bclass \b|stdin|function")
     kept2 = []
     for d in kept:
         s = edu_scores[sha256(classifier_input(d["user"], d["answer"]))]
         d["edu_score"] = s
         score_hist[f"{np.floor(s * 2) / 2:.1f}"] += 1
+        domain_scores["code" if code_re.search(d["user"] + d["answer"]) else "math"].append(s)
+        if s < EDU_DEFAULT_GATE:
+            would_drop_default += 1
         if s < EDU_THRESHOLD:
             edu_dropped += 1
         else:
@@ -762,6 +781,16 @@ def run_pipeline(prep_only=False, quiet=False):
             "heuristic_dropped": heur_dropped,
             "edu_classifier": "HuggingFaceFW/fineweb-edu-classifier",
             "edu_threshold": EDU_THRESHOLD, "edu_dropped": edu_dropped,
+            "edu_default_gate_note": {
+                "default_gate": EDU_DEFAULT_GATE,
+                "would_drop_at_default": would_drop_default,
+                "why_lowered": "inspected low scorers are good competition problems penalized "
+                               "for LaTeX density by a web-prose classifier - the filter-bias "
+                               "trap, measured before gating",
+                "domain_means": {k: round(float(np.mean(v)), 3) for k, v in domain_scores.items() if v},
+                "domain_below_default": {k: int(sum(1 for s in v if s < EDU_DEFAULT_GATE))
+                                         for k, v in domain_scores.items() if v},
+            },
             "edu_score_histogram": dict(sorted(score_hist.items())),
             "edu_score_mean_kept": round(float(np.mean([d["edu_score"] for d in kept2])), 4) if kept2 else None,
         },
@@ -925,18 +954,18 @@ def run_pipeline(prep_only=False, quiet=False):
     # (>= RARE_MATCH_MIN of them), or matches a short item exactly / by Jaccard
     hits = Counter()
     hit_examples = []
-    single_gram_pairs = 0
+    single_gram_pairs = 0  # doc-item pairs the naive GPT-3 single-gram rule would flag
     contam_drop = set()
     for i, d in enumerate(docs):
         best = None  # (containment, matched, (bench, idx))
+        naive_items = set()
         by_item = defaultdict(int)
         for g in doc_matches[i]:
-            if g in boilerplate:
-                continue
             for key in gram_items[g]:
-                by_item[key] += 1
-        if by_item:
-            single_gram_pairs += len(by_item)
+                naive_items.add(key)
+                if g not in boilerplate:
+                    by_item[key] += 1
+        single_gram_pairs += len(naive_items)
         for key, m in sorted(by_item.items()):
             rt = len(rare_item_grams[key])
             if rt == 0:

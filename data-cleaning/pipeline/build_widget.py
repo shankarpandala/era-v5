@@ -104,7 +104,11 @@ def main():
         + li([
             f"heuristic drops: <b>{qd['heuristic_dropped']}</b> ({', '.join(f'{k} {v}' for k, v in rf.items())})",
             f"classifier gate (score &lt; {qd['edu_threshold']}): <b>{qd['edu_dropped']}</b> dropped · mean score of kept docs {qd['edu_score_mean_kept']}",
-            "a curated corpus loses little here — the finding is the score distribution, not a big removal",
+            f"the FineWeb-Edu default gate of {qd['edu_default_gate_note']['default_gate']} would have dropped "
+            f"<b>{qd['edu_default_gate_note']['would_drop_at_default']:,}</b> docs — inspected, they are good "
+            f"competition problems penalized for LaTeX density (math mean {qd['edu_default_gate_note']['domain_means'].get('math')}, "
+            f"code mean {qd['edu_default_gate_note']['domain_means'].get('code')}); the gate was lowered to "
+            f"{qd['edu_threshold']} after measuring — the filter-bias trap, caught in English",
         ])
         + (f"<div class='example'>dropped by <b>{'/'.join(ex_q[0]['rules'])}</b>: {esc(ex_q[0]['head'], 180)}<br />"
            f"<span style='color:var(--ink-3)'>— a perfectly good problem (“Martians measure angles in clerts”) failing an English stop-word rule: "

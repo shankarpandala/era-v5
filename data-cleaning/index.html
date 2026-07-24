@@ -10,7 +10,7 @@
   :root {
     color-scheme: light;
     --surface-1: #fcfcfb; --plane: #f9f9f7;
-    --ink-1: #0b0b0b; --ink-2: #52514e; --ink-3: #898781;
+    --ink-1: #0b0b0b; --ink-2: #52514e; --ink-3: #6e6d67;
     --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
     --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a;
     --good: #0ca30c; --good-text: #006300; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
@@ -41,6 +41,7 @@
   }
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
+  section[id], header[id] { scroll-margin-top: 64px; }
   body {
     margin: 0; background: var(--plane); color: var(--ink-1);
     font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -458,7 +459,7 @@
       const lostLeft = keptPct;
       return `
       <div class="funnel-row ${teFlag ? "te" : ""}" data-i="${i}" role="button" tabindex="0"
-           aria-label="${st.label}: ${fmt(st.tokens_out)} tokens survive">
+           aria-expanded="false" aria-label="${st.label}: ${fmt(st.tokens_out)} tokens survive">
         <div class="funnel-label">${i + 1} · ${st.label}</div>
         <div class="funnel-track">
           <div class="funnel-bar" style="width: ${keptPct}%; background: var(${teFlag ? "--s2" : "--s1"});"></div>
@@ -468,10 +469,15 @@
       </div>`;
     }).join("");
     let active = -1;
+    const setRowStates = (i) => root.querySelectorAll(".funnel-row").forEach((r) => {
+      const on = +r.dataset.i === i;
+      r.classList.toggle("active", on);
+      r.setAttribute("aria-expanded", on ? "true" : "false");
+    });
     const activate = (i) => {
-      root.querySelectorAll(".funnel-row").forEach((r) => r.classList.toggle("active", +r.dataset.i === i));
-      if (i === active) { detail.hidden = true; active = -1; return; }
+      if (i === active) { setRowStates(-1); detail.hidden = true; active = -1; return; }
       active = i;
+      setRowStates(i);
       const st = corpus.stages[i];
       detail.hidden = false;
       detail.innerHTML = `<h3><span class="num" style="color: var(${teFlag ? "--s2" : "--s1"}); font-family: ui-monospace, Menlo, monospace; font-size: 12px;">STAGE ${i + 1}</span> ${st.label}</h3>${st.detail}`;
