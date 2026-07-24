@@ -366,7 +366,7 @@ def run_pipeline(prep_only=False, quiet=False):
         "AIME-2025": [r["problem"] for r in ld("yentinglin/aime_2025", split="train")],
         "GSM8K-test": [r["question"] for r in ld("openai/gsm8k", "main", split="test")],
     }
-    item_grams, gram_items, gram_text, short_exact, short_8g = build_fingerprints(benches)
+    item_grams, gram_items, gram_text, short_exact, short_8g, _multi = build_fingerprints(benches)
     hits = Counter()
     contam_drop = set()
     for i, d in enumerate(docs):

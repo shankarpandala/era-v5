@@ -179,15 +179,15 @@
    "docs_in": 7819,
    "docs_out": 7819,
    "docs_removed": 0,
-   "docs_modified": 2,
+   "docs_modified": 1,
    "tokens_in": 23131090,
-   "tokens_out": 23131079,
+   "tokens_out": 23131085,
    "details": {
     "exempt_bare_10digit_no_context": 28,
     "masked_email": 1,
     "exempt_code_email": 0,
     "exempt_code_ip": 0,
-    "masked_ip": 1,
+    "exempt_version_like_ip": 1,
     "note": "same typed-placeholder policy as the main run; Indic-name ML layer skipped - precision/recall tension is sharper for Indic names (common names are also common words)"
    },
    "examples": [
@@ -195,11 +195,6 @@
      "type": "email",
      "found": "editor@saarangabooks.com",
      "action": "masked [EMAIL]"
-    },
-    {
-     "type": "ip",
-     "found": "2.23.8.6",
-     "action": "masked [IP]"
     }
    ]
   },
@@ -208,8 +203,8 @@
    "docs_in": 7819,
    "docs_out": 7819,
    "docs_removed": 0,
-   "tokens_in": 23131079,
-   "tokens_out": 23131079,
+   "tokens_in": 23131085,
+   "tokens_out": 23131085,
    "details": {
     "benchmarks": {
      "MATH-500": 500,
@@ -231,11 +226,11 @@
    "docs_in": 7819,
    "docs_out": 7819,
    "docs_removed": 0,
-   "tokens_in": 23131079,
-   "tokens_out": 23131079,
+   "tokens_in": 23131085,
+   "tokens_out": 23131085,
    "details": {
-    "content_sha256": "480ef2e8b6431af0323f9ace7ae35d15c77e2ba77afb19456b2d46ec4cfa7c5c",
-    "cleaning_script_sha256": "8d73d17ed933cae422008284d4ab1511b3fdec07cdf52e0c06fc7e76f887c4c3",
+    "content_sha256": "1884cdfa3185c491bd852e97340e0e1b09464ee81956303400423d8ef93da256",
+    "cleaning_script_sha256": "3cb9539acebaa65f7eedcfa88fffa5388d8b514e7eb8d71eb5e244f096520766",
     "fertility": {
      "tokens_per_word": 11.479,
      "chars_per_token": 0.69,
@@ -249,7 +244,7 @@
   "docs_raw": 7840,
   "docs_final": 7819,
   "tokens_raw": 23168604,
-  "tokens_final": 23131079,
+  "tokens_final": 23131085,
   "pct_tokens_removed": 0.16,
   "zwj_zwnj_kept": 0,
   "garbage_chars_stripped": 11,
