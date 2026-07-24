@@ -50,7 +50,7 @@ DATASET = "bespokelabs/Bespoke-Stratos-17k"
 # distribution and the would-drop-at-2.0 count are reported instead.
 EDU_THRESHOLD = 1.5
 EDU_DEFAULT_GATE = 2.0
-PIPELINE_VERSION = "1.0.0"
+PIPELINE_VERSION = "1.1.0"
 
 # ---------------------------------------------------------------- utilities
 
@@ -258,14 +258,42 @@ def full_text(messages) -> str:
 STOPWORDS = {"the", "be", "to", "of", "and", "that", "have", "with"}
 WORD_RE = re.compile(r"\S+")
 ALPHA_RE = re.compile(r"[A-Za-z]")
+# English-prose-tuned rules that fire on good competition math / code (LaTeX density,
+# few English stop words, symbol-heavy lines). Applied only to prose domains; always
+# *measured* for math/code so the filter-bias lesson stays visible in the stats.
+SOFT_PROSE_RULES = frozenset({"stop_words", "mean_word_length", "symbol_to_word_ratio"})
+CODE_DOMAIN_RE = re.compile(
+    r"```|\bdef\s+\w+\s*\(|#include\b|\bclass\s+\w+|stdin|function\s*\(|public\s+static"
+)
+MATH_SIGNAL_RE = re.compile(
+    r"\\(?:boxed|frac|sqrt|sum|int|begin|end|text|mathrm|left|right)[{\\]|"
+    r"\$[^$\n]{1,120}\$|\\\[|\\\]|\\boxed"
+)
 
 
 def strip_fences(text: str) -> str:
     return "".join(p for i, p in enumerate(FENCE_RE.split(text)) if i % 2 == 0)
 
 
-def heuristic_check(user: str, answer: str):
-    """Returns list of failed rule names (empty = pass)."""
+def detect_domain(user: str, answer: str) -> str:
+    """Coarse domain for domain-aware gating. Code wins over math when both match."""
+    t = user + "\n" + answer
+    if CODE_DOMAIN_RE.search(t):
+        return "code"
+    math_hits = len(MATH_SIGNAL_RE.findall(t))
+    if math_hits >= 2 or "\\boxed" in t:
+        return "math"
+    return "prose"
+
+
+def heuristic_check(user: str, answer: str, *, domain_aware: bool = False):
+    """Returns list of failed rule names (empty = pass).
+
+    domain_aware=True (Stratos full run): math/code skip SOFT_PROSE_RULES so the
+    English stop-word / mean-length / symbol-ratio traps do not delete good
+    competition problems. domain_aware=False keeps the raw English rule chain
+    (used for the Telugu bias measurement and any measure-only reporting).
+    """
     fails = []
     both = user + "\n" + answer
     if not user.strip():
@@ -300,6 +328,11 @@ def heuristic_check(user: str, answer: str):
             fails.append("duplicate_lines")
     if CTRL_RE.search(both):
         fails.append("non_printable")
+
+    if domain_aware:
+        domain = detect_domain(user, answer)
+        if domain in ("math", "code"):
+            fails = [r for r in fails if r not in SOFT_PROSE_RULES]
     return fails
 
 
@@ -463,8 +496,51 @@ def is_private_ip(m) -> bool:
     o = [int(m.group(i)) for i in range(1, 5)]
     if any(x > 255 for x in o):
         return True  # not a real IP at all
-    return (o[0] in (10, 127, 0, 255) or (o[0] == 192 and o[1] == 168)
-            or (o[0] == 172 and 16 <= o[1] <= 31) or (o[0] == 169 and o[1] == 254))
+    # RFC1918 + loopback + link-local + unspecified + multicast-ish + TEST-NET docs
+    if o[0] in (10, 127, 0, 255):
+        return True
+    if o[0] == 192 and o[1] == 168:
+        return True
+    if o[0] == 172 and 16 <= o[1] <= 31:
+        return True
+    if o[0] == 169 and o[1] == 254:
+        return True
+    # Documentation ranges (RFC 5737) — task fixtures, not personal hosts
+    if o[0] == 192 and o[1] == 0 and o[2] == 2:
+        return True
+    if o[0] == 198 and o[1] == 51 and o[2] == 100:
+        return True
+    if o[0] == 203 and o[1] == 0 and o[2] == 113:
+        return True
+    return False
+
+
+def looks_like_version_not_ip(m, context: str) -> bool:
+    """Competition / code text often has 'v1.2.3.4', 'Python 3.11.0.1', or
+    pure software-version dotted quads with low octets. Masking those as [IP]
+    destroys task content for no privacy gain — precision over recall here."""
+    o = [int(m.group(i)) for i in range(1, 5)]
+    if any(x > 255 for x in o):
+        return True
+    # Attached 'v' prefix: "v1.2.3.4" has no word boundary before the first digit,
+    # so IPV4_RE still matches from '1' when the pattern is found elsewhere —
+    # when it does match, the char immediately before is often 'v'.
+    if m.start() > 0 and context[m.start() - 1] in "vV":
+        if m.start() == 1 or not context[m.start() - 2].isalnum():
+            return True
+    pre = context[max(0, m.start() - 16):m.start()].lower()
+    if re.search(r"(?:ver|version|python|node|jdk|java|gcc|llvm|ubuntu|centos|"
+                 r"release|build|api|rfc|sec(?:tion)?)\s*$", pre):
+        return True
+    # Pure dotted-quad versions: all octets < 32 and first octet ≤ 20 (e.g.
+    # 7.2.1.3 is never a public host students contact). Prefer keeping low-octet
+    # quads when no network context — 1.1.1.1 with "dns"/"ping" still masks.
+    if max(o) < 32 and o[0] <= 20:
+        window = context[max(0, m.start() - 40):m.end() + 40].lower()
+        if not re.search(r"\b(ip|address|host|server|socket|dns|ping|connect|"
+                         r"endpoint|url|http|tcp|udp|firewall|router)\b", window):
+            return True
+    return False
 
 
 def scrub_pii(text: str, ip_task: bool, stats: Counter, examples: list) -> str:
@@ -520,6 +596,9 @@ def scrub_pii(text: str, ip_task: bool, stats: Counter, examples: list) -> str:
         def ip_sub(m):
             if is_private_ip(m):
                 stats["exempt_private_or_invalid_ip"] += 1
+                return m.group(0)
+            if looks_like_version_not_ip(m, seg):
+                stats["exempt_version_like_ip"] += 1
                 return m.group(0)
             if ip_task:
                 stats["exempt_ip_task_content"] += 1
@@ -579,18 +658,24 @@ def ngrams_h(words, n):
     return [h64(" ".join(words[i:i + n])) for i in range(len(words) - n + 1)]
 
 
-BOILERPLATE_DOC_CAP = 10   # a benchmark 13-gram found in >= this many training
+BOILERPLATE_DOC_CAP = 5    # a benchmark 13-gram found in >= this many training
 # docs is answer-format boilerplate ("...where m and n are relatively prime
 # positive integers, find m+n") or Asymptote/diagram preamble, not leakage.
-# The naive single-13-gram GPT-3 rule fired on 232 doc-item pairs here, almost
-# all boilerplate - measured on this corpus before choosing the rule below.
-CONTAINMENT_MIN = 0.30     # doc must carry >=30% of an item's RARE 13-grams...
-RARE_MATCH_MIN = 2         # ...and at least 2 of them, to count as contaminated
+# Cap lowered from 10 after measuring shared problem-*template* grams still
+# surviving (factorial reminders, plane-equation phrasing).
+CONTAINMENT_MIN = 0.35     # doc must carry >=35% of an item's RARE 13-grams...
+RARE_MATCH_MIN = 3         # ...and at least 3 of them, to count as contaminated
+ITEM_WORD_JACCARD_MIN = 0.22  # confirm rare-gram hit against the full item text
+# (kills template FPs that share a long reminder but different problems)
 
 
 def build_fingerprints(benches):
-    """-> (item_grams {(bench,idx): set}, gram_items {hash: [(bench,idx)]},
-        gram_text {hash: gram}, short_exact, short_8g)"""
+    """-> (item_grams, gram_items, gram_text, short_exact, short_8g, multi_item_grams)
+
+    multi_item_grams: 13-grams that appear in >=2 distinct benchmark items —
+    problem *templates* (shared reminders, answer-format phrasing), not unique
+    item content. Excluded from rare-gram containment regardless of training DF.
+    """
     item_grams, gram_items, gram_text = {}, defaultdict(list), {}
     short_exact = {}
     short_8g = []  # (bench, idx, set8)
@@ -610,7 +695,15 @@ def build_fingerprints(benches):
                 short_exact.setdefault(" ".join(words), (name, idx))
                 if len(words) >= 8:
                     short_8g.append((name, idx, set(ngrams_h(words, 8))))
-    return item_grams, gram_items, gram_text, short_exact, short_8g
+    multi_item_grams = {g for g, keys in gram_items.items() if len(set(keys)) >= 2}
+    return item_grams, gram_items, gram_text, short_exact, short_8g, multi_item_grams
+
+
+def word_jaccard(a_words, b_words) -> float:
+    sa, sb = set(a_words), set(b_words)
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
 
 
 def scan_short_items(words, short_exact, short_8g):
@@ -741,17 +834,27 @@ def run_pipeline(prep_only=False, quiet=False):
     with open(os.path.join(OUT, "edu_scores.json")) as f:
         edu_scores = json.load(f)
     rule_fails = Counter()
+    soft_bypassed = Counter()   # soft prose rules that would have fired on math/code
+    domain_hist = Counter()
     drop_examples = []
     kept, heur_dropped = [], 0
     for d in docs:
-        fails = heuristic_check(d["user"], d["answer"])
+        domain = detect_domain(d["user"], d["answer"])
+        domain_hist[domain] += 1
+        raw_fails = heuristic_check(d["user"], d["answer"], domain_aware=False)
+        fails = heuristic_check(d["user"], d["answer"], domain_aware=True)
+        if domain in ("math", "code"):
+            for r in raw_fails:
+                if r in SOFT_PROSE_RULES and r not in fails:
+                    soft_bypassed[r] += 1
         if fails:
             for r in fails:
                 rule_fails[r] += 1
             heur_dropped += 1
             if len(drop_examples) < 3:
-                drop_examples.append({"rules": fails, "head": snip(d["user"], 200)})
+                drop_examples.append({"rules": fails, "domain": domain, "head": snip(d["user"], 200)})
             continue
+        d["domain"] = domain
         kept.append(d)
     score_hist = Counter()
     edu_dropped = 0
@@ -779,6 +882,10 @@ def run_pipeline(prep_only=False, quiet=False):
         "details": {
             "heuristic_rule_fail_counts": dict(rule_fails),
             "heuristic_dropped": heur_dropped,
+            "domain_histogram": dict(domain_hist),
+            "domain_aware": True,
+            "soft_prose_rules_bypassed_on_math_code": dict(soft_bypassed),
+            "soft_prose_rules": sorted(SOFT_PROSE_RULES),
             "edu_classifier": "HuggingFaceFW/fineweb-edu-classifier",
             "edu_threshold": EDU_THRESHOLD, "edu_dropped": edu_dropped,
             "edu_default_gate_note": {
@@ -797,7 +904,8 @@ def run_pipeline(prep_only=False, quiet=False):
         "examples": drop_examples,
     })
     docs = kept2
-    log(f"stage3 done: heur -{heur_dropped}, edu -{edu_dropped} -> {len(docs)}")
+    log(f"stage3 done: heur -{heur_dropped}, edu -{edu_dropped}, "
+        f"soft-bypass {dict(soft_bypassed)} -> {len(docs)}")
 
     # ---- stage 4: deduplication
     texts = [full_text(d["messages"]) for d in docs]
@@ -922,10 +1030,10 @@ def run_pipeline(prep_only=False, quiet=False):
         "docs_modified": touched,
         "tokens_in": tokens_in6, "tokens_out": sum(d["tokens"] for d in docs),
         "details": {**dict(pii_stats),
-                    "policy": "typed placeholders [EMAIL]/[PHONE]/[IP]/[KEY]; code-fence and "
-                              "fixture (example.com, 555-, private-IP, task-content) occurrences "
-                              "exempted; ML name layer intentionally skipped (Euler/Ramanujan "
-                              "false-positive tension documented)"},
+                    "policy": "typed placeholders [EMAIL]/[PHONE]/[IP]/[KEY]; code-fence, "
+                              "fixture (example.com, 555-, private-IP, task-content), and "
+                              "version-like dotted quads exempted; ML name layer intentionally "
+                              "skipped (Euler/Ramanujan false-positive tension documented)"},
         "examples": pii_examples,
     })
     log(f"stage6 done: {dict(pii_stats)}")
@@ -938,7 +1046,8 @@ def run_pipeline(prep_only=False, quiet=False):
         "AIME-2025": [r["problem"] for r in ld("yentinglin/aime_2025", split="train")],
         "GSM8K-test": [r["question"] for r in ld("openai/gsm8k", "main", split="test")],
     }
-    item_grams, gram_items, gram_text, short_exact, short_8g = build_fingerprints(benches)
+    (item_grams, gram_items, gram_text, short_exact, short_8g,
+     multi_item_grams) = build_fingerprints(benches)
     # pass 1: matched grams per doc, grouped by benchmark item + gram doc-frequency
     doc_matches, gram_doc_count, doc_words = [], Counter(), []
     for d in docs:
@@ -948,16 +1057,21 @@ def run_pipeline(prep_only=False, quiet=False):
         doc_matches.append(grams)
         for g in grams:
             gram_doc_count[g] += 1
-    boilerplate = {g for g, c in gram_doc_count.items() if c >= BOILERPLATE_DOC_CAP}
+    train_boilerplate = {g for g, c in gram_doc_count.items() if c >= BOILERPLATE_DOC_CAP}
+    # Exclude both training-side boilerplate and cross-item template grams
+    boilerplate = train_boilerplate | multi_item_grams
     rare_item_grams = {k: gs - boilerplate for k, gs in item_grams.items()}
-    # pass 2: hit = doc carries >= CONTAINMENT_MIN of some item's rare grams
-    # (>= RARE_MATCH_MIN of them), or matches a short item exactly / by Jaccard
+    # pre-normalize bench items for word-Jaccard confirmation
+    bench_words = {(name, idx): bench_norm(text).split()
+                   for name, items in benches.items() for idx, text in enumerate(items)}
+    # pass 2: hit = rare-gram containment + word Jaccard confirmation, or short-item match
     hits = Counter()
     hit_examples = []
     single_gram_pairs = 0  # doc-item pairs the naive GPT-3 single-gram rule would flag
+    template_rejected = 0  # rare-gram hits killed by low full-item Jaccard
     contam_drop = set()
     for i, d in enumerate(docs):
-        best = None  # (containment, matched, (bench, idx))
+        best = None  # (containment, matched, jaccard, (bench, idx))
         naive_items = set()
         by_item = defaultdict(int)
         for g in doc_matches[i]:
@@ -972,11 +1086,15 @@ def run_pipeline(prep_only=False, quiet=False):
                 continue
             c = m / rt
             if m >= RARE_MATCH_MIN and c >= CONTAINMENT_MIN:
-                if best is None or (c, m) > (best[0], best[1]):
-                    best = (c, m, key)
+                j = word_jaccard(doc_words[i], bench_words[key])
+                if j < ITEM_WORD_JACCARD_MIN:
+                    template_rejected += 1
+                    continue
+                if best is None or (c, m, j) > (best[0], best[1], best[2]):
+                    best = (c, m, j, key)
         if best:
-            c, m, (name, idx) = best
-            kind = f"rare-13gram containment {c:.2f} ({m} grams)"
+            c, m, j, (name, idx) = best
+            kind = f"rare-13gram containment {c:.2f} ({m} grams, item-J={j:.2f})"
         else:
             hit, kind = scan_short_items(doc_words[i], short_exact, short_8g)
             if not hit:
@@ -999,23 +1117,31 @@ def run_pipeline(prep_only=False, quiet=False):
         "details": {
             "benchmarks": {k: len(v) for k, v in benches.items()},
             "hits_by_benchmark": dict(hits),
-            "method": "13-gram fingerprints on normalized question text, upgraded for "
-                      "competition math: grams in >= {} training docs are excluded as "
-                      "answer-format boilerplate, then a doc is contaminated when it "
-                      "carries >= {:.0%} of one item's rare grams (>= {} grams); "
-                      "whole-item exact + 8-gram Jaccard>=0.6 fallback for short items"
-                      .format(BOILERPLATE_DOC_CAP, CONTAINMENT_MIN, RARE_MATCH_MIN),
+            "method": (
+                "13-gram fingerprints on normalized question text. Exclusions: "
+                f"(1) grams in >={BOILERPLATE_DOC_CAP} training docs (answer-format boilerplate); "
+                f"(2) grams shared by >=2 distinct benchmark items (problem templates). "
+                f"Hit = carries >={CONTAINMENT_MIN:.0%} of one item's rare grams "
+                f"(>={RARE_MATCH_MIN} grams) AND word-Jaccard(doc, item)>={ITEM_WORD_JACCARD_MIN}; "
+                "short items use exact match or 8-gram Jaccard>=0.6."
+            ),
             "naive_single_gram_rule_pairs": single_gram_pairs,
-            "boilerplate_grams_excluded": len(boilerplate),
+            "boilerplate_grams_excluded": len(train_boilerplate),
+            "multi_item_template_grams_excluded": len(multi_item_grams),
+            "template_fp_rejected_by_item_jaccard": template_rejected,
             "boilerplate_doc_cap": BOILERPLATE_DOC_CAP,
-            "boilerplate_examples": [gram_text[g] for g in sorted(boilerplate, key=lambda g: -gram_doc_count[g])[:5]],
+            "containment_min": CONTAINMENT_MIN,
+            "rare_match_min": RARE_MATCH_MIN,
+            "item_word_jaccard_min": ITEM_WORD_JACCARD_MIN,
+            "boilerplate_examples": [gram_text[g] for g in sorted(
+                train_boilerplate, key=lambda g: -gram_doc_count[g])[:5]],
             "canary_ids": canary_ids,
             "canary_note": "canaries recorded in manifest, NOT injected into training text; "
                            "they belong in held-out material to detect later leaks",
         },
         "examples": hit_examples,
     })
-    log(f"stage7 done: hits {dict(hits)}")
+    log(f"stage7 done: hits {dict(hits)}, template-rejects {template_rejected}")
 
     # ---- stage 8: manifest
     docs.sort(key=lambda d: d["idx"])

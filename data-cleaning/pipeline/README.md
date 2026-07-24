@@ -3,6 +3,11 @@
 Session 4's assignment: count the session's cleaning strategies, pick a
 10–100M-token dataset, apply the cleanups, and present the result as a widget.
 
+**Pipeline version 1.1.0** score fixes (vs 1.0):
+1. **Domain-aware quality** — math/code skip English soft rules (stop-words, mean length, symbol ratio); would-fires still measured
+2. **PII precision** — version-like dotted quads + RFC 5737 TEST-NET ranges exempted
+3. **Decontam precision** — multi-item template grams excluded; DF cap 5; ≥35% rare containment + ≥3 grams + item word-Jaccard ≥0.22
+
 Two corpora go through the same eight stages:
 
 | Corpus | Why |

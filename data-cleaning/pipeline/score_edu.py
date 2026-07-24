@@ -24,11 +24,27 @@ BATCH = 32
 MODEL = "HuggingFaceFW/fineweb-edu-classifier"
 
 
+def pick_device():
+    forced = os.environ.get("A4_EDU_DEVICE", "").strip().lower()
+    if forced in ("cpu", "cuda", "mps"):
+        return torch.device(forced)
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    # MPS is optional: large padded batches OOM easily on Apple Silicon shared memory.
+    # Prefer CPU unless A4_EDU_DEVICE=mps is set explicitly.
+    return torch.device("cpu")
+
+
 def main():
-    torch.set_num_threads(max(1, os.cpu_count() or 4))
+    device = pick_device()
+    if device.type == "cpu":
+        torch.set_num_threads(max(1, os.cpu_count() or 4))
+    batch = int(os.environ.get("A4_EDU_BATCH", "16" if device.type == "cpu" else "32"))
     tok = AutoTokenizer.from_pretrained(MODEL)
     model = AutoModelForSequenceClassification.from_pretrained(MODEL)
+    model.to(device)
     model.eval()
+    print(f"device={device} batch={batch}", flush=True)
 
     rows = []
     sources = {}  # key -> input file stem, to split the output files
@@ -43,10 +59,13 @@ def main():
                 sources[r["key"]] = stem
 
     scores = {}
+    # Prefer already-finished outputs so re-runs only score new inputs (e.g. Telugu sample)
+    for existing in ("edu_scores.json", "edu_scores_tel.json", "edu_scores.partial.json"):
+        path = os.path.join(OUT, existing)
+        if os.path.exists(path):
+            with open(path) as f:
+                scores.update(json.load(f))
     done_path = os.path.join(OUT, "edu_scores.partial.json")
-    if os.path.exists(done_path):  # resume across restarts
-        with open(done_path) as f:
-            scores = json.load(f)
 
     todo = [r for r in rows if r["key"] not in scores]
     # length-sorted batching: batches of similar length avoid padding every
@@ -55,14 +74,15 @@ def main():
     todo.sort(key=lambda r: (len(r["text"]), r["key"]))
     print(f"{len(rows)} unique inputs, {len(todo)} to score", flush=True)
     with torch.no_grad():
-        for i in range(0, len(todo), BATCH):
-            chunk = todo[i:i + BATCH]
+        for i in range(0, len(todo), batch):
+            chunk = todo[i:i + batch]
             enc = tok([r["text"] for r in chunk], truncation=True, max_length=512,
                       padding=True, return_tensors="pt")
-            logits = model(**enc).logits.squeeze(-1)
+            enc = {k: v.to(device) for k, v in enc.items()}
+            logits = model(**enc).logits.squeeze(-1).detach().cpu()
             for r, s in zip(chunk, logits.tolist()):
                 scores[r["key"]] = round(float(s), 4)
-            if (i // BATCH) % 20 == 0:
+            if (i // batch) % 20 == 0:
                 with open(done_path, "w") as f:
                     json.dump(scores, f)
                 print(f"  scored {i + len(chunk)}/{len(todo)}", flush=True)

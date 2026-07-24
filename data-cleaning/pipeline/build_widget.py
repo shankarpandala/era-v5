@@ -95,14 +95,22 @@ def main():
     )
     qd = en_q["details"]
     rf = qd["heuristic_rule_fail_counts"]
+    soft_bp = qd.get("soft_prose_rules_bypassed_on_math_code") or {}
+    dom_hist = qd.get("domain_histogram") or {}
     ex_q = en_q.get("examples", [])
     en_details["quality_filtering"] = (
         f"<p><b>Why:</b> broken or empty documents burn compute; but the lesson's warning holds even here — "
         f"prose-tuned rules misfire on math.</p><p><b>How:</b> Gopher/C4-style heuristics "
         f"(word count, mean word length, symbol ratio, stop-words, duplicate lines) then the FineWeb-Edu "
-        f"classifier — the exact Session 3 recipe — scored on every doc.</p>"
+        f"classifier — the exact Session 3 recipe — scored on every doc. "
+        f"<b>Domain-aware:</b> math/code skip English soft rules (stop-words, mean word length, symbol ratio); "
+        f"those would-fires are measured and reported, not applied.</p>"
         + li([
-            f"heuristic drops: <b>{qd['heuristic_dropped']}</b> ({', '.join(f'{k} {v}' for k, v in rf.items())})",
+            f"domain mix: {', '.join(f'{k} {v:,}' for k, v in dom_hist.items()) or 'n/a'}",
+            f"heuristic drops (hard rules only on math/code): <b>{qd['heuristic_dropped']}</b> "
+            f"({', '.join(f'{k} {v}' for k, v in rf.items()) or 'none'})",
+            f"soft prose rules bypassed on math/code (measured): "
+            f"{', '.join(f'{k} {v}' for k, v in soft_bp.items()) or 'none'}",
             f"classifier gate (score &lt; {qd['edu_threshold']}): <b>{qd['edu_dropped']}</b> dropped · mean score of kept docs {qd['edu_score_mean_kept']}",
             f"the FineWeb-Edu default gate of {qd['edu_default_gate_note']['default_gate']} would have dropped "
             f"<b>{qd['edu_default_gate_note']['would_drop_at_default']:,}</b> docs — inspected, they are good "
@@ -110,9 +118,12 @@ def main():
             f"code mean {qd['edu_default_gate_note']['domain_means'].get('code')}); the gate was lowered to "
             f"{qd['edu_threshold']} after measuring — the filter-bias trap, caught in English",
         ])
-        + (f"<div class='example'>dropped by <b>{'/'.join(ex_q[0]['rules'])}</b>: {esc(ex_q[0]['head'], 180)}<br />"
-           f"<span style='color:var(--ink-3)'>— a perfectly good problem (“Martians measure angles in clerts”) failing an English stop-word rule: "
-           f"the same filter-bias the lesson warns erases Indic text</span></div>" if ex_q else "")
+        + (f"<div class='example'>dropped by <b>{'/'.join(ex_q[0]['rules'])}</b> "
+           f"[{ex_q[0].get('domain', '?')}]: {esc(ex_q[0]['head'], 180)}</div>" if ex_q else
+           (f"<div class='example'>soft-rule bypass example: stop_words would fire on math like "
+            f"“Martians measure angles in clerts…” — domain-aware gate keeps it; "
+            f"<b>{soft_bp.get('stop_words', 0)}</b> such stop-word traps measured this run</div>"
+            if soft_bp else ""))
     )
     dd = en_d["details"]
     ex_p = (en_d.get("examples") or {}).get("prompt_level") or []
@@ -145,8 +156,9 @@ def main():
         f"<p><b>Why:</b> people's identifiers don't belong in a training corpus — and the legal usability of the "
         f"corpus depends on it.</p><p><b>How:</b> regex layer with typed placeholders "
         f"(<code>[EMAIL]</code>, <code>[PHONE]</code>, <code>[IP]</code>, <code>[KEY]</code>) and precision rules: "
-        f"code-fence content, <code>example.com</code>-style fixtures, 555-numbers and private IPs are task "
-        f"content and stay; the ML name layer is deliberately skipped — Euler and Ramanujan must survive.</p>"
+        f"code-fence content, <code>example.com</code>-style fixtures, 555-numbers, private/TEST-NET IPs, and "
+        f"<b>version-like dotted quads</b> (e.g. <code>7.2.1.3</code>, low-octet quads without network context) "
+        f"stay; the ML name layer is deliberately skipped — Euler and Ramanujan must survive.</p>"
         + li([
             f"masked: {', '.join(f'{nice(k)} {v}' for k, v in pd.items() if k.startswith('masked')) or 'none needed'}",
             f"exempted as fixtures/task content: {', '.join(f'{nice(k)} {v}' for k, v in pd.items() if k.startswith(('exempt', 'flagged')))}",
@@ -156,17 +168,23 @@ def main():
     cd = en_c["details"]
     ex_c = en_c.get("examples", [])
     hits_str = ", ".join(f"{k}: {v}" for k, v in cd["hits_by_benchmark"].items()) or "none"
+    multi_g = cd.get("multi_item_template_grams_excluded", "—")
+    tpl_rej = cd.get("template_fp_rejected_by_item_jaccard", "—")
+    cmin = cd.get("containment_min", 0.35)
+    jmin = cd.get("item_word_jaccard_min", 0.22)
     en_details["decontamination"] = (
         f"<p><b>Why:</b> the eval firewall — MATH-500 is drawn from MATH, and the dataset's sources include AIME; "
         f"if test items train the model, the scores mean nothing.</p><p><b>How:</b> 13-gram fingerprints of "
-        f"MATH-500, AIME-2024, AIME-2025 and GSM8K-test scanned against every question — <i>upgraded</i> for "
-        f"competition math after measurement: the naive single-13-gram GPT-3 rule fired on "
-        f"<b>{cd['naive_single_gram_rule_pairs']:,} doc–item pairs</b>, almost all answer-format boilerplate "
-        f"(“…where m and n are relatively prime positive integers, find m+n”). Grams in ≥{cd['boilerplate_doc_cap']} "
-        f"docs are excluded as boilerplate; a hit needs ≥30% of one item's <i>rare</i> grams.</p>"
+        f"MATH-500, AIME-2024, AIME-2025 and GSM8K-test scanned against every question. "
+        f"Naive single-13-gram GPT-3 rule fired on <b>{cd['naive_single_gram_rule_pairs']:,} doc–item pairs</b> "
+        f"(mostly boilerplate). Upgrades: training DF cap ≥{cd['boilerplate_doc_cap']}; "
+        f"exclude grams shared by ≥2 benchmark items (templates); "
+        f"require ≥{cmin:.0%} rare-gram containment, ≥{cd.get('rare_match_min', 3)} grams, "
+        f"and full-item word Jaccard ≥{jmin}.</p>"
         + li([
             f"hits removed: <b>{hits_str}</b>",
-            f"boilerplate grams excluded: <b>{cd['boilerplate_grams_excluded']:,}</b>",
+            f"training boilerplate grams excluded: <b>{cd['boilerplate_grams_excluded']:,}</b> · "
+            f"multi-item template grams: <b>{multi_g}</b> · template FPs rejected by item-J: <b>{tpl_rej}</b>",
             "canary IDs recorded in the manifest (never injected into training text)",
         ])
         + (f"<div class='example'>[{ex_c[0]['benchmark']} · {ex_c[0]['match_kind']}]<br />train: {esc(ex_c[0]['train_doc'], 150)}<br />"
