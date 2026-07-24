@@ -405,6 +405,9 @@ def run_pipeline(prep_only=False, quiet=False):
     # ---- stage 8: manifest (per-shard, the gating rule)
     docs.sort(key=lambda d: d["idx"])
     final_tokens = sum(d["tokens"] for d in docs)
+    lang_tokens = Counter()
+    for d in docs:
+        lang_tokens[d["lang"]] += d["tokens"]
     content_sha = sha256("\n".join(sorted(d["id"] for d in docs)))
     with open(os.path.abspath(__file__), "rb") as f:
         script_sha = hashlib.sha256(f.read()).hexdigest()
@@ -432,7 +435,7 @@ def run_pipeline(prep_only=False, quiet=False):
         "content_sha256": content_sha,
         "docs": {"raw": n_raw, "final": len(docs)},
         "tokens": {"raw": sum(raw_tokens), "final": final_tokens, "tokenizer": "Qwen/Qwen2.5-0.5B"},
-        "language_breakdown": {SPLIT: final_tokens},
+        "language_breakdown": dict(lang_tokens.most_common()),
         "fertility": fertility,
         "stages": [{k: v for k, v in st.items() if k != "examples"} for st in stats["stages"]],
         "decontamination": {"benchmarks": list(benches.keys()),
