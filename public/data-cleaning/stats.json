@@ -1,0 +1,375 @@
+{
+ "dataset": "bespokelabs/Bespoke-Stratos-17k",
+ "seed": 42,
+ "stages": [
+  {
+   "name": "normalization",
+   "docs_in": 16710,
+   "docs_out": 16710,
+   "docs_removed": 0,
+   "tokens_in": 92586317,
+   "tokens_out": 92488381,
+   "details": {
+    "mojibake_fixed_fields": 2332,
+    "html_entities_unescaped": 8,
+    "zwsp": 44,
+    "soft_hyphen": 1,
+    "joiner_keep_rule_selftest": "PASS: ZWJ U+200D and ZWNJ U+200C preserved; ZWSP/BOM/bidi controls stripped (verified on Devanagari+Telugu sample)"
+   }
+  },
+  {
+   "name": "format_discipline",
+   "docs_in": 16710,
+   "docs_out": 16710,
+   "docs_removed": 0,
+   "docs_restructured": 16710,
+   "tokens_in": 92488381,
+   "tokens_out": 88528968,
+   "details": {
+    "tag <|begin_of_thought|>": 33420,
+    "tag <|end_of_thought|>": 33420,
+    "tag <|begin_of_solution|>": 33420,
+    "tag <|end_of_solution|>": 33420,
+    "total_stratos_markers_removed": 133680,
+    "residual_markers_after_unification": 0,
+    "parse_anomalies": 0,
+    "canonical_system_prompt": "You are a careful problem-solving assistant. Think through the problem privately and thoroughly in the reasoning field, then give a clear, complete, self-contained final solution in the answer."
+   },
+   "examples": []
+  },
+  {
+   "name": "quality_filtering",
+   "docs_in": 16710,
+   "docs_out": 16536,
+   "docs_removed": 174,
+   "tokens_in": 88528968,
+   "tokens_out": 87650948,
+   "details": {
+    "heuristic_rule_fail_counts": {
+     "stop_words": 7,
+     "duplicate_lines": 9,
+     "mean_word_length": 10,
+     "symbol_to_word_ratio": 10,
+     "lorem_ipsum": 1
+    },
+    "heuristic_dropped": 37,
+    "edu_classifier": "HuggingFaceFW/fineweb-edu-classifier",
+    "edu_threshold": 1.5,
+    "edu_dropped": 137,
+    "edu_default_gate_note": {
+     "default_gate": 2.0,
+     "would_drop_at_default": 1186,
+     "why_lowered": "inspected low scorers are good competition problems penalized for LaTeX density by a web-prose classifier - the filter-bias trap, measured before gating",
+     "domain_means": {
+      "code": 3.258,
+      "math": 2.805
+     },
+     "domain_below_default": {
+      "code": 176,
+      "math": 1010
+     }
+    },
+    "edu_score_histogram": {
+     "0.5": 8,
+     "1.0": 129,
+     "1.5": 1049,
+     "2.0": 2528,
+     "2.5": 4004,
+     "3.0": 5520,
+     "3.5": 3119,
+     "4.0": 314,
+     "4.5": 2
+    },
+    "edu_score_mean_kept": 2.9913
+   },
+   "examples": [
+    {
+     "rules": [
+      "stop_words"
+     ],
+     "head": "Return your final response within \\boxed{}. Martians measure angles in clerts. There are $500$ clerts in a full circle. How many clerts are there in a right angle? $\\text{(A)}\\ 90 \\qquad \\text{(B)}\\ 1..."
+    },
+    {
+     "rules": [
+      "duplicate_lines"
+     ],
+     "head": "Return your final response within \\boxed{}. Three $\\text{A's}$, three $\\text{B's}$, and three $\\text{C's}$ are placed in the nine spaces so that each row and column contains one of each letter. If $\\t..."
+    },
+    {
+     "rules": [
+      "mean_word_length"
+     ],
+     "head": "Return your final response within \\boxed{}. [asy] size((400)); draw((0,0)--(5,0)--(5,5)--(0,5)--(0,0), linewidth(1)); draw((5,0)--(10,0)--(15,0)--(20,0)--(20,5)--(15,5)--(10,5)--(5,5)--(6,7)--(11,7)--..."
+    }
+   ]
+  },
+  {
+   "name": "deduplication",
+   "docs_in": 16536,
+   "docs_out": 15300,
+   "docs_removed": 1236,
+   "tokens_in": 87650948,
+   "tokens_out": 81570703,
+   "details": {
+    "exact_duplicates": 0,
+    "near_dup_doc_clusters": 0,
+    "near_dup_docs_removed": 0,
+    "near_dup_verified_pairs": 0,
+    "prompt_dup_clusters_j090": 1225,
+    "prompt_dup_docs_removed": 1236,
+    "similarity_histogram": {},
+    "prompt_similarity_histogram": {
+     "0.0": 30,
+     "0.1": 6847,
+     "0.2": 3000,
+     "0.3": 1799,
+     "0.4": 688,
+     "0.5": 628,
+     "0.6": 283,
+     "0.7": 125,
+     "0.8": 102,
+     "0.9": 101,
+     "1.0": 1223
+    },
+    "minhash": {
+     "num_perm": 128,
+     "seed": 42,
+     "shingle_words": 5,
+     "lsh_bands_rows": [
+      16,
+      8
+     ],
+     "s_curve": "P(candidate)=1-(1-s^8)^16 @ s=0.8 -> 0.946"
+    },
+    "index_memory_note": "16536 docs x 128 perms x 8B = 16.9 MB - local pass == global pass here (whole corpus in one process)"
+   },
+   "examples": {
+    "doc_level": [],
+    "prompt_level": [
+     {
+      "similarity": 0.91,
+      "a": "Return your final response within \\boxed{}. Keiko walks once around a track at exactly the same constant speed every day. The sides of the track are straight, and the ends are semicircles. The track has a width of $6$ me...",
+      "b": "Return your final response within \\boxed{}. Keiko walks once around a track at the same constant speed every day. The sides of the track are straight, and the ends are semicircles. The track has a width of $6$ meters, an...",
+      "id_a": "bc568af366473d73",
+      "id_b": "24331d72450dd33b"
+     },
+     {
+      "similarity": 0.916,
+      "a": "Return your final response within \\boxed{}. $ABCDEFGH$ shown below is a cube. Find $\\sin \\angle HAC$.  [asy]  import three;  triple A,B,C,D,EE,F,G,H;  A = (0,0,0);  B = (1,0,0);  C = (1,1,0);  D= (0,1,0);  EE = (0,0,1); ...",
+      "b": "Return your final response within \\boxed{}. $ABCDEFGH$ shown below is a cube. Find $\\sin \\angle GAC$.  [asy]  import three;  triple A,B,C,D,EE,F,G,H;  A = (0,0,0);  B = (1,0,0);  C = (1,1,0);  D= (0,1,0);  EE = (0,0,1); ...",
+      "id_a": "f5d8a1b2142106f4",
+      "id_b": "e423dbd93de32a27"
+     },
+     {
+      "similarity": 0.975,
+      "a": "Return your final response within \\boxed{}. The graph of $y = f(x)$ is shown below.  [asy] unitsize(0.5 cm);  real func(real x) {   real y;   if (x >= -3 && x <= 0) {y = -2 - x;}   if (x >= 0 && x <= 2) {y = sqrt(4 - (x ...",
+      "b": "Return your final response within \\boxed{}. The graph of $y = f(x)$ is shown below.  [asy] unitsize(0.5 cm);  real func(real x) {   real y;   if (x >= -3 && x <= 0) {y = -2 - x;}   if (x >= 0 && x <= 2) {y = sqrt(4 - (x ...",
+      "id_a": "49721b55ffc78369",
+      "id_b": "d6abb7699ab59ed3"
+     }
+    ]
+   }
+  },
+  {
+   "name": "language_id",
+   "docs_in": 15300,
+   "docs_out": 15287,
+   "docs_removed": 13,
+   "tokens_in": 81570703,
+   "tokens_out": 81465923,
+   "details": {
+    "model": "fastText lid.176",
+    "claimed_language": "en (dataset card)",
+    "language_histogram": {
+     "en": 15284,
+     "ru": 15,
+     "ceb": 1
+    },
+    "flagged_low_conf_or_non_en": 2047,
+    "iso_validation": "all labels checked against ISO 639-1/3 set - fail-loud"
+   },
+   "examples": [
+    {
+     "lang": "en",
+     "conf": 0.632,
+     "ascii_letter_frac": 1.0,
+     "head": "Return your final response within \\boxed{}. Let $f$ be the function defined by $f(x)=ax^2-\\sqrt{2}$ for some positive $a$. If $f(f(\\sqrt{2}))=-\\sqrt{2..."
+    },
+    {
+     "lang": "en",
+     "conf": 0.57,
+     "ascii_letter_frac": 1.0,
+     "head": "Return your final response within \\boxed{}. Find the smallest positive number from the numbers below. $\\textbf{(A)} \\ 10-3\\sqrt{11} \\qquad \\textbf{(B)..."
+    },
+    {
+     "lang": "en",
+     "conf": 0.646,
+     "ascii_letter_frac": 1.0,
+     "head": "Return your final response within \\boxed{}. Which of the following is the negation of the statement: For all $x$ of a certain set, $x^2>0$? $\\textbf{(..."
+    },
+    {
+     "lang": "en",
+     "conf": 0.605,
+     "ascii_letter_frac": 1.0,
+     "head": "Return your final response within \\boxed{}. A 3x3x3 cube is made of $27$ normal dice. Each die's opposite sides sum to $7$. What is the smallest possi..."
+    },
+    {
+     "lang": "en",
+     "conf": 0.596,
+     "ascii_letter_frac": 1.0,
+     "head": "Return your final response within \\boxed{}. What is the value of \\[2^{\\left(0^{\\left(1^9\\right)}\\right)}+\\left(\\left(2^0\\right)^1\\right)^9?\\] $\\textbf..."
+    },
+    {
+     "lang": "en",
+     "conf": 0.58,
+     "ascii_letter_frac": 1.0,
+     "head": "Return your final response within \\boxed{}. If $\\texttt{a}$ and $\\texttt{b}$ are digits for which $\\begin{array}{ccc}& 2 & a\\\\ \\times & b & 3\\\\ \\hline..."
+    },
+    {
+     "lang": "en",
+     "conf": 0.625,
+     "ascii_letter_frac": 1.0,
+     "head": "Return your final response within \\boxed{}. At $2: 15$ o'clock, the hour and minute hands of a clock form an angle of: $\\textbf{(A)}\\ 30^{\\circ} \\qqua..."
+    },
+    {
+     "lang": "en",
+     "conf": 0.448,
+     "ascii_letter_frac": 1.0,
+     "head": "Return your final response within \\boxed{}. In $\\triangle ABC$, $\\angle ABC=45^\\circ$. Point $D$ is on $\\overline{BC}$ so that $2\\cdot BD=CD$ and $\\an..."
+    }
+   ]
+  },
+  {
+   "name": "pii_removal",
+   "docs_in": 15287,
+   "docs_out": 15287,
+   "docs_removed": 0,
+   "docs_modified": 24,
+   "tokens_in": 81465923,
+   "tokens_out": 81464708,
+   "details": {
+    "exempt_code_email": 0,
+    "exempt_code_ip": 0,
+    "exempt_bare_10digit_no_context": 217,
+    "flagged_444_digit_groups_not_masked": 121,
+    "masked_ip": 83,
+    "masked_phone": 38,
+    "exempt_private_or_invalid_ip": 9,
+    "exempt_ip_task_content": 14,
+    "masked_email": 109,
+    "policy": "typed placeholders [EMAIL]/[PHONE]/[IP]/[KEY]; code-fence and fixture (example.com, 555-, private-IP, task-content) occurrences exempted; ML name layer intentionally skipped (Euler/Ramanujan false-positive tension documented)"
+   },
+   "examples": [
+    {
+     "type": "ip",
+     "found": "7.2.1.3",
+     "action": "masked [IP]"
+    },
+    {
+     "type": "ip",
+     "found": "1.1.1.1",
+     "action": "masked [IP]"
+    },
+    {
+     "type": "ip",
+     "found": "1.1.1.1",
+     "action": "masked [IP]"
+    },
+    {
+     "type": "ip",
+     "found": "1.1.1.1",
+     "action": "masked [IP]"
+    }
+   ]
+  },
+  {
+   "name": "decontamination",
+   "docs_in": 15287,
+   "docs_out": 15232,
+   "docs_removed": 55,
+   "tokens_in": 81464708,
+   "tokens_out": 81307799,
+   "details": {
+    "benchmarks": {
+     "MATH-500": 500,
+     "AIME-2024": 30,
+     "AIME-2025": 30,
+     "GSM8K-test": 1319
+    },
+    "hits_by_benchmark": {
+     "MATH-500": 55
+    },
+    "method": "13-gram fingerprints on normalized question text, upgraded for competition math: grams in >= 10 training docs are excluded as answer-format boilerplate, then a doc is contaminated when it carries >= 30% of one item's rare grams (>= 2 grams); whole-item exact + 8-gram Jaccard>=0.6 fallback for short items",
+    "naive_single_gram_rule_pairs": 724,
+    "boilerplate_grams_excluded": 13,
+    "boilerplate_doc_cap": 10,
+    "boilerplate_examples": [
+     "m n where m and n are relatively prime positive integers find m",
+     "n where m and n are relatively prime positive integers find m n",
+     "frac m n where m and n are relatively prime positive integers find",
+     "q where p and q are relatively prime positive integers find p q",
+     "p q where p and q are relatively prime positive integers find p"
+    ],
+    "canary_ids": [
+     "ERA-V5-CANARY-aa6373e89435d58d",
+     "ERA-V5-CANARY-fb42c071c4cd6e3b",
+     "ERA-V5-CANARY-a50b69c326f4ceae"
+    ],
+    "canary_note": "canaries recorded in manifest, NOT injected into training text; they belong in held-out material to detect later leaks"
+   },
+   "examples": [
+    {
+     "benchmark": "MATH-500",
+     "match_kind": "rare-13gram containment 0.47 (17 grams)",
+     "train_doc": "Return your final response within \\boxed{}. Line $L$ is the intersection of the planes $x + 2y + 3z = 2$ and $x - y + z = 3.$ A plane $P,$ different from both these planes, contains line $L,$ and has ...",
+     "bench_item": "Find the equation of the plane containing the points $(0,-1,-1),$ $(-4,4,4),$ and $(4,5,1).$  Enter your answer in the form \\[Ax + By + Cz + D = 0,\\]where $A,$ $B,$ $C,$ $D$ are integers such that $A ..."
+    },
+    {
+     "benchmark": "MATH-500",
+     "match_kind": "rare-13gram containment 0.44 (165 grams)",
+     "train_doc": "Return your final response within \\boxed{}. $\\textbf{Juan's Old Stamping Grounds}$  Juan organizes the stamps in his collection by country and by the decade in which they were issued. The prices he pa...",
+     "bench_item": "$\\textbf{Juan's Old Stamping Grounds}$  Juan organizes the stamps in his collection by country and by the decade in which they were issued. The prices he paid for them at a stamp shop were: Brazil and..."
+    },
+    {
+     "benchmark": "MATH-500",
+     "match_kind": "rare-13gram containment 0.54 (13 grams)",
+     "train_doc": "Return your final response within \\boxed{}. Find the square root of $\\dfrac{8!}{70}$. (Reminder: The number $n!$ is the product of the integers from 1 to $n$. For example, $5!=5\\cdot 4\\cdot3\\cdot2\\cdo...",
+     "bench_item": "How many zeroes are at the end of $42!$ (42 factorial)?  (Reminder: The number $n!$ is the product of the integers from 1 to $n$.  For example, $5!=5\\cdot 4\\cdot3\\cdot2\\cdot 1= 120$.)"
+    },
+    {
+     "benchmark": "MATH-500",
+     "match_kind": "rare-13gram containment 0.38 (19 grams)",
+     "train_doc": "Return your final response within \\boxed{}. Yann and Camille go to a restaurant. If there are 10 items on the menu, and each orders one dish, how many different combinations of meals can Yann and Cami...",
+     "bench_item": "Yann and Camille go to a restaurant.  If there are 10 items on the menu, and each orders one dish, how many different combinations of meals can Yann and Camille order if they refuse to order the same ..."
+    }
+   ]
+  },
+  {
+   "name": "manifest",
+   "docs_in": 15232,
+   "docs_out": 15232,
+   "docs_removed": 0,
+   "tokens_in": 81307799,
+   "tokens_out": 81307799,
+   "details": {
+    "content_sha256": "c81f2eefcf3a7fc070a7b4a30a97e2fe2bde051a188a536cfaa337bd24932933",
+    "cleaning_script_sha256": "740dea867571b4f5dce2c66effe0448d4fef3599d6dc7bf477dc4cb004470c32",
+    "rule": "no manifest -> no entry into the corpus; hash computed AFTER cleaning"
+   }
+  }
+ ],
+ "headline": {
+  "docs_raw": 16710,
+  "docs_final": 15232,
+  "tokens_raw": 92586317,
+  "tokens_final": 81307799,
+  "pct_tokens_removed": 12.18,
+  "pct_docs_removed": 8.85,
+  "ghost_markers_removed": 133680,
+  "contamination_hits": {
+   "MATH-500": 55
+  },
+  "garbage_chars_stripped": 45,
+  "zwj_zwnj_kept": 0
+ }
+}

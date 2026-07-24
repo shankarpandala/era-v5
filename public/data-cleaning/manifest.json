@@ -1,0 +1,251 @@
+{
+ "dataset": "bespokelabs/Bespoke-Stratos-17k",
+ "source_url": "https://huggingface.co/datasets/bespokelabs/Bespoke-Stratos-17k",
+ "license": "apache-2.0",
+ "contributor": "Shankar (ERA V5)",
+ "collected": "HF snapshot, downloaded 2026-07-24",
+ "cleaning_script": {
+  "file": "clean.py",
+  "sha256": "740dea867571b4f5dce2c66effe0448d4fef3599d6dc7bf477dc4cb004470c32"
+ },
+ "pipeline_version": "1.0.0",
+ "canonical_format": "messages[{role, content, reasoning?}]",
+ "content_sha256": "c81f2eefcf3a7fc070a7b4a30a97e2fe2bde051a188a536cfaa337bd24932933",
+ "docs": {
+  "raw": 16710,
+  "final": 15232
+ },
+ "tokens": {
+  "raw": 92586317,
+  "final": 81307799,
+  "tokenizer": "Qwen/Qwen2.5-0.5B"
+ },
+ "language_breakdown": {
+  "en": 81280444,
+  "ru": 14373,
+  "ceb": 12982
+ },
+ "fertility": {
+  "tokens_per_word": 1.674,
+  "chars_per_token": 3.267,
+  "tokenizer": "Qwen/Qwen2.5-0.5B"
+ },
+ "stages": [
+  {
+   "name": "normalization",
+   "docs_in": 16710,
+   "docs_out": 16710,
+   "docs_removed": 0,
+   "tokens_in": 92586317,
+   "tokens_out": 92488381,
+   "details": {
+    "mojibake_fixed_fields": 2332,
+    "html_entities_unescaped": 8,
+    "zwsp": 44,
+    "soft_hyphen": 1,
+    "joiner_keep_rule_selftest": "PASS: ZWJ U+200D and ZWNJ U+200C preserved; ZWSP/BOM/bidi controls stripped (verified on Devanagari+Telugu sample)"
+   }
+  },
+  {
+   "name": "format_discipline",
+   "docs_in": 16710,
+   "docs_out": 16710,
+   "docs_removed": 0,
+   "docs_restructured": 16710,
+   "tokens_in": 92488381,
+   "tokens_out": 88528968,
+   "details": {
+    "tag <|begin_of_thought|>": 33420,
+    "tag <|end_of_thought|>": 33420,
+    "tag <|begin_of_solution|>": 33420,
+    "tag <|end_of_solution|>": 33420,
+    "total_stratos_markers_removed": 133680,
+    "residual_markers_after_unification": 0,
+    "parse_anomalies": 0,
+    "canonical_system_prompt": "You are a careful problem-solving assistant. Think through the problem privately and thoroughly in the reasoning field, then give a clear, complete, self-contained final solution in the answer."
+   }
+  },
+  {
+   "name": "quality_filtering",
+   "docs_in": 16710,
+   "docs_out": 16536,
+   "docs_removed": 174,
+   "tokens_in": 88528968,
+   "tokens_out": 87650948,
+   "details": {
+    "heuristic_rule_fail_counts": {
+     "stop_words": 7,
+     "duplicate_lines": 9,
+     "mean_word_length": 10,
+     "symbol_to_word_ratio": 10,
+     "lorem_ipsum": 1
+    },
+    "heuristic_dropped": 37,
+    "edu_classifier": "HuggingFaceFW/fineweb-edu-classifier",
+    "edu_threshold": 1.5,
+    "edu_dropped": 137,
+    "edu_default_gate_note": {
+     "default_gate": 2.0,
+     "would_drop_at_default": 1186,
+     "why_lowered": "inspected low scorers are good competition problems penalized for LaTeX density by a web-prose classifier - the filter-bias trap, measured before gating",
+     "domain_means": {
+      "code": 3.258,
+      "math": 2.805
+     },
+     "domain_below_default": {
+      "code": 176,
+      "math": 1010
+     }
+    },
+    "edu_score_histogram": {
+     "0.5": 8,
+     "1.0": 129,
+     "1.5": 1049,
+     "2.0": 2528,
+     "2.5": 4004,
+     "3.0": 5520,
+     "3.5": 3119,
+     "4.0": 314,
+     "4.5": 2
+    },
+    "edu_score_mean_kept": 2.9913
+   }
+  },
+  {
+   "name": "deduplication",
+   "docs_in": 16536,
+   "docs_out": 15300,
+   "docs_removed": 1236,
+   "tokens_in": 87650948,
+   "tokens_out": 81570703,
+   "details": {
+    "exact_duplicates": 0,
+    "near_dup_doc_clusters": 0,
+    "near_dup_docs_removed": 0,
+    "near_dup_verified_pairs": 0,
+    "prompt_dup_clusters_j090": 1225,
+    "prompt_dup_docs_removed": 1236,
+    "similarity_histogram": {},
+    "prompt_similarity_histogram": {
+     "0.0": 30,
+     "0.1": 6847,
+     "0.2": 3000,
+     "0.3": 1799,
+     "0.4": 688,
+     "0.5": 628,
+     "0.6": 283,
+     "0.7": 125,
+     "0.8": 102,
+     "0.9": 101,
+     "1.0": 1223
+    },
+    "minhash": {
+     "num_perm": 128,
+     "seed": 42,
+     "shingle_words": 5,
+     "lsh_bands_rows": [
+      16,
+      8
+     ],
+     "s_curve": "P(candidate)=1-(1-s^8)^16 @ s=0.8 -> 0.946"
+    },
+    "index_memory_note": "16536 docs x 128 perms x 8B = 16.9 MB - local pass == global pass here (whole corpus in one process)"
+   }
+  },
+  {
+   "name": "language_id",
+   "docs_in": 15300,
+   "docs_out": 15287,
+   "docs_removed": 13,
+   "tokens_in": 81570703,
+   "tokens_out": 81465923,
+   "details": {
+    "model": "fastText lid.176",
+    "claimed_language": "en (dataset card)",
+    "language_histogram": {
+     "en": 15284,
+     "ru": 15,
+     "ceb": 1
+    },
+    "flagged_low_conf_or_non_en": 2047,
+    "iso_validation": "all labels checked against ISO 639-1/3 set - fail-loud"
+   }
+  },
+  {
+   "name": "pii_removal",
+   "docs_in": 15287,
+   "docs_out": 15287,
+   "docs_removed": 0,
+   "docs_modified": 24,
+   "tokens_in": 81465923,
+   "tokens_out": 81464708,
+   "details": {
+    "exempt_code_email": 0,
+    "exempt_code_ip": 0,
+    "exempt_bare_10digit_no_context": 217,
+    "flagged_444_digit_groups_not_masked": 121,
+    "masked_ip": 83,
+    "masked_phone": 38,
+    "exempt_private_or_invalid_ip": 9,
+    "exempt_ip_task_content": 14,
+    "masked_email": 109,
+    "policy": "typed placeholders [EMAIL]/[PHONE]/[IP]/[KEY]; code-fence and fixture (example.com, 555-, private-IP, task-content) occurrences exempted; ML name layer intentionally skipped (Euler/Ramanujan false-positive tension documented)"
+   }
+  },
+  {
+   "name": "decontamination",
+   "docs_in": 15287,
+   "docs_out": 15232,
+   "docs_removed": 55,
+   "tokens_in": 81464708,
+   "tokens_out": 81307799,
+   "details": {
+    "benchmarks": {
+     "MATH-500": 500,
+     "AIME-2024": 30,
+     "AIME-2025": 30,
+     "GSM8K-test": 1319
+    },
+    "hits_by_benchmark": {
+     "MATH-500": 55
+    },
+    "method": "13-gram fingerprints on normalized question text, upgraded for competition math: grams in >= 10 training docs are excluded as answer-format boilerplate, then a doc is contaminated when it carries >= 30% of one item's rare grams (>= 2 grams); whole-item exact + 8-gram Jaccard>=0.6 fallback for short items",
+    "naive_single_gram_rule_pairs": 724,
+    "boilerplate_grams_excluded": 13,
+    "boilerplate_doc_cap": 10,
+    "boilerplate_examples": [
+     "m n where m and n are relatively prime positive integers find m",
+     "n where m and n are relatively prime positive integers find m n",
+     "frac m n where m and n are relatively prime positive integers find",
+     "q where p and q are relatively prime positive integers find p q",
+     "p q where p and q are relatively prime positive integers find p"
+    ],
+    "canary_ids": [
+     "ERA-V5-CANARY-aa6373e89435d58d",
+     "ERA-V5-CANARY-fb42c071c4cd6e3b",
+     "ERA-V5-CANARY-a50b69c326f4ceae"
+    ],
+    "canary_note": "canaries recorded in manifest, NOT injected into training text; they belong in held-out material to detect later leaks"
+   }
+  }
+ ],
+ "decontamination": {
+  "benchmarks": [
+   "MATH-500",
+   "AIME-2024",
+   "AIME-2025",
+   "GSM8K-test"
+  ],
+  "hits_removed": 55,
+  "canary_ids": [
+   "ERA-V5-CANARY-aa6373e89435d58d",
+   "ERA-V5-CANARY-fb42c071c4cd6e3b",
+   "ERA-V5-CANARY-a50b69c326f4ceae"
+  ]
+ },
+ "determinism": {
+  "seed": 42,
+  "id_scheme": "sha256(canonical cleaned messages JSON)",
+  "verified_identical_on_rerun": null
+ }
+}

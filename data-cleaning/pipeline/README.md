@@ -37,3 +37,15 @@ Everything is seeded (seed 42), iterates in the published dataset order, and
 derives every ID from sha256 over the *cleaned* text — the lesson's ordering
 rule. The stats and manifests the widget displays are committed under
 `public/data-cleaning/`.
+
+## Deploy the widget to Netlify (assignment submission)
+
+The widget is fully self-contained (inline CSS/JS, no external calls). After
+`npm run build` at the repo root:
+
+1. Open https://app.netlify.com/drop (log in yourself).
+2. Drag the **`dist/data-cleaning/`** folder onto the page.
+3. Share the resulting URL with the course.
+
+The same page also deploys with the site to
+https://www.pandala.in/era-v5/data-cleaning/.
