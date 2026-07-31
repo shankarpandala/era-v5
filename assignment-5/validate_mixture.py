@@ -20,6 +20,10 @@ an assertion:
   6. The anneal reserve is genuinely held back: main-run (pre-anneal) lane
      allocations must fit inside (unique - reserved) x epoch_cap + synthetic,
      and the anneal stage spends only what the reserve holds.
+  7. Difficulty (D0-D3) and reasoning-length (R0-R4) band shares sum to 100%
+     per stage; R-band token ranges are contiguous and non-overlapping.
+  8. Proxy protocol is complete: five arms, primary metrics with decision
+     rules, 1B/3B budgets, stage fractions matching the full curriculum.
 
 Run:  python3 validate_mixture.py            (exit 0 = every check passes)
 """
@@ -149,6 +153,87 @@ def main():
     check(anneal_tokens <= total_reserved + TOL,
           f"anneal stage {anneal_tokens:,.0f}B <= total reserved {total_reserved:,.0f}B "
           f"(remainder feeds SFT/RLVR in Sessions 17-18)")
+
+    # ---- 7. difficulty + reasoning-length bands
+    print("\n[7] difficulty and reasoning-length bands")
+    stage_keys = ["A", "B", "C", "D"]
+    diff = mx.get("difficulty_bands", {})
+    rlen = mx.get("reasoning_length_bands", {})
+    check(bool(diff.get("bands")), "difficulty_bands.bands present")
+    check(bool(rlen.get("bands")), "reasoning_length_bands.bands present")
+    if diff.get("bands"):
+        for sk in stage_keys:
+            s = sum(b["share_of_lane_pct"][sk] for b in diff["bands"].values())
+            check(abs(s - 100.0) <= TOL,
+                  f"difficulty shares stage {sk} sum to {s:.1f}%")
+        check(set(diff["bands"]) == {"D0", "D1", "D2", "D3"},
+              f"difficulty keys D0-D3 (got {sorted(diff['bands'])})")
+        for name, b in diff["bands"].items():
+            check(bool(b.get("example")), f"difficulty {name} has a concrete example")
+    if rlen.get("bands"):
+        for sk in stage_keys:
+            s = sum(b["share_of_reasoning_pct"][sk] for b in rlen["bands"].values())
+            check(abs(s - 100.0) <= TOL,
+                  f"reasoning-length shares stage {sk} sum to {s:.1f}%")
+        check(set(rlen["bands"]) == {"R0", "R1", "R2", "R3", "R4"},
+              f"reasoning-length keys R0-R4 (got {sorted(rlen['bands'])})")
+        # contiguous non-overlapping token ranges in band order
+        ordered = [rlen["bands"][k] for k in ["R0", "R1", "R2", "R3", "R4"]]
+        prev_hi = 0
+        for i, b in enumerate(ordered):
+            lo, hi = b["token_range"]
+            check(lo <= hi, f"R{i} token_range lo<=hi ({lo},{hi})")
+            if i == 0:
+                check(lo == 1, f"R0 starts at 1 (got {lo})")
+            else:
+                check(lo == prev_hi + 1,
+                      f"R{i} starts at {prev_hi + 1} (contiguous; got {lo})")
+            prev_hi = hi
+            check(bool(b.get("example")), f"reasoning R{i} has a concrete example")
+
+    # ---- 8. proxy protocol completeness
+    print("\n[8] proxy experiment protocol")
+    proxy = mx.get("proxy_experiments", {})
+    check(bool(proxy), "proxy_experiments block present")
+    if proxy:
+        arms = proxy.get("arms", [])
+        arm_ids = {a.get("id") for a in arms}
+        required_arms = {
+            "H0_uniform", "H1_proposed", "H2_no_indic_floor",
+            "H3_agentic_real_only", "H4_no_late_upweight",
+        }
+        check(required_arms <= arm_ids,
+              f"five required arms present (missing {sorted(required_arms - arm_ids) or 'none'})")
+        prim = proxy.get("metrics", {}).get("primary", [])
+        check(len(prim) >= 4, f"≥4 primary metrics with decision rules (got {len(prim)})")
+        for m in prim:
+            check(bool(m.get("decision")), f"metric {m.get('name')} has a decision rule")
+        scales = proxy.get("scales", {})
+        for sk, want_tok in (("1B", 40), ("3B", 90)):
+            sc = scales.get(sk, {})
+            check(sc.get("tokens_b") == want_tok,
+                  f"{sk} proxy budget is {want_tok}B tokens (got {sc.get('tokens_b')})")
+        fr = proxy.get("scaling_rule", {}).get("stage_fractions_of_budget", {})
+        # must match full curriculum: 12000/16000, 3000/16000, 600/16000, 400/16000
+        expected_fr = {"A": 12000 / 16000, "B": 3000 / 16000,
+                       "C": 600 / 16000, "D": 400 / 16000}
+        for k, exp in expected_fr.items():
+            got = fr.get(k, -1)
+            check(abs(got - exp) <= 1e-6,
+                  f"proxy stage fraction {k}={got} matches curriculum {exp}")
+        # proxy stage token sums
+        for sk, sc in scales.items():
+            tok = sc.get("tokens_b", 0)
+            rebuilt = sum(fr.get(k, 0) * tok for k in expected_fr)
+            check(abs(rebuilt - tok) <= TOL,
+                  f"{sk}: stage fractions × budget rebuild {rebuilt:.2f}B ≈ {tok}B")
+        status = proxy.get("status", "")
+        check(status in ("specified_not_run", "running", "complete"),
+              f"proxy status is explicit (got {status!r})")
+        if status == "specified_not_run":
+            results = proxy.get("proxy_results", {})
+            if any(results.get(k) for k in ("1B", "3B", "midtrain_surrogate")):
+                warn("status is specified_not_run but proxy_results has non-null entries")
 
     # ---- ledger summary
     print("\n---- lane ledger (billions of tokens) ----")

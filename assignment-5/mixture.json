@@ -193,5 +193,213 @@
       "total_b": 798,
       "sources": "native-style textbook generation, transliteration/romanized pairs (15% romanized target), code-mixed Hinglish UGC-style"
     }
+  },
+
+  "difficulty_bands": {
+    "applies_to_lanes": ["math_science", "code", "reasoning"],
+    "note": "Difficulty is independent of reasoning-trace length. A hard contest problem can still be R1 if the solution is short; a long CoT can still be D1.",
+    "bands": {
+      "D0": {
+        "name": "foundational",
+        "share_of_lane_pct": {"A": 45, "B": 20, "C": 25, "D": 15},
+        "description": "Single-skill recall or one-step application; solution is a known pattern.",
+        "example": "GSM8K-style: 'A shop sells pencils at Rs 12 each. Ravi buys 7. How much does he pay?' — one multiply, no distractors."
+      },
+      "D1": {
+        "name": "routine multi-step",
+        "share_of_lane_pct": {"A": 35, "B": 35, "C": 35, "D": 30},
+        "description": "2–5 steps, standard school/undergrad tooling, no novel insight required.",
+        "example": "MATH Algebra intermediate: solve a quadratic after a substitution; or implement binary search on a sorted array with off-by-one edge cases spelled out."
+      },
+      "D2": {
+        "name": "compositional / exam-hard",
+        "share_of_lane_pct": {"A": 15, "B": 30, "C": 25, "D": 35},
+        "description": "Cross-topic composition, careful casework, or non-trivial debugging across files.",
+        "example": "JEE Advanced / AMC12 hard: geometry + trig identity chain; or fix a flaky pytest that fails only under concurrent DB access (multi-file, non-local cause)."
+      },
+      "D3": {
+        "name": "contest / research-hard",
+        "share_of_lane_pct": {"A": 5, "B": 15, "C": 15, "D": 20},
+        "description": "Olympiad, GPQA-diamond science, or SWE-bench-class multi-hunk patches with incomplete specs.",
+        "example": "AIME #12–15 style integer answer with ≥6 non-obvious steps; or SWE-bench Verified django ticket needing API design judgment, not just a one-line fix."
+      }
+    }
+  },
+
+  "reasoning_length_bands": {
+    "applies_to_lanes": ["reasoning"],
+    "unit": "assistant-trace tokens (Qwen2.5-class tokenizer; chain-of-thought + final answer, excluding problem statement)",
+    "bands": {
+      "R0": {
+        "token_range": [1, 256],
+        "share_of_reasoning_pct": {"A": 40, "B": 10, "C": 15, "D": 5},
+        "description": "Direct answer or 1–2 sentence justification.",
+        "example": "Q: capital of Telangana? A: Hyderabad. Trace ≈ 30 tokens."
+      },
+      "R1": {
+        "token_range": [257, 1024],
+        "share_of_reasoning_pct": {"A": 35, "B": 25, "C": 25, "D": 15},
+        "description": "Short worked solution: a few equations or a short code walk-through.",
+        "example": "Derive the closed form for sum of first n odds; ~400–700 tokens of algebra + boxed answer."
+      },
+      "R2": {
+        "token_range": [1025, 4096],
+        "share_of_reasoning_pct": {"A": 20, "B": 30, "C": 30, "D": 30},
+        "description": "Full multi-step solution with backtracking or alternative attempts kept in the trace.",
+        "example": "OpenThoughts-style MATH hard: try substitution, fail, restart with completing-the-square; ~2k tokens."
+      },
+      "R3": {
+        "token_range": [4097, 16384],
+        "share_of_reasoning_pct": {"A": 5, "B": 25, "C": 20, "D": 30},
+        "description": "Long verified traces: contest math, multi-hop science, or multi-file code reasoning without tools.",
+        "example": "AM-R1 / OpenR1 long CoT on a GPQA-diamond chemistry item: mechanism enumeration + elimination; ~8k tokens, final answer verified."
+      },
+      "R4": {
+        "token_range": [16385, 65536],
+        "share_of_reasoning_pct": {"A": 0, "B": 10, "C": 10, "D": 20},
+        "description": "Ultra-long traces reserved for late stages; only keep when a verifier accepts the final answer.",
+        "example": "Self-distilled LiveCodeBench hard: full algorithm design, complexity analysis, two failed implementations, then a correct one; ~20–40k tokens."
+      }
+    },
+    "stage_policy": "Stage A is R0–R2 dominant (format + short chains). Stages B–D shift mass into R2–R4 so long traces arrive after the model already has syntax and short-form competence."
+  },
+
+  "proxy_experiments": {
+    "status": "specified_not_run",
+    "submission_note": "No GPU cluster for this hand-in. Protocol (arms, metrics, kill rules, mid-train surrogate) is complete and machine-checked; proxy_results stay null rather than fabricated.",
+    "principle": "Every mixture number is a hypothesis until a cheap experiment has tested it. Full 40B@16T is never the first place a share is trusted.",
+    "scaling_rule": {
+      "note": "Compress the 16T curriculum by the ratio tokens_proxy / 16000B, preserving stage order and per-stage lane shares. Difficulty and R-band mixes scale with the same stage labels A/B/C/D.",
+      "stage_fractions_of_budget": {
+        "A": 0.75,
+        "B": 0.1875,
+        "C": 0.0375,
+        "D": 0.025
+      }
+    },
+    "scales": {
+      "1B": {
+        "params": "1e9 dense (e.g. Llama-architecture 1B or OLMo-1B-class)",
+        "tokens_b": 40,
+        "tokens_per_param": 40,
+        "context_train": 4096,
+        "context_stage_C": 16384,
+        "estimated_gpu_days_h100": "≈ 80–120 H100-days from scratch (order-of-magnitude; depends on framework/kernels)",
+        "why": "Large enough for mixture effects to show on small evals; small enough to ablate 4–5 arms in one research cycle."
+      },
+      "3B": {
+        "params": "3e9 dense",
+        "tokens_b": 90,
+        "tokens_per_param": 30,
+        "context_train": 4096,
+        "context_stage_C": 32768,
+        "estimated_gpu_days_h100": "≈ 400–600 H100-days from scratch",
+        "why": "Confirms 1B findings before any 40B commitment; catches scale-sensitive failures (long CoT, agentic format)."
+      }
+    },
+    "arms": [
+      {
+        "id": "H0_uniform",
+        "name": "uniform baseline",
+        "description": "Equal 12.5% across 8 lanes for the whole budget; no stages, no floors, no anneal reserve.",
+        "tests": "Is curriculum structure worth anything vs a flat mix?"
+      },
+      {
+        "id": "H1_proposed",
+        "name": "proposed mixture (this spec)",
+        "description": "Stages A–D shares, protected floors, Indic 4-tier mix, D/R band schedules, held-out anneal.",
+        "tests": "Primary candidate."
+      },
+      {
+        "id": "H2_no_indic_floor",
+        "name": "crush Indic in mid-train",
+        "description": "Same as H1 but Indic may fall to 2% in stages B–C (no 8% floor); reallocate freed tokens to code+math.",
+        "tests": "Is the 8% Indic floor load-bearing or decorative?"
+      },
+      {
+        "id": "H3_agentic_real_only",
+        "name": "no synthetic agentic",
+        "description": "Same as H1 but agentic synthetic_capacity=0; agentic share capped by real unique×epochs only (~few B tokens → near-zero share).",
+        "tests": "Does the 3.5% agentic bet require verified synthetic, or is the lane a mirage?"
+      },
+      {
+        "id": "H4_no_late_upweight",
+        "name": "no stage-B rebalance",
+        "description": "Hold stage-A shares constant through the whole budget (still anneal 2.5% at end on HQ data).",
+        "tests": "Is Blakeney-style late domain upweight real at 1B/3B?"
+      }
+    ],
+    "metrics": {
+      "primary": [
+        {
+          "name": "MILU_macro",
+          "lane": "indic",
+          "higher_is_better": true,
+          "decision": "H1 must beat H2 by ≥ 1.5 points absolute on MILU macro; else drop or soften the 8% Indic floor."
+        },
+        {
+          "name": "MATH_500",
+          "lane": "math_science+reasoning",
+          "higher_is_better": true,
+          "decision": "H1 must beat H0 by ≥ 2 points; else the reasoning/math shares are not buying capability."
+        },
+        {
+          "name": "HumanEval_plus_or_MBPP",
+          "lane": "code",
+          "higher_is_better": true,
+          "decision": "H1 must beat H4 by ≥ 1.5 points; else late code upweight is not justified."
+        },
+        {
+          "name": "BFCL_v3_//_simple_tool_subset",
+          "lane": "agentic",
+          "higher_is_better": true,
+          "decision": "H1 must beat H3 by ≥ 3 points on tool-call exactness; else cut agentic synthetic capacity and the 3.5% headline share."
+        }
+      ],
+      "secondary": [
+        "MMLU-Pro (smoke — general regression guard)",
+        "IndicGenBench subset (hi/te/ta generation)",
+        "romanization-robustness gap on a 200-item Hinglish probe (H1 target gap < 8 points at 1B, < 5 at 3B)",
+        "RULER 4k/16k (stage-C smoke only at proxy scale)",
+        "held-out domain PPL: web / code / indic / reasoning shards (lower is better; used for early stopping diagnostics, not pass/fail)"
+      ],
+      "gates_before_full_scale": [
+        "No primary metric may regress vs H0 by > 1 point on H1 (proposed must not be worse than uniform on anything primary).",
+        "H3 failure is allowed to force a redesign of agentic supply; it must not be ignored.",
+        "Run 1B arms first; promote only arms that pass 1B gates to 3B (do not spend 3B budget on already-falsified hypotheses)."
+      ]
+    },
+    "data_construction": {
+      "note": "Proxy data is a stratified downsample of the same inventory, not a different mixture inventing new sources.",
+      "rules": [
+        "Per lane, sample without replacement until the scaled token budget is met; if unique data is exhausted, apply the same epoch_cap as full scale (never silent extra epochs).",
+        "Indic tier ratios at proxy = full-scale tier totals (300:450:720:798).",
+        "Reasoning D/R band mixes follow stage shares in difficulty_bands and reasoning_length_bands.",
+        "Agentic: prefer sandbox-resolved trajectories (our cleaned SWE-smith slice first, then public SWE-Gym / ToolACE); for H1 only, fill remainder with verifier-gated synthetic at the same policy as §7.",
+        "Decontaminate proxy eval n-grams from all proxy training shards before any reported number."
+      ]
+    },
+    "compute_reality": {
+      "from_scratch_1B_5_arms": "On the order of 0.5–1k H100-days total — a lab/cluster exercise, not a laptop exercise.",
+      "from_scratch_3B_passing_arms": "Additional multi-k H100-days; only after 1B gates.",
+      "cheaper_surrogate_if_cluster_unavailable": {
+        "name": "mid-train continue-pretrain proxy",
+        "protocol": "Take a public base (e.g. Qwen2.5-1.5B / OLMo-2-1B / Llama-3.2-3B), freeze nothing, continue-pretrain each arm for a fixed 5B tokens under that arm's mixture, then evaluate the same primary metrics.",
+        "what_it_can_falsify": "Relative value of floors, late upweight, and agentic synthetic under a matched budget — not absolute 40B ceilings.",
+        "what_it_cannot_claim": "That 16T@40B is optimal; only that the mixture ranking is stable under short mid-training."
+      },
+      "status_note": "This repository specifies the experiment and decision rules; it does not claim H100-cluster results. status=specified_not_run until numbers are pasted into proxy_results."
+    },
+    "proxy_results": {
+      "1B": null,
+      "3B": null,
+      "midtrain_surrogate": null
+    }
+  },
+
+  "inventory_reconciliation": {
+    "a3_indic_unique_b": 275,
+    "a5_indic_unique_b": 385,
+    "note": "A3 quoted ~275B cleaned native Indic (Sangraha-heavy, MT folded into the headline). A5 splits provenance: 75B verified + 150B unverified native-like + 160B translated-unique counted under the translated tier rather than hidden inside 'native'. 75+150+160=385. Synthetic capacity is separate (1,520B) and is not mixed into unique."
   }
 }
