@@ -7,13 +7,13 @@ increment on the lane the mixture shows to be starved.
 
 No GPU cluster was available for this submission, so this document does **not**
 claim trained 1B/3B proxy scores. Claiming numbers without jobs would violate the
-session’s own rule (*a data decision is a hypothesis until a cheap experiment has
+session's own rule (*a data decision is a hypothesis until a cheap experiment has
 tested it*). What *is* complete: every share defended against inventory, Indic
 four-tier split, floors, anneal reserve, D0–D3 / R0–R4 bands with examples, a
 **falsifiable** proxy protocol with kill criteria (§9), arithmetic self-audit,
 and shipped agentic tokens (§8).
 
-## Deliverables (what “done” means here)
+## Deliverables (what "done" means here)
 
 | # | Requirement | Status | Where |
 |---|---|---|---|
@@ -143,7 +143,7 @@ short-context skills don't regress — the Llama 3 recipe: a short dedicated
 stage, late, rather than paying long-sequence attention cost for 16T.
 
 **D — anneal (400B).** WSD-style: learning rate decays to zero over 400B tokens
-of **never-before-seen, highest-quality data** — the held-back reserve (§6) plus
+of **never-before-seen, highest-quality data** — the held-back reserve (§6.1) plus
 anneal-grade verified synthetic. Annealing over held-out high-quality data is
 the consistent winner in MiniCPM's WSD ablations, Llama 3's final stage, and
 OLMo 2's mid-training. Multilingual-other goes to 0 — transfer support has done
@@ -311,8 +311,8 @@ in `mixture.json` so a later run pastes numbers without rewriting the protocol.
 | | |
 |---|---|
 | **Can (and does)** | Specify a complete, falsifiable protocol; bind it to the same shares as §4; name the metric that kills each bet |
-| **Cannot (no GPU cluster)** | Train 1B@40B or 3B@90B from scratch, or even a 5B-token mid-train sweep, inside this repo’s compute budget |
-| **Must not** | Invent proxy scores. Empty `proxy_results` is honesty; fabricated deltas would fail the session’s own standard |
+| **Cannot (no GPU cluster)** | Train 1B@40B or 3B@90B from scratch, or even a 5B-token mid-train sweep, inside this repo's compute budget |
+| **Must not** | Invent proxy scores. Empty `proxy_results` is honesty; fabricated deltas would fail the session's own standard |
 
 The course grades the **quality of reasoning and the evidence behind choices**.
 For a no-cluster submission the evidence is: supply-honest accounting (§3),
@@ -386,13 +386,13 @@ first**; only if H1 still wins, spend on from-scratch 1B; only then 3B.
 | BFCL v3 simple-tool subset | agentic synthetic | H1 must beat H3 by **≥ 3 pts** tool-call exactness; else cut agentic synthetic capacity and the 3.5% share |
 
 **Secondary (diagnostics):** MMLU-Pro regression guard; IndicGenBench hi/te/ta
-subset; romanization gap on a 200-item Hinglish probe (targets: &lt; 8 pts after
-mid-train surrogate, &lt; 5 pts after a full 3B proxy); held-out domain PPL on
+subset; romanization gap on a 200-item Hinglish probe (targets: < 8 pts after
+mid-train surrogate, < 5 pts after a full 3B proxy); held-out domain PPL on
 web/code/indic/reasoning shards.
 
 **Global gates before full scale:**
 
-- H1 may not lose to H0 by &gt; 1 pt on **any** primary metric.
+- H1 may not lose to H0 by > 1 pt on **any** primary metric.
 - H3 failure is a **redesign signal**, not something to ignore while keeping
   550B of agentic synthetic on the ledger.
 - Decontaminate every proxy eval against every proxy training shard before
@@ -408,7 +408,7 @@ proxy_results.midtrain_surrogate = null
 reason = "no GPU cluster; protocol fixed so results can be pasted later"
 ```
 
-**Inventory note (A3 → A5):** A3 quoted ~275B cleaned native Indic. A5’s 385B
+**Inventory note (A3 → A5):** A3 quoted ~275B cleaned native Indic. A5's 385B
 unique is the same inventory split by provenance (75 verified + 150 unverified
 + 160 translated-unique); synthetic stays outside unique (see
 `inventory_reconciliation` in `mixture.json`).
