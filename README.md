@@ -9,6 +9,7 @@ under `/era-v5/`:
 | **2** | [/era-v5/tokenizer/](https://www.pandala.in/era-v5/tokenizer/) | A shared 10k-token tokenizer for the wiki-faithful Markdown India pages (en/hi/te/mai) — grader-compatible HuggingFace format, live fertility ratios, self-score 81,400, downloadable. |
 | **3** | [/era-v5/data-collection/](https://www.pandala.in/era-v5/data-collection/) | Design brief for a 40B India-first coding & agentic model: data, cleaning, evaluation, and a fertility-derived 262K tokenizer. |
 | **4** | [/era-v5/data-cleaning/](https://www.pandala.in/era-v5/data-cleaning/) | Session 4's 8 cleaning strategies applied end-to-end to Bespoke-Stratos-17k (≈85M tokens) **and** a Sangraha Telugu slice — ghost-tag restructuring, MinHash dedup, benchmark decontamination, PII, manifests, determinism proven. Pipeline: [`data-cleaning/pipeline/`](data-cleaning/pipeline/). |
+| **5** | [`assignment-5/`](assignment-5/README.md) | 16T-token data mixture + 4-stage curriculum for the 40B India-first model — supply-honest lane ledger, protected floors, 4-tier Indic split, held-back anneal reserve, every arithmetic claim machine-checked by [`validate_mixture.py`](assignment-5/validate_mixture.py) (0 failures), plus a cleaned SWE-smith agentic increment (3,287→790 sandbox-verified trajectories, 15.8M tokens) feeding the mixture's starved lane. |
 
 Single Vite multi-page build; each assignment is its own static page. Everything
 runs client-side.
