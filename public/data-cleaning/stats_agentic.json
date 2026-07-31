@@ -1,0 +1,315 @@
+{
+ "dataset": "SWE-bench/SWE-smith-trajectories (tool split slice)",
+ "seed": 42,
+ "stages": [
+  {
+   "name": "normalization",
+   "docs_in": 3287,
+   "docs_out": 3287,
+   "docs_removed": 0,
+   "chars_in": 400042825,
+   "details": {
+    "zwj_kept": 2,
+    "control": 15380,
+    "private_use": 14,
+    "soft_hyphen": 60,
+    "bom_zwnbsp": 6,
+    "replacement_char": 82,
+    "zwnj_kept": 31,
+    "policy": "fidelity-first: bidi/ZWSP/BOM/control stripped (Trojan-Source defense); NFC, mojibake repair and whitespace collapse MEASURED but NOT applied - tool observations are sandbox ground truth and patches are whitespace-sensitive",
+    "measured_not_applied": {
+     "nfc_would_change_messages": 1,
+     "ftfy_would_change_messages": 12,
+     "probe_messages": 4000,
+     "trailing_ws_line_count": 642722
+    },
+    "json_parse_failures": 0
+   }
+  },
+  {
+   "name": "format_discipline",
+   "docs_in": 3287,
+   "docs_out": 3287,
+   "docs_removed": 0,
+   "tokens_out": 89380763,
+   "details": {
+    "canonical_format": "messages [{role, text, tool_calls?, loss}] - the loss mask IS the format: assistant turns train, system/user/tool observations are context-only",
+    "schema_anomalies": {},
+    "assistant_thought_content_duplicates_collapsed": 56288,
+    "supervised_tokens": 19941962,
+    "context_only_tokens": 69438801
+   },
+   "examples": []
+  },
+  {
+   "name": "quality_filtering",
+   "docs_in": 3287,
+   "docs_out": 795,
+   "docs_removed": 2492,
+   "tokens_in": 89380763,
+   "tokens_out": 15865899,
+   "details": {
+    "trajectory_gate_fail_counts": {
+     "empty_patch": 736,
+     "not_sandbox_resolved": 1737,
+     "no_final_submit_turn": 1195,
+     "degenerate_tool_loop": 7,
+     "single_call_not_agentic": 1025
+    },
+    "gates": {
+     "sandbox_resolved_only": true,
+     "final_submit_turn_required": true,
+     "min_tool_calling_turns": 2,
+     "degenerate_loop_limit": 4,
+     "non_empty_patch": true
+    },
+    "tool_turns_histogram_by_decade": {
+     "0": 1123,
+     "10": 805,
+     "20": 615,
+     "30": 293,
+     "40": 190,
+     "50": 261
+    },
+    "english_prose_rules_measure_only": {
+     "would_drop_docs": 24,
+     "rule_fail_counts": {
+      "lorem_ipsum": 1,
+      "duplicate_lines": 8,
+      "mean_word_length": 14,
+      "symbol_to_word_ratio": 1
+     },
+     "note": "prose heuristics have no validity claim over terminal transcripts; measured on the task statement only"
+    },
+    "edu_classifier": "NOT consulted - web-prose scorer on terminal logs is the A4 filter-bias trap; sandbox resolution is this corpus's quality signal"
+   },
+   "examples": [
+    {
+     "instance_id": "django-money__django-money.835c1ab8.func_pm_ctrl_shuffle__viqnyl9u",
+     "rules": [
+      "empty_patch"
+     ]
+    },
+    {
+     "instance_id": "mozillazg__python-pinyin.e42dede5.func_pm_remove_assign__vn346ybe",
+     "rules": [
+      "empty_patch"
+     ]
+    },
+    {
+     "instance_id": "luozhouyang__python-string-similarity.115acaac.func_pm_remove_cond__gch4emzr",
+     "rules": [
+      "empty_patch"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "deduplication",
+   "docs_in": 795,
+   "docs_out": 790,
+   "docs_removed": 5,
+   "tokens_in": 15865899,
+   "tokens_out": 15800071,
+   "details": {
+    "exact_duplicates": 0,
+    "near_dup_clusters": 1,
+    "near_dup_docs_removed": 5,
+    "similarity_histogram": {
+     "0.2": 1,
+     "0.3": 15,
+     "0.6": 1,
+     "0.7": 3,
+     "0.9": 15
+    },
+    "dedup_key": "task_text + patch (task identity) - transcript-level shingling is blinded by scaffold boilerplate (system prompt + tool schemas shared by every trajectory)",
+    "instances_with_multiple_rollouts": 9,
+    "minhash": {
+     "num_perm": 128,
+     "seed": 42,
+     "shingle_words": 5,
+     "lsh_bands_rows": [
+      16,
+      8
+     ]
+    }
+   },
+   "examples": {
+    "task_level": [
+     {
+      "similarity": 0.927,
+      "a": "<uploaded_files> /testbed </uploaded_files> I've uploaded a python code repository in the directory /testbed. Consider the following PR description:  <pr_description> # ACM export_certificate function broken due to code ...",
+      "b": "<uploaded_files> /testbed </uploaded_files> I've uploaded a python code repository in the directory /testbed. Consider the following PR description:  <pr_description> Missing transpositionsevaluator in SIFT4Options initi...",
+      "id_a": "202a718ee4159229",
+      "id_b": "d43f38c28bf69f4b"
+     },
+     {
+      "similarity": 0.92,
+      "a": "<uploaded_files> /testbed </uploaded_files> I've uploaded a python code repository in the directory /testbed. Consider the following PR description:  <pr_description> # ACM export_certificate function broken due to code ...",
+      "b": "<uploaded_files> /testbed </uploaded_files> I've uploaded a python code repository in the directory /testbed. Consider the following PR description:  <pr_description> # Output formatting broken in sqlparse  ## Descriptio...",
+      "id_a": "202a718ee4159229",
+      "id_b": "b0739fbc43a3e96f"
+     },
+     {
+      "similarity": 0.929,
+      "a": "<uploaded_files> /testbed </uploaded_files> I've uploaded a python code repository in the directory /testbed. Consider the following PR description:  <pr_description> # ACM export_certificate function broken due to code ...",
+      "b": "<uploaded_files> /testbed </uploaded_files> I've uploaded a python code repository in the directory /testbed. Consider the following PR description:  <pr_description> # EVESpWxTimeSeries not raising expected warnings whe...",
+      "id_a": "202a718ee4159229",
+      "id_b": "7da4a90a6080bd0d"
+     }
+    ]
+   }
+  },
+  {
+   "name": "language_id",
+   "docs_in": 790,
+   "docs_out": 790,
+   "docs_removed": 0,
+   "tokens_in": 15800071,
+   "tokens_out": 15800071,
+   "details": {
+    "model": "fastText lid.176",
+    "expected": "en",
+    "language_histogram": {
+     "en": 790
+    },
+    "policy": "sampled from the task statement - LID on raw terminal text is dominated by code tokens"
+   },
+   "examples": []
+  },
+  {
+   "name": "pii_removal",
+   "docs_in": 790,
+   "docs_out": 790,
+   "docs_removed": 0,
+   "docs_modified": 89,
+   "tokens_in": 15800071,
+   "tokens_out": 15789194,
+   "details": {
+    "exempt_code_email": 7,
+    "exempt_code_ip": 12,
+    "masked_email": 226,
+    "exempt_private_or_invalid_ip": 599,
+    "exempt_fixture_email": 131,
+    "masked_key_extra": 7,
+    "flagged_444_digit_groups_not_masked": 16,
+    "exempt_version_like_ip": 272,
+    "masked_ip": 396,
+    "exempt_bare_10digit_no_context": 8,
+    "extra_patterns": [
+     "hf_*",
+     "github_pat_*",
+     "AIza*",
+     "PEM private-key blocks"
+    ],
+    "note": "typed placeholders; fixture exemptions (example.com, RFC 5737 ranges, 555 numbers) from the A4 v1.1 precision rules apply unchanged"
+   },
+   "examples": [
+    {
+     "type": "email",
+     "found": "t3kcit@gmail.com",
+     "action": "masked [EMAIL]"
+    },
+    {
+     "type": "email",
+     "found": "paul@nechifor.net",
+     "action": "masked [EMAIL]"
+    },
+    {
+     "type": "email",
+     "found": "njs@pobox.com",
+     "action": "masked [EMAIL]"
+    },
+    {
+     "type": "email",
+     "found": "etingof@gmail.com",
+     "action": "masked [EMAIL]"
+    }
+   ]
+  },
+  {
+   "name": "decontamination",
+   "docs_in": 790,
+   "docs_out": 790,
+   "docs_removed": 0,
+   "tokens_in": 15789194,
+   "tokens_out": 15789194,
+   "details": {
+    "benchmarks": {
+     "SWE-bench-Verified": 500,
+     "SWE-bench-Lite": 300,
+     "MATH-500": 500,
+     "GSM8K-test": 1319
+    },
+    "hits_by_benchmark": {},
+    "precision_rules": {
+     "rare_match_min": 3,
+     "containment_min": 0.35,
+     "training_df_cap": 5,
+     "subthreshold_gram_overlaps_kept_docs": 16,
+     "note": "single shared 13-grams (generic tracebacks live in benchmark issue reports AND tool observations) are counted, not dropped - the A4 v1.1 precision lesson"
+    },
+    "repo_level_audit": {
+     "swe_bench_eval_repos": [
+      "astropy",
+      "django",
+      "flask",
+      "matplotlib",
+      "pylint",
+      "pytest",
+      "requests",
+      "scikit-learn",
+      "seaborn",
+      "sphinx",
+      "sympy",
+      "xarray"
+     ],
+     "trajectories_from_eval_repos": {},
+     "removed": 0,
+     "note": "SWE-smith mines non-SWE-bench repositories by design (arXiv 2504.21798); verified here on the slice itself rather than trusted"
+    },
+    "canary_ids": [
+     "ERA-V5-CANARY-AGENTIC-9f9e6e8c875bbeeb",
+     "ERA-V5-CANARY-AGENTIC-4bb229e4eaaeb5a9",
+     "ERA-V5-CANARY-AGENTIC-3be1ed41417ad794"
+    ]
+   },
+   "examples": []
+  },
+  {
+   "name": "manifest",
+   "docs_in": 790,
+   "docs_out": 790,
+   "docs_removed": 0,
+   "tokens_in": 15789194,
+   "tokens_out": 15789194,
+   "details": {
+    "content_sha256": "e7d0f4eac045c278248e48716273115302aab1c111514ac00164234463497355",
+    "cleaning_script_sha256": "24d27af1ddfc29344aa00c822fb5e5b16018464a21491c4f962c776af18b5943",
+    "fertility": {
+     "tokens_per_word": 3.467,
+     "chars_per_token": 2.747,
+     "tokenizer": "Qwen/Qwen2.5-0.5B"
+    }
+   }
+  }
+ ],
+ "headline": {
+  "docs_raw": 3287,
+  "docs_final": 790,
+  "tokens_final": 15789194,
+  "supervised_tokens": 3489996,
+  "context_only_tokens": 12299198,
+  "supervised_share": 0.221,
+  "sandbox_resolved_only": true,
+  "mean_assistant_turns": 23.3,
+  "error_recovery_share": 0.687,
+  "swe_bench_13gram_hits": 0,
+  "swe_bench_repo_overlap_removed": 0,
+  "fertility": {
+   "tokens_per_word": 3.467,
+   "chars_per_token": 2.747,
+   "tokenizer": "Qwen/Qwen2.5-0.5B"
+  }
+ }
+}
