@@ -1,0 +1,197 @@
+{
+  "meta": {
+    "model": "V5 - 40B dense, India-first coding/agentic/reasoning (A3 design brief frame)",
+    "total_budget_tokens_b": 16000,
+    "token_unit": "billions",
+    "note": "Machine-readable mirror of README.md. validate_mixture.py re-derives every arithmetic claim from this file."
+  },
+
+  "lanes": {
+    "web": {
+      "name": "General web (English, Indian-authored upweighted)",
+      "benchmarks": ["MMLU-Pro", "GPQA-Diamond", "Arena-Hard", "IFEval"]
+    },
+    "code": {
+      "name": "Code (repo files, PR/issue threads, notebooks)",
+      "benchmarks": ["SWE-bench Verified", "LiveCodeBench", "RepoBench"]
+    },
+    "math_science": {
+      "name": "Math + science",
+      "benchmarks": ["MATH", "AIME", "GPQA-Diamond"]
+    },
+    "indic": {
+      "name": "Indic languages (12 scheduled; 4 tiers)",
+      "benchmarks": ["MILU", "IndicGenBench", "IN22 chrF++", "romanization-robustness gap"]
+    },
+    "multilingual_other": {
+      "name": "Other multilingual + books",
+      "benchmarks": ["transfer support; no direct benchmark"]
+    },
+    "reasoning": {
+      "name": "Reasoning traces (R0-R4 length bands)",
+      "benchmarks": ["GPQA-Diamond", "AIME", "LiveCodeBench (reasoning mode)"]
+    },
+    "agentic": {
+      "name": "Agentic trajectories + tool use",
+      "benchmarks": ["SWE-bench Verified", "BFCL v3", "tau-bench", "terminal-bench"]
+    },
+    "long_context": {
+      "name": "Long-context documents (repos, books, legal, multi-doc)",
+      "benchmarks": ["RULER", "HELMET", "repo-level SWE tasks"]
+    }
+  },
+
+  "supply": {
+    "web": {
+      "unique_tokens_b": 5500,
+      "epoch_cap": 4,
+      "synthetic_capacity_b": 0,
+      "reserved_for_anneal_b": 100,
+      "synthetic_anneal_capacity_b": 0,
+      "sources": "FineWeb-Edu 1.3T, DCLM-baseline 3.8T dedup-overlap discounted, Nemotron-CC HQ ~1.1T; see README inventory"
+    },
+    "code": {
+      "unique_tokens_b": 1500,
+      "epoch_cap": 4,
+      "synthetic_capacity_b": 0,
+      "reserved_for_anneal_b": 60,
+      "synthetic_anneal_capacity_b": 40,
+      "sources": "Stack v2 dedup ~775B + issues/PRs/StackExchange/notebooks; see README inventory"
+    },
+    "math_science": {
+      "unique_tokens_b": 500,
+      "epoch_cap": 4,
+      "synthetic_capacity_b": 300,
+      "reserved_for_anneal_b": 20,
+      "synthetic_anneal_capacity_b": 40,
+      "sources": "MegaMath 371B, FineMath 34B, OpenWebMath 15B, peS2o, arXiv; synthetic = verified-solution generation"
+    },
+    "indic": {
+      "unique_tokens_b": 385,
+      "epoch_cap": 4,
+      "synthetic_capacity_b": 1520,
+      "reserved_for_anneal_b": 15,
+      "synthetic_anneal_capacity_b": 45,
+      "sources": "Sangraha verified+unverified+synthetic, IndicCorp v2, MADLAD-400 Indic; tiers below"
+    },
+    "multilingual_other": {
+      "unique_tokens_b": 2000,
+      "epoch_cap": 2,
+      "synthetic_capacity_b": 0,
+      "reserved_for_anneal_b": 0,
+      "synthetic_anneal_capacity_b": 0,
+      "sources": "CulturaX/MADLAD non-Indic non-English, books (PG-19 + open)"
+    },
+    "reasoning": {
+      "unique_tokens_b": 60,
+      "epoch_cap": 3,
+      "synthetic_capacity_b": 950,
+      "reserved_for_anneal_b": 20,
+      "synthetic_anneal_capacity_b": 60,
+      "sources": "OpenThoughts3, AM-R1-Distilled, OpenR1-Math, Nemotron-PT, our cleaned Stratos 81.5M; synthetic = self-distilled verified traces"
+    },
+    "agentic": {
+      "unique_tokens_b": 5,
+      "epoch_cap": 3,
+      "synthetic_capacity_b": 550,
+      "reserved_for_anneal_b": 2,
+      "synthetic_anneal_capacity_b": 46,
+      "sources": "SWE-smith trajectories (incl. our cleaned slice), SWE-Gym, xlam/glaive/ToolACE FC; synthetic = SWE-smith-style generation + sandbox verify"
+    },
+    "long_context": {
+      "unique_tokens_b": 500,
+      "epoch_cap": 2,
+      "synthetic_capacity_b": 100,
+      "reserved_for_anneal_b": 10,
+      "synthetic_anneal_capacity_b": 2,
+      "sources": "repo-level concatenation from Stack v2 sources, PG-19, Indian case law, arXiv full text, multi-doc synthesis"
+    }
+  },
+
+  "stages": [
+    {
+      "name": "A-foundation (0 -> 12.0T)",
+      "tokens_b": 12000,
+      "shares": {
+        "web": 40, "code": 18, "math_science": 10, "indic": 16,
+        "multilingual_other": 7, "reasoning": 5, "agentic": 2, "long_context": 2
+      }
+    },
+    {
+      "name": "B-capability rebalance (12.0T -> 15.0T)",
+      "tokens_b": 3000,
+      "shares": {
+        "web": 18, "code": 30, "math_science": 20, "indic": 8,
+        "multilingual_other": 2, "reasoning": 12, "agentic": 8, "long_context": 2
+      }
+    },
+    {
+      "name": "C-long-context (15.0T -> 15.6T)",
+      "tokens_b": 600,
+      "shares": {
+        "web": 10, "code": 15, "math_science": 5, "indic": 8,
+        "multilingual_other": 2, "reasoning": 7, "agentic": 5, "long_context": 48
+      }
+    },
+    {
+      "name": "D-anneal (15.6T -> 16.0T)",
+      "tokens_b": 400,
+      "anneal": true,
+      "shares": {
+        "web": 10, "code": 25, "math_science": 15, "indic": 15,
+        "multilingual_other": 0, "reasoning": 20, "agentic": 12, "long_context": 3
+      }
+    }
+  ],
+
+  "protected_floor_pct": {
+    "indic": 8,
+    "agentic": 2,
+    "reasoning": 3
+  },
+
+  "anneal_reserve": {
+    "pools_b": {
+      "web": 40,
+      "code": 100,
+      "math_science": 60,
+      "indic": 60,
+      "reasoning": 80,
+      "agentic": 48,
+      "long_context": 12
+    },
+    "note": "Reserve = real data withheld from stages A-C (reserved_for_anneal_b per lane) + anneal-grade verified synthetic; total 400B spent in stage D; real-data remainder feeds SFT/RLVR (Sessions 17-18)."
+  },
+
+  "indic_tiers": {
+    "verified": {
+      "unique_tokens_b": 75,
+      "epoch_cap": 4,
+      "synthetic_b": 0,
+      "total_b": 300,
+      "sources": "Sangraha verified, IndicCorp v2, NCERT/govt/legal curated"
+    },
+    "unverified": {
+      "unique_tokens_b": 150,
+      "epoch_cap": 3,
+      "synthetic_b": 0,
+      "total_b": 450,
+      "sources": "Sangraha unverified, MADLAD-400 Indic clean, CulturaX Indic"
+    },
+    "translated": {
+      "unique_tokens_b": 160,
+      "epoch_cap": 2,
+      "synthetic_b": 400,
+      "total_b": 720,
+      "cap_share_of_indic": 0.35,
+      "sources": "Sangraha synthetic (translated Wikimedia) + fresh quality-gated en->Indic MT of educational/technical text"
+    },
+    "synthetic": {
+      "unique_tokens_b": 0,
+      "epoch_cap": 1,
+      "synthetic_b": 798,
+      "total_b": 798,
+      "sources": "native-style textbook generation, transliteration/romanized pairs (15% romanized target), code-mixed Hinglish UGC-style"
+    }
+  }
+}
