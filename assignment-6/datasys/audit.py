@@ -18,7 +18,10 @@ from typing import Dict, List, Optional
 
 from . import mixture as mix
 from . import perf as perf_mod
+from .batcher import Batcher
 from .ledger import Ledger, verify_chain
+from .packing import verify_sample_invariants
+from .replay import replay_and_compare
 from .shards import load_manifests, validate_shard
 from .tokenizer import Tokenizer
 from .util import read_json, write_json
@@ -136,16 +139,50 @@ def run_audit(artifacts_dir: str, run_id: str, fork_run_id: Optional[str],
     # ---------------------------------------------------------------- 4
     c = Check("packing_correctness", "Packing correctness (masks, positions)")
     pack_report = read_json(os.path.join(artifacts_dir, "packing_report.json"))
+    # Independent re-pack of a subset of steps from schedule+inventory+shards;
+    # compare sample hashes and re-run mask invariants. This proves the report
+    # was not written by hand and that the consumption ledger matches the packer.
+    schedule = read_json(os.path.join(manifests_dir, "schedule.json"))
+    inventory = read_json(os.path.join(manifests_dir, "inventory.json"))
+    cons_path = os.path.join(ledgers_dir, f"consumption_{run_id}.jsonl")
+    cons_by_step = {e["payload"]["step"]: e["payload"]
+                    for e in Ledger(cons_path).entries()}
+    probe_steps = sorted(cons_by_step)[:min(8, len(cons_by_step))]
+    rebatcher = Batcher(run_id, schedule, inventory, manifests_dir, seq_len)
+    repack_mismatches = []
+    repack_violations = 0
+    for step in range(max(probe_steps) + 1 if probe_steps else 0):
+        batch = rebatcher.build_step(step, advance=True)
+        if step not in cons_by_step:
+            continue
+        orig = cons_by_step[step]
+        if orig["batch_id"] != batch["batch_id"]:
+            repack_mismatches.append({"step": step, "kind": "batch_id"})
+        orig_hashes = [s["sample_hash"] for s in orig["samples"]]
+        new_hashes = [s["sample_hash"] for s in batch["samples"]]
+        if orig_hashes != new_hashes:
+            repack_mismatches.append({"step": step, "kind": "sample_hash"})
+        for s in batch["samples"]:
+            repack_violations += len(verify_sample_invariants(s))
     c.passed = (pack_report["invariant_violations"] == 0
                 and pack_report["samples_checked"] > 0
-                and pack_report["policies_exercised"] >= 3)
-    c.detail = pack_report
-    c.evidence = [_rel(artifacts_dir, os.path.join(artifacts_dir, "packing_report.json"))]
+                and pack_report["policies_exercised"] >= 3
+                and not repack_mismatches
+                and repack_violations == 0)
+    c.detail = {
+        **pack_report,
+        "independent_repack": {
+            "steps_probed": probe_steps,
+            "mismatches": repack_mismatches,
+            "invariant_violations_on_repack": repack_violations,
+        },
+    }
+    c.evidence = [_rel(artifacts_dir, os.path.join(artifacts_dir, "packing_report.json")),
+                  _rel(artifacts_dir, cons_path)]
     checks.append(c)
 
     # ---------------------------------------------------------------- 5
     c = Check("mixture_compliance", "Mixture compliance and protected floors")
-    schedule = read_json(os.path.join(manifests_dir, "schedule.json"))
     planned = schedule["planned_fractions"]
     # Actual shares are recomputed from the CONSUMPTION LEDGER, never from the
     # schedule that produced it. Floors are promises about *scheduled sequence
@@ -224,7 +261,6 @@ def run_audit(artifacts_dir: str, run_id: str, fork_run_id: Optional[str],
 
     # ---------------------------------------------------------------- 7
     c = Check("consumption_ledger", "Consumption ledger integrity")
-    cons_path = os.path.join(ledgers_dir, f"consumption_{run_id}.jsonl")
     cchain = verify_chain(cons_path)
     steps = [e["payload"]["step"] for e in Ledger(cons_path).entries()]
     expected = list(range(len(steps)))
@@ -249,22 +285,36 @@ def run_audit(artifacts_dir: str, run_id: str, fork_run_id: Optional[str],
     learn_path = os.path.join(ledgers_dir, f"learning_{run_id}.jsonl")
     lchain = verify_chain(learn_path)
     learn_entries = [e["payload"] for e in Ledger(learn_path).entries()]
-    cons_by_step = {e["payload"]["step"]: e["payload"]
-                    for e in Ledger(cons_path).entries()}
     link_errors = []
     lane_loss_tokens = 0
+    sample_link_errors = []
+    sample_token_errors = []
+    sample_level_present = 0
     for le in learn_entries:
         ce = cons_by_step.get(le["step"])
         if ce is None or ce["batch_id"] != le["batch_id"]:
             link_errors.append(le["step"])
         lane_loss_tokens += sum(v["tokens"] for v in le["per_lane_loss"].values())
+        # sample-level loss must be present and reconcile with consumption
+        samples = le.get("per_sample_loss") or []
+        if samples:
+            sample_level_present += 1
+            cons_hashes = {s["sample_hash"] for s in ce["samples"]} if ce else set()
+            for s in samples:
+                if s["sample_hash"] not in cons_hashes:
+                    sample_link_errors.append({"step": le["step"],
+                                               "sample_hash": s["sample_hash"]})
+            if sum(s["tokens"] for s in samples) != le["n_loss_tokens"]:
+                sample_token_errors.append(le["step"])
     total_loss_tokens = sum(ce["n_loss_tokens"] for ce in cons_by_step.values())
     tokens_reconcile = lane_loss_tokens == total_loss_tokens
     losses = [le["loss"] for le in learn_entries]
     first_avg = sum(losses[:10]) / max(1, len(losses[:10]))
     last_avg = sum(losses[-10:]) / max(1, len(losses[-10:]))
     c.passed = (lchain["ok"] and not link_errors and tokens_reconcile
-                and len(learn_entries) == len(cons_by_step))
+                and len(learn_entries) == len(cons_by_step)
+                and sample_level_present == len(learn_entries)
+                and not sample_link_errors and not sample_token_errors)
     c.detail = {
         "chain_ok": lchain["ok"], "entries": lchain["count"],
         "steps_linked_to_consumption": len(learn_entries) - len(link_errors),
@@ -272,6 +322,9 @@ def run_audit(artifacts_dir: str, run_id: str, fork_run_id: Optional[str],
         "per_lane_loss_tokens": lane_loss_tokens,
         "consumption_loss_tokens": total_loss_tokens,
         "token_accounting_reconciles": tokens_reconcile,
+        "sample_level_loss_entries": sample_level_present,
+        "sample_hashes_linked_to_consumption": not sample_link_errors,
+        "sample_token_accounting_errors": sample_token_errors,
         "mean_loss_first_10_steps": first_avg,
         "mean_loss_last_10_steps": last_avg,
         "loss_decreased": last_avg < first_avg,
@@ -281,26 +334,116 @@ def run_audit(artifacts_dir: str, run_id: str, fork_run_id: Optional[str],
 
     # ---------------------------------------------------------------- 9
     c = Check("crash_recovery", "Crash recovery (no skipped or repeated batches)")
-    c.passed = bool(resume_proof.get("next_batch_matched")) and \
-        bool(resume_proof.get("no_gaps_or_duplicates")) and \
-        bool(resume_proof.get("learning_state_matched")) and \
-        bool(crash_proof.get("process_died"))
-    c.detail = {**crash_proof, **resume_proof}
-    c.evidence = [_rel(artifacts_dir, cons_path),
-                  _rel(artifacts_dir, os.path.join(ckpt_dir,
-                       f"{resume_proof.get('resumed_from','')}.manifest.json"))]
+    # Independently re-derive resume correctness from the precrash snapshot on
+    # disk plus the final ledger and the selected checkpoint -- do not trust the
+    # orchestrator's in-memory proof alone.
+    pre_path = os.path.join(ledgers_dir, f"consumption_{run_id}.precrash.jsonl")
+    learn_pre_path = os.path.join(ledgers_dir, f"learning_{run_id}.precrash.jsonl")
+    pre_exists = os.path.exists(pre_path) and os.path.exists(learn_pre_path)
+    independent: Dict[str, object] = {"precrash_artifacts_present": pre_exists}
+    if pre_exists:
+        pre_by_step = {e["payload"]["step"]: e["payload"]
+                       for e in Ledger(pre_path).entries()}
+        post_by_step = cons_by_step
+        pre_learn = {e["payload"]["step"]: e["payload"]
+                     for e in Ledger(learn_pre_path).entries()}
+        post_learn = {e["payload"]["step"]: e["payload"]
+                      for e in Ledger(learn_path).entries()}
+        # last main-run checkpoint at or before the crash window
+        ckpts = sorted(
+            (read_json(os.path.join(ckpt_dir, f)) for f in os.listdir(ckpt_dir)
+             if f.startswith(run_id) and f.endswith(".manifest.json")),
+            key=lambda m: m["step"])
+        # the resume checkpoint is the greatest checkpoint step still in the
+        # pre-crash prefix (pre_by_step max step + 1 would be crash point)
+        pre_max = max(pre_by_step) if pre_by_step else -1
+        resume_ckpts = [m for m in ckpts if m["step"] <= pre_max]
+        last_ckpt = resume_ckpts[-1] if resume_ckpts else None
+        if last_ckpt is not None:
+            resume_step = last_ckpt["step"]
+            expected_batch = pre_by_step.get(resume_step, {}).get("batch_id")
+            actual_batch = post_by_step.get(resume_step, {}).get("batch_id")
+            rewritten = [s for s in sorted(pre_by_step) if s >= resume_step]
+            rewrite_identical = all(
+                pre_by_step[s]["batch_id"] == post_by_step.get(s, {}).get("batch_id")
+                for s in rewritten)
+            learn_identical = all(
+                pre_learn.get(s, {}).get("loss") == post_learn.get(s, {}).get("loss")
+                and pre_learn.get(s, {}).get("param_hash") ==
+                post_learn.get(s, {}).get("param_hash")
+                for s in rewritten)
+            # checkpoint pins ledger offsets
+            offset_ok = (last_ckpt["consumption_offset"]["count"] == resume_step
+                         and last_ckpt["learning_offset"]["count"] == resume_step)
+            binding = last_ckpt.get("data_binding") or {}
+            binding_ok = (not binding) or (
+                binding.get("tokenizer_hash") == frozen_hash
+                and binding.get("root_manifest_hash") == loaded["root"]["root_hash"])
+            independent.update({
+                "resumed_from": last_ckpt["tag"],
+                "resume_next_step": resume_step,
+                "expected_next_batch_id": expected_batch,
+                "actual_next_batch_id": actual_batch,
+                "next_batch_matched": expected_batch is not None
+                                      and expected_batch == actual_batch,
+                "rewritten_window": [rewritten[0], rewritten[-1]] if rewritten else [],
+                "rewritten_batches_identical": rewrite_identical,
+                "learning_state_matched": learn_identical,
+                "checkpoint_offset_matches_step": offset_ok,
+                "checkpoint_data_binding_ok": binding_ok,
+                "precrash_steps": len(pre_by_step),
+                "post_steps": len(post_by_step),
+                "no_gaps_or_duplicates": steps == list(range(len(steps)))
+                                         and len(steps) == len(set(steps))
+                                         and rewrite_identical,
+            })
+        else:
+            independent["error"] = "no resume checkpoint found in pre-crash prefix"
+    orch_ok = (bool(resume_proof.get("next_batch_matched"))
+               and bool(resume_proof.get("no_gaps_or_duplicates"))
+               and bool(resume_proof.get("learning_state_matched"))
+               and bool(crash_proof.get("process_died")))
+    ind_ok = (bool(independent.get("next_batch_matched"))
+              and bool(independent.get("no_gaps_or_duplicates"))
+              and bool(independent.get("learning_state_matched"))
+              and bool(independent.get("checkpoint_offset_matches_step"))
+              and bool(independent.get("checkpoint_data_binding_ok", True)))
+    c.passed = orch_ok and ind_ok and pre_exists
+    c.detail = {
+        "orchestrator_proof": {**crash_proof, **resume_proof},
+        "independent_from_disk": independent,
+    }
+    c.evidence = [
+        _rel(artifacts_dir, cons_path),
+        _rel(artifacts_dir, pre_path) if pre_exists else cons_path,
+        _rel(artifacts_dir, os.path.join(
+            ckpt_dir, f"{independent.get('resumed_from', resume_proof.get('resumed_from', ''))}.manifest.json")),
+    ]
     checks.append(c)
 
     # ---------------------------------------------------------------- 10
     c = Check("replay", "Replay of historical data stream")
-    c.passed = bool(replay_proof.get("all_match")) and replay_proof.get("n_steps", 0) > 0
+    # Re-run replay from artifacts alone (schedule + inventory + shards) and
+    # compare both to the on-disk report and the consumption ledger.
+    report_path = os.path.join(artifacts_dir, "replay_report.json")
+    on_disk = read_json(report_path) if os.path.exists(report_path) else {}
+    interval = on_disk.get("interval") or replay_proof.get("interval") or [8, 20]
+    start, end = interval[0], interval[1]
+    recomputed = replay_and_compare(artifacts_dir, run_id, start, end, seq_len)
+    report_agrees = (on_disk.get("all_match") == recomputed["all_match"]
+                     and on_disk.get("n_steps") == recomputed["n_steps"])
+    c.passed = (bool(recomputed.get("all_match"))
+                and recomputed.get("n_steps", 0) > 0
+                and report_agrees
+                and bool(replay_proof.get("all_match")))
     c.detail = {
-        "interval": replay_proof.get("interval"),
-        "n_steps": replay_proof.get("n_steps"),
-        "all_match": replay_proof.get("all_match"),
-        "examples": replay_proof.get("comparisons", [])[:3],
+        "interval": recomputed.get("interval"),
+        "n_steps": recomputed.get("n_steps"),
+        "all_match": recomputed.get("all_match"),
+        "report_agrees_with_recompute": report_agrees,
+        "examples": recomputed.get("comparisons", [])[:3],
     }
-    c.evidence = [_rel(artifacts_dir, os.path.join(artifacts_dir, "replay_report.json"))]
+    c.evidence = [_rel(artifacts_dir, report_path), _rel(artifacts_dir, cons_path)]
     checks.append(c)
 
     # ---------------------------------------------------------------- 11
@@ -456,6 +599,9 @@ def _write_evidence_md(artifacts_dir: str, evidence: dict, checks: List[Check]) 
     th = by_key["throughput"].detail
     lt = by_key["learning_trace"].detail
     cr = by_key["crash_recovery"].detail
+    # crash detail nests orchestrator + independent proofs after the audit harden
+    cr_ind = cr.get("independent_from_disk") or cr
+    cr_orch = cr.get("orchestrator_proof") or cr
     rp = by_key["replay"].detail
     lines += [
         f"- Frozen tokenizer hash: `{tk['tokenizer_content_hash'][:16]}…`, "
@@ -464,20 +610,24 @@ def _write_evidence_md(artifacts_dir: str, evidence: dict, checks: List[Check]) 
         f"{sh['total_tokens']} tokens.",
         f"- Packing: {pk['samples_checked']} samples checked, "
         f"{pk['invariant_violations']} invariant violations, "
-        f"{pk['policies_exercised']} policies exercised.",
+        f"{pk['policies_exercised']} policies exercised; "
+        f"independent re-pack mismatches: "
+        f"{(pk.get('independent_repack') or {}).get('mismatches', [])}.",
         f"- OPUS decision events: {op['events_by_decision']}; "
         f"final per document: {op['final_decision_per_document']}.",
         f"- Packing utilization: {th['derived']['packing_utilization']:.3f}; "
         f"loss-bearing fraction {th['derived']['loss_bearing_fraction']:.3f}; "
         f"{th['derived']['loss_tokens_per_sec']:.1f} loss-bearing tokens/sec.",
         f"- Loss: {lt['mean_loss_first_10_steps']:.4f} (first 10 steps) → "
-        f"{lt['mean_loss_last_10_steps']:.4f} (last 10 steps).",
-        f"- Crash at step {cr.get('crash_at_step')}, resumed from "
-        f"`{cr.get('resumed_from')}`; expected next batch "
-        f"`{str(cr.get('expected_next_batch_id'))[:16]}…` matched: "
-        f"{cr.get('next_batch_matched')}.",
+        f"{lt['mean_loss_last_10_steps']:.4f} (last 10 steps); "
+        f"sample-level loss entries: {lt.get('sample_level_loss_entries')}.",
+        f"- Crash at step {cr_orch.get('crash_at_step')}, resumed from "
+        f"`{cr_ind.get('resumed_from')}`; expected next batch "
+        f"`{str(cr_ind.get('expected_next_batch_id'))[:16]}…` matched: "
+        f"{cr_ind.get('next_batch_matched')} (independent disk re-check).",
         f"- Replay interval {rp.get('interval')}: {rp.get('n_steps')} steps, "
-        f"all hashes matched: {rp.get('all_match')}.",
+        f"all hashes matched: {rp.get('all_match')}; "
+        f"report agrees with recompute: {rp.get('report_agrees_with_recompute')}.",
         "",
         "All values above are recomputed by `datasys/audit.py` from the generated",
         "manifests, ledgers, checkpoints and counters — none are hardcoded.",

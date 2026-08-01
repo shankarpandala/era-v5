@@ -45,6 +45,7 @@ def test_required_directory_structure_exists():
 
 
 def test_run_log_contains_the_required_event_sequence(run_log):
+    # Underscored [PASS]/EVENT markers used by the orchestrator…
     for marker in [
         "shards_created", "manifests_validated", "eval_shard_blocked",
         "mixture_compiled", "batches_packed", "opus_decisions_recorded",
@@ -53,6 +54,14 @@ def test_run_log_contains_the_required_event_sequence(run_log):
         "performance_measured",
     ]:
         assert marker in run_log, marker
+    # …and the human-readable phrases required by the assignment brief.
+    for phrase in [
+        "shards created", "manifests validated", "evaluation data blocked",
+        "mixture compiled", "batches packed", "OPUS decisions recorded",
+        "crash simulated", "run resumed", "historical stream replayed",
+        "branch forked", "audit completed", "performance measured",
+    ]:
+        assert phrase in run_log, phrase
 
 
 def test_run_log_records_the_headline_passes(run_log):
@@ -128,11 +137,21 @@ def test_no_blocked_content_appears_in_the_consumption_ledger():
     run_id = read_json(os.path.join(ART, "evidence.json"))["run_id"]
     fw = read_json(os.path.join(ART, "manifests", "firewall.json"))
     blocked_docs = {e["doc_id"] for e in fw["entries"]}
+    blocked_hashes = {e["content_hash"] for e in fw["entries"]}
+    # resolve every consumed doc_id to its text content hash via manifests
+    doc_hash = {}
+    man_dir = os.path.join(ART, "manifests")
+    for name in os.listdir(man_dir):
+        if name.endswith(".manifest.json") and "__" in name:
+            m = read_json(os.path.join(man_dir, name))
+            for d in m.get("documents", []):
+                doc_hash[d["doc_id"]] = d["text_hash"]
     path = os.path.join(ART, "ledgers", f"consumption_{run_id}.jsonl")
     for e in Ledger(path).entries():
         for s in e["payload"]["samples"]:
             for seg in s["segments"]:
                 assert seg["doc_id"] not in blocked_docs
+                assert doc_hash.get(seg["doc_id"]) not in blocked_hashes
                 assert "__eval" not in seg["shard_id"]
                 assert "__validation" not in seg["shard_id"]
 
@@ -158,15 +177,45 @@ def test_performance_numbers_recompute_from_the_ledger():
 def test_learning_ledger_links_every_step_to_its_batch():
     run_id = read_json(os.path.join(ART, "evidence.json"))["run_id"]
     ledgers = os.path.join(ART, "ledgers")
-    cons = {e["payload"]["step"]: e["payload"]["batch_id"]
+    cons = {e["payload"]["step"]: e["payload"]
             for e in Ledger(os.path.join(ledgers, f"consumption_{run_id}.jsonl")).entries()}
     learn = list(Ledger(os.path.join(ledgers, f"learning_{run_id}.jsonl")).entries())
     assert len(learn) == len(cons)
     for e in learn:
         p = e["payload"]
-        assert cons[p["step"]] == p["batch_id"]
+        ce = cons[p["step"]]
+        assert ce["batch_id"] == p["batch_id"]
         assert p["n_loss_tokens"] > 0
         assert sum(v["tokens"] for v in p["per_lane_loss"].values()) == p["n_loss_tokens"]
+        # sample-level loss tracking: every sample hash ties back to consumption
+        samples = p.get("per_sample_loss") or []
+        assert samples, "missing per_sample_loss"
+        cons_hashes = {s["sample_hash"] for s in ce["samples"]}
+        assert sum(s["tokens"] for s in samples) == p["n_loss_tokens"]
+        for s in samples:
+            assert s["sample_hash"] in cons_hashes
+            assert s["tokens"] >= 0
+            assert "source_docs" in s
+
+
+def test_audit_reverified_crash_and_replay_independently(evidence):
+    """The audit must re-derive crash/replay proofs from disk, not just echo
+    the orchestrator's in-memory dicts."""
+    cr = evidence["checks"]["crash_recovery"]["detail"]
+    assert "independent_from_disk" in cr
+    ind = cr["independent_from_disk"]
+    assert ind["next_batch_matched"] is True
+    assert ind["rewritten_batches_identical"] is True
+    assert ind["learning_state_matched"] is True
+    assert ind["checkpoint_offset_matches_step"] is True
+
+    rp = evidence["checks"]["replay"]["detail"]
+    assert rp["all_match"] is True
+    assert rp.get("report_agrees_with_recompute") is True
+
+    pk = evidence["checks"]["packing_correctness"]["detail"]
+    assert "independent_repack" in pk
+    assert pk["independent_repack"]["mismatches"] == []
 
 
 def test_checkpoints_are_tied_to_ledger_offsets():

@@ -32,7 +32,7 @@ branch from an earlier checkpoint, and audits everything. Exit code is 0 only if
 all twelve audit checks pass.
 
 ```bash
-python -m pytest tests -q          # 61 invariant tests
+python -m pytest tests -q          # invariant tests (unit + artifact checks)
 ```
 
 ## Generated structure
@@ -174,6 +174,13 @@ consumption ledger (never from the schedule that produced it), re-derives
 throughput from raw counters, and re-checks packing invariants. If it reused the
 trainer's in-memory objects it would confirm the trainer's own mistakes.
 
+Crash recovery and replay are **re-derived independently** from
+`*.precrash.jsonl`, checkpoints and the immutable schedule/inventory/shards —
+not merely echoed from the orchestrator's in-memory proof dicts. Packing is
+re-exercised against the first N consumption-ledger steps; sample hashes must
+match. Learning entries carry **sample-level** loss (per `sample_hash` and
+source document ids) as well as per-lane aggregates.
+
 ## What the demonstration proves
 
 | Claim | Proof in the artifacts |
@@ -189,7 +196,7 @@ trainer's in-memory objects it would confirm the trainer's own mistakes.
 | Resume | The next batch id after resume equals the one recorded before the crash; the four rewritten steps are byte-identical; **the recomputed loss and parameter hash also match exactly** |
 | Replay | Steps 8–19 rebuilt from artifacts alone match on batch ids, per-sample hashes and every token span |
 | Fork | A new run branches from checkpoint step 16 with recorded lineage, consumes the same data at the branch step, and carries its own batch-id namespace |
-| Learning | Step-0 loss 6.93 against `ln(1024) = 6.93`; mean loss falls from 6.64 (first 10 steps) to 5.64 (last 10), every step linked to its batch id |
+| Learning | Step-0 loss 6.93 against `ln(1024) = 6.93`; mean loss falls from 6.64 (first 10 steps) to 5.64 (last 10); every step linked to its batch id **and** every packed sample's `sample_hash` / source docs via `per_sample_loss` |
 | Throughput | `performance.json` stores raw counters; the audit recomputes utilization (0.867), loss-bearing fraction (0.955) and loss-bearing tokens/sec, and confirms the counters reconcile with the ledger |
 
 Two consecutive clean runs produce a **byte-identical** consumption ledger.

@@ -48,6 +48,7 @@ def save_checkpoint(
     perf_counters: dict,
     run_id: str,
     lineage: Optional[dict] = None,
+    data_binding: Optional[dict] = None,
 ) -> dict:
     ensure_dir(ckpt_dir)
     blob_path = os.path.join(ckpt_dir, f"{tag}.pt")
@@ -72,6 +73,9 @@ def save_checkpoint(
         "blob_file": os.path.basename(blob_path),
         "blob_hash": None,
         "lineage": lineage or {},
+        # Bind the checkpoint to the immutable data identity so a resume against
+        # a different tokenizer / schedule / inventory is detectable.
+        "data_binding": data_binding or {},
     }
     with open(blob_path, "rb") as f:
         manifest["blob_hash"] = sha256_bytes(f.read())

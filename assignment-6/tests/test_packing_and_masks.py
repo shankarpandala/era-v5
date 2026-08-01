@@ -137,3 +137,26 @@ def test_packing_is_a_pure_function_of_the_cursor(tmp_path):
         assert ba["batch_id"] == bb["batch_id"]
         assert [s["sample_hash"] for s in ba["samples"]] == \
                [s["sample_hash"] for s in bb["samples"]]
+
+
+def test_sample_level_loss_reconciles_with_lane_loss_and_mask(tmp_path):
+    """per_sample_loss tokens must sum to the batch's loss-token count."""
+    from datasys.model import compute_loss, per_lane_loss, per_sample_loss
+
+    session = build_session(str(tmp_path))
+    b = Batcher("t", session["schedule"], session["inventory"],
+                os.path.join(str(tmp_path), "manifests"), SEQ_LEN)
+    batch = b.build_step(0)
+    input_ids = torch.tensor([s["input_ids"] for s in batch["samples"]], dtype=torch.long)
+    loss_mask = torch.tensor([s["loss_mask"] for s in batch["samples"]], dtype=torch.long)
+    torch.manual_seed(0)
+    logits = torch.randn(input_ids.shape[0], input_ids.shape[1], 1024)
+    _, per_tok, flat_mask = compute_loss(logits, input_ids, loss_mask)
+    lanes = []
+    for s in batch["samples"]:
+        lanes.extend([s["lane"]] * (SEQ_LEN - 1))
+    lane = per_lane_loss(per_tok, flat_mask, lanes)
+    sample = per_sample_loss(per_tok, flat_mask, batch["samples"], SEQ_LEN)
+    assert sum(s["tokens"] for s in sample) == batch["n_loss_tokens"]
+    assert sum(v["tokens"] for v in lane.values()) == batch["n_loss_tokens"]
+    assert {s["sample_hash"] for s in sample} == {s["sample_hash"] for s in batch["samples"]}

@@ -27,7 +27,14 @@
       "off": 46
     }
   },
-  "parent_model_tensor_hash": "f1a06db41ef18d66222275bb06ea85e2afdf400411c0dcac0126e8fdb1495a98",
+  "parent_data_binding": {
+    "root_manifest_hash": "cb2a471b41cda7b88b8a0223d647172c7418bbb787bbafabfc859c7063cdc0fd",
+    "schedule_steps": 48,
+    "seq_len": 256,
+    "seqs_per_step": 8,
+    "tokenizer_hash": "ae4ea5abcd2d9573b3c50e8cbe946851f32ba3336171a2b6fa04e25598ef434b"
+  },
+  "parent_model_tensor_hash": "b842cbd064fac9f2868a48e2ab76c02205ebd0196f30321fddb72710e59535b3",
   "parent_run_id": "run_main",
   "parent_step": 16,
   "run_id": "run_fork"

@@ -35,7 +35,7 @@ import torch
 from .batcher import Batcher, batch_consumption_record
 from .checkpoint import load_checkpoint, save_checkpoint
 from .ledger import Ledger
-from .model import TinyGPT, compute_loss, per_lane_loss
+from .model import TinyGPT, compute_loss, per_lane_loss, per_sample_loss
 from .perf import PerfCounter
 from .tokenizer import Tokenizer
 from .util import ensure_dir, read_json, sha256_json, write_json
@@ -98,10 +98,19 @@ def run_training(args) -> int:
     schedule = read_json(os.path.join(manifests_dir, "schedule.json"))
     inventory = read_json(os.path.join(manifests_dir, "inventory.json"))
     tok = Tokenizer.load(os.path.join(manifests_dir, "tokenizer.json"))
+    root = read_json(os.path.join(manifests_dir, "root_manifest.json"))
 
     seq_len = cfg["seq_len"]
     total_steps = cfg["total_steps"]
     run_id = args.run_id
+    # Immutable data identity the checkpoint is bound to (resume must match).
+    data_binding = {
+        "tokenizer_hash": tok.content_hash,
+        "root_manifest_hash": root["root_hash"],
+        "schedule_steps": schedule["total_steps"],
+        "seqs_per_step": schedule["seqs_per_step"],
+        "seq_len": seq_len,
+    }
 
     set_global_seed(cfg["seed"])
     model, opt = build_model(tok.vocab_size, seq_len, cfg)
@@ -116,6 +125,10 @@ def run_training(args) -> int:
 
     if args.resume_from:
         man = load_checkpoint(ckpt_dir, args.resume_from, model, opt)
+        bound = man.get("data_binding") or {}
+        if bound:
+            for k, v in data_binding.items():
+                assert bound.get(k) == v, f"checkpoint data_binding mismatch on {k}"
         start_step = man["step"]
         batcher.set_cursor(man["cursor"])
         # roll ledgers back to the committed prefix pinned by the checkpoint, so
@@ -134,6 +147,10 @@ def run_training(args) -> int:
                      "perf_steps_restored": man["perf_counters"]["steps"]})
     elif args.fork_from:
         man = load_checkpoint(ckpt_dir, args.fork_from, model, opt)
+        bound = man.get("data_binding") or {}
+        if bound:
+            for k, v in data_binding.items():
+                assert bound.get(k) == v, f"checkpoint data_binding mismatch on {k}"
         start_step = man["step"]
         batcher.set_cursor(man["cursor"])
         lineage = {
@@ -143,6 +160,7 @@ def run_training(args) -> int:
             "parent_model_tensor_hash": man["model_tensor_hash"],
             "parent_consumption_head": man["consumption_offset"]["head"],
             "parent_cursor": man["cursor"],
+            "parent_data_binding": bound,
         }
         write_json(os.path.join(ckpt_dir, f"{run_id}.lineage.json"),
                    {"run_id": run_id, **lineage})
@@ -179,6 +197,9 @@ def run_training(args) -> int:
         dt = time.perf_counter() - t0
 
         lane_loss = per_lane_loss(per_tok, flat_mask, lane_positions(batch, seq_len))
+        sample_loss = per_sample_loss(per_tok, flat_mask, batch["samples"], seq_len)
+        # sample-level tokens must reconcile with the batch's loss-token count
+        assert sum(s["tokens"] for s in sample_loss) == batch["n_loss_tokens"]
         learn.append({
             "run_id": run_id,
             "step": step,
@@ -188,6 +209,7 @@ def run_training(args) -> int:
             "lr": lr,
             "n_loss_tokens": batch["n_loss_tokens"],
             "per_lane_loss": lane_loss,
+            "per_sample_loss": sample_loss,      # sample-level loss tracking
             "param_hash": param_hash(model),
             "wall_seconds": dt,
         })
@@ -208,6 +230,7 @@ def run_training(args) -> int:
                 {"count": cons.count, "head": cons.head},
                 {"count": learn.count, "head": learn.head},
                 perf.to_counters(), run_id, lineage,
+                data_binding=data_binding,
             )
             saved_tags.append({"tag": tag, "step": step + 1,
                                "model_tensor_hash": man["model_tensor_hash"]})

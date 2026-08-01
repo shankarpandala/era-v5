@@ -4,15 +4,15 @@
     "real_tokens": 85259,
     "steps": 48,
     "total_slot_tokens": 98304,
-    "wall_seconds": 2.7880132909995154
+    "wall_seconds": 0.6118186247767881
   },
   "counters_reconcile_with_ledger": true,
   "derived": {
     "loss_bearing_fraction": 0.9549724955723149,
-    "loss_tokens_per_sec": 29203.591052756623,
+    "loss_tokens_per_sec": 133078.65550792075,
     "packing_utilization": 0.8672993977864584,
     "pad_fraction": 0.13270060221354163,
-    "tokens_per_sec": 30580.55722877643
+    "tokens_per_sec": 139353.3909352716
   },
   "ledger_recomputed": {
     "loss_tokens": 81420,

@@ -19,58 +19,80 @@
     },
     "crash_recovery": {
       "detail": {
-        "actual_next_batch_id": "485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea",
-        "crash_at_step": 28,
-        "exit_code": 137,
-        "expected_next_batch_id": "485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea",
-        "learning_state_matched": true,
-        "next_batch_matched": true,
-        "no_gaps_or_duplicates": true,
-        "pre_crash_last_step": 27,
-        "process_died": true,
-        "resume_exit_ok": true,
-        "resume_next_step": 24,
-        "resumed_from": "run_main_step24",
-        "rewritten_batches_identical": true,
-        "rewritten_step_comparison": [
-          {
-            "loss_identical": true,
-            "param_hash_identical": true,
-            "pre_crash_loss": 5.93554162979126,
-            "resumed_loss": 5.93554162979126,
-            "step": 24
-          },
-          {
-            "loss_identical": true,
-            "param_hash_identical": true,
-            "pre_crash_loss": 5.830650329589844,
-            "resumed_loss": 5.830650329589844,
-            "step": 25
-          },
-          {
-            "loss_identical": true,
-            "param_hash_identical": true,
-            "pre_crash_loss": 5.886748790740967,
-            "resumed_loss": 5.886748790740967,
-            "step": 26
-          },
-          {
-            "loss_identical": true,
-            "param_hash_identical": true,
-            "pre_crash_loss": 5.924123764038086,
-            "resumed_loss": 5.924123764038086,
-            "step": 27
-          }
-        ],
-        "rewritten_window": [
-          24,
-          27
-        ],
-        "steps_completed_before_crash": 28,
-        "total_steps_in_ledger": 48
+        "independent_from_disk": {
+          "actual_next_batch_id": "485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea",
+          "checkpoint_data_binding_ok": true,
+          "checkpoint_offset_matches_step": true,
+          "expected_next_batch_id": "485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea",
+          "learning_state_matched": true,
+          "next_batch_matched": true,
+          "no_gaps_or_duplicates": true,
+          "post_steps": 48,
+          "precrash_artifacts_present": true,
+          "precrash_steps": 28,
+          "resume_next_step": 24,
+          "resumed_from": "run_main_step24",
+          "rewritten_batches_identical": true,
+          "rewritten_window": [
+            24,
+            27
+          ]
+        },
+        "orchestrator_proof": {
+          "actual_next_batch_id": "485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea",
+          "crash_at_step": 28,
+          "exit_code": 137,
+          "expected_next_batch_id": "485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea",
+          "learning_state_matched": true,
+          "next_batch_matched": true,
+          "no_gaps_or_duplicates": true,
+          "pre_crash_last_step": 27,
+          "process_died": true,
+          "resume_exit_ok": true,
+          "resume_next_step": 24,
+          "resumed_from": "run_main_step24",
+          "rewritten_batches_identical": true,
+          "rewritten_step_comparison": [
+            {
+              "loss_identical": true,
+              "param_hash_identical": true,
+              "pre_crash_loss": 5.935540676116943,
+              "resumed_loss": 5.935540676116943,
+              "step": 24
+            },
+            {
+              "loss_identical": true,
+              "param_hash_identical": true,
+              "pre_crash_loss": 5.830650329589844,
+              "resumed_loss": 5.830650329589844,
+              "step": 25
+            },
+            {
+              "loss_identical": true,
+              "param_hash_identical": true,
+              "pre_crash_loss": 5.886748790740967,
+              "resumed_loss": 5.886748790740967,
+              "step": 26
+            },
+            {
+              "loss_identical": true,
+              "param_hash_identical": true,
+              "pre_crash_loss": 5.924123764038086,
+              "resumed_loss": 5.924123764038086,
+              "step": 27
+            }
+          ],
+          "rewritten_window": [
+            24,
+            27
+          ],
+          "steps_completed_before_crash": 28,
+          "total_steps_in_ledger": 48
+        }
       },
       "evidence": [
         "ledgers/consumption_run_main.jsonl",
+        "ledgers/consumption_run_main.precrash.jsonl",
         "checkpoints/run_main_step24.manifest.json"
       ],
       "requirement": "Crash recovery (no skipped or repeated batches)",
@@ -144,7 +166,14 @@
               "off": 46
             }
           },
-          "parent_model_tensor_hash": "f1a06db41ef18d66222275bb06ea85e2afdf400411c0dcac0126e8fdb1495a98",
+          "parent_data_binding": {
+            "root_manifest_hash": "cb2a471b41cda7b88b8a0223d647172c7418bbb787bbafabfc859c7063cdc0fd",
+            "schedule_steps": 48,
+            "seq_len": 256,
+            "seqs_per_step": 8,
+            "tokenizer_hash": "ae4ea5abcd2d9573b3c50e8cbe946851f32ba3336171a2b6fa04e25598ef434b"
+          },
+          "parent_model_tensor_hash": "b842cbd064fac9f2868a48e2ab76c02205ebd0196f30321fddb72710e59535b3",
           "parent_run_id": "run_main",
           "parent_step": 16,
           "run_id": "run_fork"
@@ -163,9 +192,12 @@
         "consumption_loss_tokens": 81420,
         "entries": 48,
         "loss_decreased": true,
-        "mean_loss_first_10_steps": 6.643997144699097,
-        "mean_loss_last_10_steps": 5.637484169006347,
+        "mean_loss_first_10_steps": 6.643997097015381,
+        "mean_loss_last_10_steps": 5.637484312057495,
         "per_lane_loss_tokens": 81420,
+        "sample_hashes_linked_to_consumption": true,
+        "sample_level_loss_entries": 48,
+        "sample_token_accounting_errors": [],
         "steps_linked_to_consumption": 48,
         "token_accounting_reconciles": true,
         "unlinked_steps": []
@@ -665,6 +697,20 @@
             "step": 1
           }
         ],
+        "independent_repack": {
+          "invariant_violations_on_repack": 0,
+          "mismatches": [],
+          "steps_probed": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ]
+        },
         "invariant_violations": 0,
         "per_lane": {
           "agentic": {
@@ -749,7 +795,8 @@
         "violation_examples": []
       },
       "evidence": [
-        "packing_report.json"
+        "packing_report.json",
+        "ledgers/consumption_run_main.jsonl"
       ],
       "requirement": "Packing correctness (masks, positions)",
       "result": "PASS"
@@ -790,10 +837,12 @@
           8,
           20
         ],
-        "n_steps": 12
+        "n_steps": 12,
+        "report_agrees_with_recompute": true
       },
       "evidence": [
-        "replay_report.json"
+        "replay_report.json",
+        "ledgers/consumption_run_main.jsonl"
       ],
       "requirement": "Replay of historical data stream",
       "result": "PASS"
@@ -825,15 +874,15 @@
           "real_tokens": 85259,
           "steps": 48,
           "total_slot_tokens": 98304,
-          "wall_seconds": 2.7880132909995154
+          "wall_seconds": 0.6118186247767881
         },
         "counters_reconcile_with_ledger": true,
         "derived": {
           "loss_bearing_fraction": 0.9549724955723149,
-          "loss_tokens_per_sec": 29203.591052756623,
+          "loss_tokens_per_sec": 133078.65550792075,
           "packing_utilization": 0.8672993977864584,
           "pad_fraction": 0.13270060221354163,
-          "tokens_per_sec": 30580.55722877643
+          "tokens_per_sec": 139353.3909352716
         },
         "ledger_recomputed": {
           "loss_tokens": 81420,

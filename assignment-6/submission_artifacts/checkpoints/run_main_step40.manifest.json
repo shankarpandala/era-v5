@@ -1,6 +1,6 @@
 {
   "blob_file": "run_main_step40.pt",
-  "blob_hash": "95c165e61f065a57edd89510dde38259fa5ecf85cf8b57f05ca77c3f193a4461",
+  "blob_hash": "586cbc9307042ad810c3f36568f6ead8bb8ee22cd389ed11cc7836dabf1364bd",
   "consumption_offset": {
     "count": 40,
     "head": "378354f222499ce9cd4a217410972cda7f2935b3efffc380c037307d2f4da160"
@@ -31,18 +31,25 @@
       "off": 98
     }
   },
+  "data_binding": {
+    "root_manifest_hash": "cb2a471b41cda7b88b8a0223d647172c7418bbb787bbafabfc859c7063cdc0fd",
+    "schedule_steps": 48,
+    "seq_len": 256,
+    "seqs_per_step": 8,
+    "tokenizer_hash": "ae4ea5abcd2d9573b3c50e8cbe946851f32ba3336171a2b6fa04e25598ef434b"
+  },
   "learning_offset": {
     "count": 40,
-    "head": "58738cf4bb142cb65c3d4bcbc58fd46a6a9f7015c73a4c35fd7fde2cb46203e4"
+    "head": "af3fd63d435aca8ea2d92a560f4de9ebdc4b481738bec05906de552a9944b563"
   },
   "lineage": {},
-  "model_tensor_hash": "78725199775f6f2b2753aab3eab11e2e7c28718e8e5760adc089b380ae654c52",
+  "model_tensor_hash": "5508f7019c549f8338043edec257cdc5bd1ae3c53fb1d6ca35b67d0389560fcd",
   "perf_counters": {
     "loss_tokens": 68860,
     "real_tokens": 71686,
     "steps": 40,
     "total_slot_tokens": 81920,
-    "wall_seconds": 2.355234962999475
+    "wall_seconds": 0.5157681257696822
   },
   "run_id": "run_main",
   "stage": "C_long_context",

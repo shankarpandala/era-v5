@@ -92,7 +92,8 @@ def test_checkpoint_round_trip_restores_the_model_exactly(tmp_path):
                           {"count": 7, "head": "h1"}, {"count": 7, "head": "h2"},
                           {"steps": 7, "real_tokens": 1, "loss_tokens": 1,
                            "total_slot_tokens": 1, "wall_seconds": 0.5},
-                          "run_x")
+                          "run_x",
+                          data_binding={"tokenizer_hash": "abc", "seq_len": 32})
     before = model(ids, seg, pos)
 
     other, other_opt = _tiny()
@@ -103,6 +104,7 @@ def test_checkpoint_round_trip_restores_the_model_exactly(tmp_path):
     assert restored["consumption_offset"] == {"count": 7, "head": "h1"}
     assert restored["perf_counters"]["steps"] == 7
     assert man["model_tensor_hash"] == restored["model_tensor_hash"]
+    assert restored["data_binding"] == {"tokenizer_hash": "abc", "seq_len": 32}
 
 
 def test_corrupting_a_checkpoint_blob_is_detected(tmp_path):

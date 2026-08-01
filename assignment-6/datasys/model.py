@@ -157,3 +157,38 @@ def per_lane_loss(per_tok, mask, lane_of_position) -> Dict[str, dict]:
     for lane, rec in out.items():
         rec["mean_loss"] = rec["loss_sum"] / max(1, rec["tokens"])
     return out
+
+
+def per_sample_loss(per_tok, mask, samples: List[dict], seq_len: int) -> List[dict]:
+    """Sample-level loss linked to source data (sample_hash + document spans).
+
+    ``per_tok`` / ``mask`` are flat over B x (L-1). Each sample occupies a contiguous
+    block of (seq_len - 1) shifted positions. This is the assignment's
+    sample-level loss trace: every learning entry can point at the exact packed
+    sample (and therefore the shard spans) that produced that loss.
+    """
+    per_tok = per_tok.detach()
+    mask = mask.detach()
+    out: List[dict] = []
+    width = seq_len - 1
+    for i, s in enumerate(samples):
+        start = i * width
+        end = start + width
+        loss_sum = 0.0
+        tokens = 0
+        for j in range(start, end):
+            if mask[j].item() <= 0:
+                continue
+            loss_sum += float(per_tok[j].item())
+            tokens += 1
+        out.append({
+            "slot": s["slot"],
+            "lane": s["lane"],
+            "policy": s["policy"],
+            "sample_hash": s["sample_hash"],
+            "loss_sum": loss_sum,
+            "tokens": tokens,
+            "mean_loss": loss_sum / max(1, tokens),
+            "source_docs": sorted({seg["doc_id"] for seg in s["segments"]}),
+        })
+    return out

@@ -146,13 +146,20 @@ def run_trainer(log: RunLog, artifacts: str, run_id: str, *, crash_at=None,
                 log.check("checkpoint_saved", True, tag=ev["tag"], step=ev["step"],
                           consumption_entries=ev["consumption_count"])
             elif ev["event"] == "crash":
+                log.event("crash simulated", last_completed_step=ev["at_step_completed"],
+                          consumption_entries=ev["consumption_count"])
                 log.event("crash_simulated", last_completed_step=ev["at_step_completed"],
                           consumption_entries=ev["consumption_count"])
             elif ev["event"] == "resumed":
+                log.event("run resumed", from_checkpoint=ev["from"],
+                          next_step=ev["next_step"],
+                          consumption_entries=ev["consumption_count"])
                 log.event("run_resumed", from_checkpoint=ev["from"],
                           next_step=ev["next_step"],
                           consumption_entries=ev["consumption_count"])
             elif ev["event"] == "forked":
+                log.event("branch forked", from_checkpoint=ev["from"],
+                          next_step=ev["next_step"])
                 log.event("branch_forked", from_checkpoint=ev["from"],
                           next_step=ev["next_step"])
             elif ev["event"] == "training_complete":
@@ -186,8 +193,12 @@ def stage_prepare(log: RunLog, artifacts: str, corpus: str, tokenizer_path: str)
         and root["tokenizer_hash"] == tok_hash
     log.check("tokenizer_hash_verified", ok, hash=tok_hash[:16],
               vocab=session["tokenizer"].vocab_size)
+    # Required sequence markers (assignment text) + structured [PASS] checks.
+    log.event("shards created", n=root["n_shards"],
+              tokens=sum(s["n_tokens"] for s in root["shards"]))
     log.check("shards_created", True, n=root["n_shards"],
               tokens=sum(s["n_tokens"] for s in root["shards"]))
+    log.event("manifests validated", root_hash=root["root_hash"][:16])
     log.check("manifests_validated", True, root_hash=root["root_hash"][:16])
 
     # firewall proof: eval/validation shards exist but are refused admission
@@ -198,6 +209,10 @@ def stage_prepare(log: RunLog, artifacts: str, corpus: str, tokenizer_path: str)
     blocked_docs = [e for e in opus_entries if e["content_hash"] in blocked_hashes]
     poisoned = [e for e in blocked_docs if e["split"] == "train"]
     all_rejected = bool(blocked_docs) and all(e["decision"] == "REJECT" for e in blocked_docs)
+    log.event("evaluation data blocked",
+              blocked_hashes=len(blocked_hashes),
+              rejected_docs=len(blocked_docs),
+              poisoned_train_docs_caught=[e["doc_id"] for e in poisoned])
     log.check("eval_shard_blocked", all_rejected,
               blocked_hashes=len(blocked_hashes),
               rejected_docs=len(blocked_docs),
@@ -210,11 +225,14 @@ def stage_prepare(log: RunLog, artifacts: str, corpus: str, tokenizer_path: str)
                   final=summary["final_by_decision"].get(d, 0))
     all_four = all(summary["by_decision"].get(d, 0) > 0
                    for d in ("ACCEPT", "REJECT", "DEFER", "FLOOR_OVERRIDE"))
+    log.event("OPUS decisions recorded", by_decision=summary["by_decision"])
     log.check("opus_decisions_recorded", all_four, by_reason=summary["by_reason"])
     log.info(f"admitted tokens per lane: {summary['admitted_tokens_per_lane']}")
     log.info(f"protected-floor token demand: {summary['floor_token_demand']}")
 
     sched = session["schedule"]
+    log.event("mixture compiled", steps=sched["total_steps"],
+              seqs_per_step=sched["seqs_per_step"], floors=mix.FLOORS)
     log.check("mixture_compiled", True, steps=sched["total_steps"],
               seqs_per_step=sched["seqs_per_step"], floors=mix.FLOORS)
     for b in sched["stage_boundaries"]:
@@ -282,6 +300,8 @@ def stage_packing_report(log: RunLog, artifacts: str, session: dict) -> dict:
     }
     report["violation_examples"] = violation_examples[:10]
     write_json(os.path.join(artifacts, "packing_report.json"), report)
+    log.event("batches packed", samples=checked, policies=sorted(policies),
+              violations=violations)
     log.check("batches_packed", violations == 0, samples=checked,
               policies=sorted(policies), violations=violations)
     for pol, v in report["per_policy"].items():
@@ -414,6 +434,8 @@ def stage_replay(log: RunLog, artifacts: str) -> dict:
     start, end = CONFIG["replay_interval"]
     proof = replay_and_compare(artifacts, RUN_ID, start, end, CONFIG["seq_len"])
     write_json(os.path.join(artifacts, "replay_report.json"), proof)
+    log.event("historical stream replayed", interval=[start, end],
+              steps=proof["n_steps"], all_match=proof["all_match"])
     log.check("replay_hash_matched", proof["all_match"],
               interval=[start, end], steps=proof["n_steps"])
     for cmp_ in proof["comparisons"][:3]:
@@ -451,11 +473,18 @@ def stage_audit(log: RunLog, artifacts: str, proofs: dict, replay_proof: dict,
         log.check(f"audit_{key}", obj["result"] == "PASS")
     perf = read_json(os.path.join(artifacts, "performance.json"))
     d = perf["derived"]
+    log.event("performance measured",
+              packing_utilization=d["packing_utilization"],
+              loss_bearing_fraction=d["loss_bearing_fraction"],
+              tokens_per_sec=d["tokens_per_sec"],
+              loss_tokens_per_sec=d["loss_tokens_per_sec"])
     log.check("performance_measured", perf["counters_reconcile_with_ledger"],
               packing_utilization=d["packing_utilization"],
               loss_bearing_fraction=d["loss_bearing_fraction"],
               tokens_per_sec=d["tokens_per_sec"],
               loss_tokens_per_sec=d["loss_tokens_per_sec"])
+    log.event("audit completed",
+              passed=evidence["n_passed"], total=evidence["n_checks"])
     log.check("audit_completed", evidence["all_passed"],
               passed=evidence["n_passed"], total=evidence["n_checks"])
     return evidence
