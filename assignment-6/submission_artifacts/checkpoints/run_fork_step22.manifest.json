@@ -1,0 +1,83 @@
+{
+  "blob_file": "run_fork_step22.pt",
+  "blob_hash": "200f189785849b6433831a578b43b3f2d0d18a27eafb69f7721683c10beacf76",
+  "consumption_offset": {
+    "count": 6,
+    "head": "b5c450d62c84b8c868dc5c88191fca57507b7384a292dfd149d15961c9902da7"
+  },
+  "cursor": {
+    "agentic": {
+      "doc": 6,
+      "off": 0
+    },
+    "code": {
+      "doc": 44,
+      "off": 0
+    },
+    "indic": {
+      "doc": 53,
+      "off": 120
+    },
+    "math_science": {
+      "doc": 38,
+      "off": 155
+    },
+    "reasoning": {
+      "doc": 13,
+      "off": 0
+    },
+    "web": {
+      "doc": 144,
+      "off": 48
+    }
+  },
+  "learning_offset": {
+    "count": 6,
+    "head": "9e36c1e90ee7883e93b34bef27b5f0a398dc3f02a8e570c3596489cf26bfa103"
+  },
+  "lineage": {
+    "parent_checkpoint": "run_main_step16",
+    "parent_consumption_head": "1d8339e76877673725fa7428de64ae49798573f7debfe94a358a0e602bda24e7",
+    "parent_cursor": {
+      "agentic": {
+        "doc": 4,
+        "off": 0
+      },
+      "code": {
+        "doc": 29,
+        "off": 0
+      },
+      "indic": {
+        "doc": 35,
+        "off": 1
+      },
+      "math_science": {
+        "doc": 27,
+        "off": 113
+      },
+      "reasoning": {
+        "doc": 6,
+        "off": 0
+      },
+      "web": {
+        "doc": 123,
+        "off": 46
+      }
+    },
+    "parent_model_tensor_hash": "f1a06db41ef18d66222275bb06ea85e2afdf400411c0dcac0126e8fdb1495a98",
+    "parent_run_id": "run_main",
+    "parent_step": 16
+  },
+  "model_tensor_hash": "ff2341478c2aaeeb57b6e0c03c427329c112e179553a2d51bf31da5bfb624012",
+  "perf_counters": {
+    "loss_tokens": 9964,
+    "real_tokens": 10431,
+    "steps": 6,
+    "total_slot_tokens": 12288,
+    "wall_seconds": 0.34457176200066897
+  },
+  "run_id": "run_fork",
+  "stage": "B_rebalance",
+  "step": 22,
+  "tag": "run_fork_step22"
+}

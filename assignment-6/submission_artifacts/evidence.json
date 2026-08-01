@@ -1,0 +1,872 @@
+{
+  "all_passed": true,
+  "checks": {
+    "consumption_ledger": {
+      "detail": {
+        "chain_ok": true,
+        "duplicate_steps": false,
+        "entries": 48,
+        "first_step": 0,
+        "last_step": 47,
+        "steps_contiguous_from_zero": true,
+        "unique_batch_ids": true
+      },
+      "evidence": [
+        "ledgers/consumption_run_main.jsonl"
+      ],
+      "requirement": "Consumption ledger integrity",
+      "result": "PASS"
+    },
+    "crash_recovery": {
+      "detail": {
+        "actual_next_batch_id": "485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea",
+        "crash_at_step": 28,
+        "exit_code": 137,
+        "expected_next_batch_id": "485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea",
+        "learning_state_matched": true,
+        "next_batch_matched": true,
+        "no_gaps_or_duplicates": true,
+        "pre_crash_last_step": 27,
+        "process_died": true,
+        "resume_exit_ok": true,
+        "resume_next_step": 24,
+        "resumed_from": "run_main_step24",
+        "rewritten_batches_identical": true,
+        "rewritten_step_comparison": [
+          {
+            "loss_identical": true,
+            "param_hash_identical": true,
+            "pre_crash_loss": 5.93554162979126,
+            "resumed_loss": 5.93554162979126,
+            "step": 24
+          },
+          {
+            "loss_identical": true,
+            "param_hash_identical": true,
+            "pre_crash_loss": 5.830650329589844,
+            "resumed_loss": 5.830650329589844,
+            "step": 25
+          },
+          {
+            "loss_identical": true,
+            "param_hash_identical": true,
+            "pre_crash_loss": 5.886748790740967,
+            "resumed_loss": 5.886748790740967,
+            "step": 26
+          },
+          {
+            "loss_identical": true,
+            "param_hash_identical": true,
+            "pre_crash_loss": 5.924123764038086,
+            "resumed_loss": 5.924123764038086,
+            "step": 27
+          }
+        ],
+        "rewritten_window": [
+          24,
+          27
+        ],
+        "steps_completed_before_crash": 28,
+        "total_steps_in_ledger": 48
+      },
+      "evidence": [
+        "ledgers/consumption_run_main.jsonl",
+        "checkpoints/run_main_step24.manifest.json"
+      ],
+      "requirement": "Crash recovery (no skipped or repeated batches)",
+      "result": "PASS"
+    },
+    "evaluation_firewall": {
+      "detail": {
+        "blocked_content_hashes": 10,
+        "blocked_docs_rejected_by_opus": 11,
+        "consumed_shards": [
+          "agentic__train",
+          "code__train",
+          "indic__train",
+          "math_science__train",
+          "reasoning__train",
+          "web__train"
+        ],
+        "eval_shards_consumed": [],
+        "leaked_documents": [],
+        "poisoned_train_docs_caught": [
+          "D0083"
+        ]
+      },
+      "evidence": [
+        "manifests/firewall.json",
+        "ledgers/opus_ledger.jsonl"
+      ],
+      "requirement": "Evaluation firewall",
+      "result": "PASS"
+    },
+    "fork": {
+      "detail": {
+        "batch_id_collision_with_parent": [],
+        "branch_step_data_matches_parent": true,
+        "chain_ok": true,
+        "fork_run_id": "run_fork",
+        "fork_steps": [
+          16,
+          17,
+          18,
+          19,
+          20,
+          21
+        ],
+        "lineage": {
+          "parent_checkpoint": "run_main_step16",
+          "parent_consumption_head": "1d8339e76877673725fa7428de64ae49798573f7debfe94a358a0e602bda24e7",
+          "parent_cursor": {
+            "agentic": {
+              "doc": 4,
+              "off": 0
+            },
+            "code": {
+              "doc": 29,
+              "off": 0
+            },
+            "indic": {
+              "doc": 35,
+              "off": 1
+            },
+            "math_science": {
+              "doc": 27,
+              "off": 113
+            },
+            "reasoning": {
+              "doc": 6,
+              "off": 0
+            },
+            "web": {
+              "doc": 123,
+              "off": 46
+            }
+          },
+          "parent_model_tensor_hash": "f1a06db41ef18d66222275bb06ea85e2afdf400411c0dcac0126e8fdb1495a98",
+          "parent_run_id": "run_main",
+          "parent_step": 16,
+          "run_id": "run_fork"
+        }
+      },
+      "evidence": [
+        "ledgers/consumption_run_fork.jsonl",
+        "checkpoints/run_fork.lineage.json"
+      ],
+      "requirement": "Fork from an earlier checkpoint",
+      "result": "PASS"
+    },
+    "learning_trace": {
+      "detail": {
+        "chain_ok": true,
+        "consumption_loss_tokens": 81420,
+        "entries": 48,
+        "loss_decreased": true,
+        "mean_loss_first_10_steps": 6.643997144699097,
+        "mean_loss_last_10_steps": 5.637484169006347,
+        "per_lane_loss_tokens": 81420,
+        "steps_linked_to_consumption": 48,
+        "token_accounting_reconciles": true,
+        "unlinked_steps": []
+      },
+      "evidence": [
+        "ledgers/learning_run_main.jsonl",
+        "ledgers/consumption_run_main.jsonl"
+      ],
+      "requirement": "Learning trace linked to source data",
+      "result": "PASS"
+    },
+    "mixture_compliance": {
+      "detail": {
+        "actual_slot_shares_from_consumption_ledger": {
+          "A_foundation": {
+            "agentic": 0.02631578947368421,
+            "code": 0.19736842105263158,
+            "indic": 0.17763157894736842,
+            "math_science": 0.1118421052631579,
+            "reasoning": 0.05263157894736842,
+            "web": 0.4342105263157895
+          },
+          "B_rebalance": {
+            "agentic": 0.08333333333333333,
+            "code": 0.31666666666666665,
+            "indic": 0.08333333333333333,
+            "math_science": 0.20833333333333334,
+            "reasoning": 0.125,
+            "web": 0.18333333333333332
+          },
+          "C_long_context": {
+            "agentic": 0.10714285714285714,
+            "code": 0.30357142857142855,
+            "indic": 0.16071428571428573,
+            "math_science": 0.08928571428571429,
+            "reasoning": 0.14285714285714285,
+            "web": 0.19642857142857142
+          },
+          "D_anneal": {
+            "agentic": 0.125,
+            "code": 0.25,
+            "indic": 0.16071428571428573,
+            "math_science": 0.16071428571428573,
+            "reasoning": 0.19642857142857142,
+            "web": 0.10714285714285714
+          }
+        },
+        "actual_token_shares_from_consumption_ledger": {
+          "A_foundation": {
+            "agentic": 0.02083216665733326,
+            "code": 0.15447723581788655,
+            "indic": 0.19353754830038641,
+            "math_science": 0.12185697485579884,
+            "reasoning": 0.03620428963431707,
+            "web": 0.4730917847342779
+          },
+          "B_rebalance": {
+            "agentic": 0.07181202832023652,
+            "code": 0.26744728857076167,
+            "indic": 0.09958764490780363,
+            "math_science": 0.24896911226950907,
+            "reasoning": 0.09309110713452112,
+            "web": 0.21909281879716797
+          },
+          "C_long_context": {
+            "agentic": 0.09370594576664731,
+            "code": 0.26660585454847,
+            "indic": 0.1910606186250933,
+            "math_science": 0.10614478812505183,
+            "reasoning": 0.10896425905962352,
+            "web": 0.233518533875114
+          },
+          "D_anneal": {
+            "agentic": 0.10959252971137522,
+            "code": 0.2166383701188455,
+            "indic": 0.19558573853989814,
+            "math_science": 0.19558573853989814,
+            "reasoning": 0.15220713073005093,
+            "web": 0.13039049235993208
+          }
+        },
+        "floor_basis": "fraction of scheduled sequence slots per stage",
+        "floor_violations": [],
+        "floors": {
+          "agentic": 0.02,
+          "indic": 0.08,
+          "reasoning": 0.03
+        },
+        "largest_deviations": [
+          {
+            "abs_dev": 0.010714285714285718,
+            "actual": 0.08928571428571429,
+            "lane": "math_science",
+            "planned": 0.1,
+            "stage": "C_long_context"
+          },
+          {
+            "abs_dev": 0.009756995581737843,
+            "actual": 0.19642857142857142,
+            "lane": "reasoning",
+            "planned": 0.20618556701030927,
+            "stage": "D_anneal"
+          },
+          {
+            "abs_dev": 0.0077319587628865705,
+            "actual": 0.25,
+            "lane": "code",
+            "planned": 0.25773195876288657,
+            "stage": "D_anneal"
+          },
+          {
+            "abs_dev": 0.007142857142857131,
+            "actual": 0.10714285714285714,
+            "lane": "agentic",
+            "planned": 0.1,
+            "stage": "C_long_context"
+          },
+          {
+            "abs_dev": 0.006075110456553762,
+            "actual": 0.16071428571428573,
+            "lane": "math_science",
+            "planned": 0.15463917525773196,
+            "stage": "D_anneal"
+          }
+        ],
+        "max_abs_share_deviation": 0.010714285714285718,
+        "planned_fractions": {
+          "A_foundation": {
+            "agentic": 0.02197802197802198,
+            "code": 0.1978021978021978,
+            "indic": 0.17582417582417584,
+            "math_science": 0.10989010989010989,
+            "reasoning": 0.054945054945054944,
+            "web": 0.43956043956043955
+          },
+          "B_rebalance": {
+            "agentic": 0.08333333333333333,
+            "code": 0.3125,
+            "indic": 0.08333333333333333,
+            "math_science": 0.20833333333333334,
+            "reasoning": 0.125,
+            "web": 0.1875
+          },
+          "C_long_context": {
+            "agentic": 0.1,
+            "code": 0.3,
+            "indic": 0.16,
+            "math_science": 0.1,
+            "reasoning": 0.14,
+            "web": 0.2
+          },
+          "D_anneal": {
+            "agentic": 0.12371134020618557,
+            "code": 0.25773195876288657,
+            "indic": 0.15463917525773196,
+            "math_science": 0.15463917525773196,
+            "reasoning": 0.20618556701030927,
+            "web": 0.10309278350515463
+          }
+        },
+        "tolerance": 0.02
+      },
+      "evidence": [
+        "manifests/schedule.json",
+        "ledgers/consumption_run_main.jsonl"
+      ],
+      "requirement": "Mixture compliance and protected floors",
+      "result": "PASS"
+    },
+    "opus_audit_trail": {
+      "detail": {
+        "all_four_decision_types_present": true,
+        "chain_entries": 93,
+        "chain_ok": true,
+        "deferred_then_admitted_in_pass_2": [
+          "D0016",
+          "D0017",
+          "D0028",
+          "D0029",
+          "D0042"
+        ],
+        "documents_consumed_without_admission": [],
+        "events_by_decision": {
+          "ACCEPT": 57,
+          "DEFER": 13,
+          "FLOOR_OVERRIDE": 9,
+          "REJECT": 14
+        },
+        "events_by_reason": {
+          "budget_exhausted": 13,
+          "duplicate": 1,
+          "eval_firewall": 7,
+          "ok": 52,
+          "protected_floor_starved": 9,
+          "quality_flagged": 2,
+          "requeued_admitted": 5,
+          "validation_firewall": 4
+        },
+        "final_decision_per_document": {
+          "ACCEPT": 57,
+          "DEFER": 4,
+          "FLOOR_OVERRIDE": 9,
+          "REJECT": 14
+        }
+      },
+      "evidence": [
+        "ledgers/opus_ledger.jsonl",
+        "manifests/opus_summary.json"
+      ],
+      "requirement": "OPUS audit trail",
+      "result": "PASS"
+    },
+    "packing_correctness": {
+      "detail": {
+        "examples": [
+          {
+            "first_24_loss_mask": [
+              0,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "first_24_position_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ],
+            "first_24_segment_ids": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "lane": "code",
+            "n_loss_tokens": 175,
+            "n_prompt_masked_tokens": 0,
+            "n_real_tokens": 176,
+            "n_segments": 1,
+            "policy": "whole_unit",
+            "segment_boundaries": [
+              [
+                0,
+                176
+              ]
+            ],
+            "step": 0
+          },
+          {
+            "first_24_loss_mask": [
+              0,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "first_24_position_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ],
+            "first_24_segment_ids": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "lane": "web",
+            "n_loss_tokens": 254,
+            "n_prompt_masked_tokens": 0,
+            "n_real_tokens": 256,
+            "n_segments": 2,
+            "policy": "concat",
+            "segment_boundaries": [
+              [
+                0,
+                131
+              ],
+              [
+                131,
+                125
+              ]
+            ],
+            "step": 0
+          },
+          {
+            "first_24_loss_mask": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "first_24_position_ids": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              22,
+              23
+            ],
+            "first_24_segment_ids": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "lane": "reasoning",
+            "n_loss_tokens": 89,
+            "n_prompt_masked_tokens": 51,
+            "n_real_tokens": 140,
+            "n_segments": 1,
+            "policy": "prompt_completion",
+            "segment_boundaries": [
+              [
+                0,
+                140
+              ]
+            ],
+            "step": 1
+          }
+        ],
+        "invariant_violations": 0,
+        "per_lane": {
+          "agentic": {
+            "loss": 3495,
+            "loss_fraction": 0.6974655757333865,
+            "real": 5011,
+            "slots": 6912,
+            "utilization": 0.7249710648148148
+          },
+          "code": {
+            "loss": 18041,
+            "loss_fraction": 0.9935018448152432,
+            "real": 18159,
+            "slots": 25344,
+            "utilization": 0.716500946969697
+          },
+          "indic": {
+            "loss": 13923,
+            "loss_fraction": 0.9888494318181819,
+            "real": 14080,
+            "slots": 14080,
+            "utilization": 1.0
+          },
+          "math_science": {
+            "loss": 14177,
+            "loss_fraction": 0.9889090401785714,
+            "real": 14336,
+            "slots": 14336,
+            "utilization": 1.0
+          },
+          "reasoning": {
+            "loss": 5227,
+            "loss_fraction": 0.7694685705873694,
+            "real": 6793,
+            "slots": 10752,
+            "utilization": 0.6317894345238095
+          },
+          "web": {
+            "loss": 26557,
+            "loss_fraction": 0.987983630952381,
+            "real": 26880,
+            "slots": 26880,
+            "utilization": 1.0
+          }
+        },
+        "per_policy": {
+          "concat": {
+            "loss": 54657,
+            "loss_fraction": 0.9884440104166666,
+            "real": 55296,
+            "slots": 55296,
+            "utilization": 1.0
+          },
+          "prompt_completion": {
+            "loss": 8722,
+            "loss_fraction": 0.7389020670958997,
+            "real": 11804,
+            "slots": 17664,
+            "utilization": 0.6682518115942029
+          },
+          "whole_unit": {
+            "loss": 18041,
+            "loss_fraction": 0.9935018448152432,
+            "real": 18159,
+            "slots": 25344,
+            "utilization": 0.716500946969697
+          }
+        },
+        "policies_exercised": 3,
+        "policy_counts": {
+          "concat": 216,
+          "prompt_completion": 69,
+          "whole_unit": 99
+        },
+        "policy_rationale": {
+          "concat": "prose-like lanes: maximize utilization, documents may continue across the sequence boundary",
+          "prompt_completion": "reasoning/agentic: one trajectory per sequence, prompt prefix visible but loss-masked",
+          "whole_unit": "code: never split a file across sequences; accept padding to preserve file locality"
+        },
+        "samples_checked": 384,
+        "steps_probed": 48,
+        "violation_examples": []
+      },
+      "evidence": [
+        "packing_report.json"
+      ],
+      "requirement": "Packing correctness (masks, positions)",
+      "result": "PASS"
+    },
+    "replay": {
+      "detail": {
+        "all_match": true,
+        "examples": [
+          {
+            "match": true,
+            "n_segments": 18,
+            "original_batch_id": "5ede3695407226c24fccd606b66b1e128550cac26942991db991dfb005c9ddcd",
+            "replay_batch_id": "5ede3695407226c24fccd606b66b1e128550cac26942991db991dfb005c9ddcd",
+            "sample_hashes_match": true,
+            "step": 8,
+            "token_spans_match": true
+          },
+          {
+            "match": true,
+            "n_segments": 24,
+            "original_batch_id": "a033d90514ad7f9bed77bc3c24398f775a5cafc440d41240bc45f7238dc42de7",
+            "replay_batch_id": "a033d90514ad7f9bed77bc3c24398f775a5cafc440d41240bc45f7238dc42de7",
+            "sample_hashes_match": true,
+            "step": 9,
+            "token_spans_match": true
+          },
+          {
+            "match": true,
+            "n_segments": 14,
+            "original_batch_id": "7a9d3c2b0e28012b7518684612ffe6c49e9cf44fe5a4c987470db284bfbd8d34",
+            "replay_batch_id": "7a9d3c2b0e28012b7518684612ffe6c49e9cf44fe5a4c987470db284bfbd8d34",
+            "sample_hashes_match": true,
+            "step": 10,
+            "token_spans_match": true
+          }
+        ],
+        "interval": [
+          8,
+          20
+        ],
+        "n_steps": 12
+      },
+      "evidence": [
+        "replay_report.json"
+      ],
+      "requirement": "Replay of historical data stream",
+      "result": "PASS"
+    },
+    "shard_immutability": {
+      "detail": {
+        "errors": [],
+        "shards_verified": 8,
+        "total_documents": 84,
+        "total_tokens": 10747
+      },
+      "evidence": [
+        "manifests/agentic__train.manifest.json",
+        "manifests/code__train.manifest.json",
+        "manifests/indic__train.manifest.json",
+        "manifests/math_science__train.manifest.json",
+        "manifests/math_science__validation.manifest.json",
+        "manifests/reasoning__train.manifest.json",
+        "manifests/web__eval.manifest.json",
+        "manifests/web__train.manifest.json"
+      ],
+      "requirement": "Shard immutability and manifests",
+      "result": "PASS"
+    },
+    "throughput": {
+      "detail": {
+        "counters": {
+          "loss_tokens": 81420,
+          "real_tokens": 85259,
+          "steps": 48,
+          "total_slot_tokens": 98304,
+          "wall_seconds": 2.7880132909995154
+        },
+        "counters_reconcile_with_ledger": true,
+        "derived": {
+          "loss_bearing_fraction": 0.9549724955723149,
+          "loss_tokens_per_sec": 29203.591052756623,
+          "packing_utilization": 0.8672993977864584,
+          "pad_fraction": 0.13270060221354163,
+          "tokens_per_sec": 30580.55722877643
+        },
+        "ledger_recomputed": {
+          "loss_tokens": 81420,
+          "real_tokens": 85259,
+          "total_slot_tokens": 98304
+        }
+      },
+      "evidence": [
+        "performance.json"
+      ],
+      "requirement": "Throughput and packing efficiency",
+      "result": "PASS"
+    },
+    "tokenizer_integrity": {
+      "detail": {
+        "decode_encode_roundtrip": true,
+        "root_manifest_hash": "cb2a471b41cda7b88b8a0223d647172c7418bbb787bbafabfc859c7063cdc0fd",
+        "shards_bound_to_tokenizer": 8,
+        "shards_total": 8,
+        "tokenizer_content_hash": "ae4ea5abcd2d9573b3c50e8cbe946851f32ba3336171a2b6fa04e25598ef434b",
+        "vocab_size": 1024
+      },
+      "evidence": [
+        "manifests/tokenizer.json",
+        "manifests/root_manifest.json"
+      ],
+      "requirement": "Tokenizer integrity",
+      "result": "PASS"
+    }
+  },
+  "fork_run_id": "run_fork",
+  "generated_by": "datasys.audit.run_audit",
+  "n_checks": 12,
+  "n_passed": 12,
+  "run_id": "run_main"
+}

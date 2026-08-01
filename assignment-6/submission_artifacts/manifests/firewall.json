@@ -1,0 +1,59 @@
+{
+  "blocked_splits": [
+    "eval",
+    "validation"
+  ],
+  "count": 10,
+  "entries": [
+    {
+      "content_hash": "0b282770086d28b6dde2ef893259546f6e6d3acc337a9df9dfc850adfa54dfb7",
+      "doc_id": "D0072",
+      "split": "eval"
+    },
+    {
+      "content_hash": "36692a8867052d3b908d90d275fccc78dc6b8008a99fbe43d014f076214868d7",
+      "doc_id": "D0073",
+      "split": "eval"
+    },
+    {
+      "content_hash": "6ef701be8a8a6ebb7f9d217336a4021e266e536e9e55dc50437c3172c14d2302",
+      "doc_id": "D0079",
+      "split": "validation"
+    },
+    {
+      "content_hash": "aedd050b54d974f92d77d4bf0781f2388e7ad22426c0a550df266bf0a22a91fc",
+      "doc_id": "D0070",
+      "split": "eval"
+    },
+    {
+      "content_hash": "b140cd493a41238e31b9009d388994d43e653fc700dddd3330c37e39534d1f2a",
+      "doc_id": "D0074",
+      "split": "eval"
+    },
+    {
+      "content_hash": "c59c01e0682018686c67eaec7ddb5562207c2f45c81c3427dd1ff4062f0ff927",
+      "doc_id": "D0075",
+      "split": "eval"
+    },
+    {
+      "content_hash": "c920d1c7a85c03c9f756c119940cf27d5c04e7013869405c8b6edcc8a0e98f8f",
+      "doc_id": "D0077",
+      "split": "validation"
+    },
+    {
+      "content_hash": "dca4bd8a31ccd0a4772e7a84aea2e8514abf32516e21399712881601e54d489f",
+      "doc_id": "D0076",
+      "split": "validation"
+    },
+    {
+      "content_hash": "e8ed7c536d2f7c9ed32efa4401d55c3e26edd8ed18b8086639b0641af7899d03",
+      "doc_id": "D0078",
+      "split": "validation"
+    },
+    {
+      "content_hash": "f16769c90857257c1eed16c0f1cb944f44ac9cb7874a742a3be72b0e4258b030",
+      "doc_id": "D0071",
+      "split": "eval"
+    }
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "all_match": true,
+  "comparisons": [
+    {
+      "match": true,
+      "n_segments": 18,
+      "original_batch_id": "5ede3695407226c24fccd606b66b1e128550cac26942991db991dfb005c9ddcd",
+      "replay_batch_id": "5ede3695407226c24fccd606b66b1e128550cac26942991db991dfb005c9ddcd",
+      "sample_hashes_match": true,
+      "step": 8,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 24,
+      "original_batch_id": "a033d90514ad7f9bed77bc3c24398f775a5cafc440d41240bc45f7238dc42de7",
+      "replay_batch_id": "a033d90514ad7f9bed77bc3c24398f775a5cafc440d41240bc45f7238dc42de7",
+      "sample_hashes_match": true,
+      "step": 9,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 14,
+      "original_batch_id": "7a9d3c2b0e28012b7518684612ffe6c49e9cf44fe5a4c987470db284bfbd8d34",
+      "replay_batch_id": "7a9d3c2b0e28012b7518684612ffe6c49e9cf44fe5a4c987470db284bfbd8d34",
+      "sample_hashes_match": true,
+      "step": 10,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 20,
+      "original_batch_id": "511909cd3232430496b2248cba45d0cf708768d505327d2ab0a60e55b21f4888",
+      "replay_batch_id": "511909cd3232430496b2248cba45d0cf708768d505327d2ab0a60e55b21f4888",
+      "sample_hashes_match": true,
+      "step": 11,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 18,
+      "original_batch_id": "ab65dea60635ca458a9a21b86be33e640e0a26b7b835026354054ffa518a36d3",
+      "replay_batch_id": "ab65dea60635ca458a9a21b86be33e640e0a26b7b835026354054ffa518a36d3",
+      "sample_hashes_match": true,
+      "step": 12,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 18,
+      "original_batch_id": "164f93a5d62524667763ce275d593e07f2ba40beedc70bcb34a004a0e0b7aa17",
+      "replay_batch_id": "164f93a5d62524667763ce275d593e07f2ba40beedc70bcb34a004a0e0b7aa17",
+      "sample_hashes_match": true,
+      "step": 13,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 20,
+      "original_batch_id": "5d14efb4aed67106512c28fb3c750e698c26b604f4bd9cdd4aefe67ef38a5644",
+      "replay_batch_id": "5d14efb4aed67106512c28fb3c750e698c26b604f4bd9cdd4aefe67ef38a5644",
+      "sample_hashes_match": true,
+      "step": 14,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 24,
+      "original_batch_id": "ba9e27f70f0a828cee193f421d130d36be51c1ce23677d71d04f3c6198012083",
+      "replay_batch_id": "ba9e27f70f0a828cee193f421d130d36be51c1ce23677d71d04f3c6198012083",
+      "sample_hashes_match": true,
+      "step": 15,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 16,
+      "original_batch_id": "06cedacdff330dc42ff43cd69e160c49f6f6a9628bde535f61253371edbeb1b5",
+      "replay_batch_id": "06cedacdff330dc42ff43cd69e160c49f6f6a9628bde535f61253371edbeb1b5",
+      "sample_hashes_match": true,
+      "step": 16,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 23,
+      "original_batch_id": "8917b9b3f1f2005db844d72f010de3c6a5487df7c83e0d2207825f0a1089f57d",
+      "replay_batch_id": "8917b9b3f1f2005db844d72f010de3c6a5487df7c83e0d2207825f0a1089f57d",
+      "sample_hashes_match": true,
+      "step": 17,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 20,
+      "original_batch_id": "3bf07d45fdd4d55d39ea792c1f7f411b8755db3501b8b78a7add0c580196a242",
+      "replay_batch_id": "3bf07d45fdd4d55d39ea792c1f7f411b8755db3501b8b78a7add0c580196a242",
+      "sample_hashes_match": true,
+      "step": 18,
+      "token_spans_match": true
+    },
+    {
+      "match": true,
+      "n_segments": 11,
+      "original_batch_id": "03befcdf5f66ea6270c96699a328a233e5c742f454756c7991c4dd0be0e7ad42",
+      "replay_batch_id": "03befcdf5f66ea6270c96699a328a233e5c742f454756c7991c4dd0be0e7ad42",
+      "sample_hashes_match": true,
+      "step": 19,
+      "token_spans_match": true
+    }
+  ],
+  "interval": [
+    8,
+    20
+  ],
+  "n_steps": 12,
+  "run_id": "run_main"
+}

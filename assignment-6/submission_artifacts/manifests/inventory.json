@@ -1,0 +1,740 @@
+{
+  "agentic": [
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0066",
+      "n_tokens": 181,
+      "prompt_tokens": 66,
+      "shard_id": "agentic__train",
+      "token_end": 181,
+      "token_start": 0,
+      "type": "trajectory"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0067",
+      "n_tokens": 177,
+      "prompt_tokens": 56,
+      "shard_id": "agentic__train",
+      "token_end": 358,
+      "token_start": 181,
+      "type": "trajectory"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0068",
+      "n_tokens": 189,
+      "prompt_tokens": 50,
+      "shard_id": "agentic__train",
+      "token_end": 547,
+      "token_start": 358,
+      "type": "trajectory"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0069",
+      "n_tokens": 197,
+      "prompt_tokens": 52,
+      "shard_id": "agentic__train",
+      "token_end": 744,
+      "token_start": 547,
+      "type": "trajectory"
+    }
+  ],
+  "code": [
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0018",
+      "n_tokens": 176,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 176,
+      "token_start": 0,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0019",
+      "n_tokens": 160,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 336,
+      "token_start": 176,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0020",
+      "n_tokens": 182,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 518,
+      "token_start": 336,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0021",
+      "n_tokens": 201,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 719,
+      "token_start": 518,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0022",
+      "n_tokens": 176,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 895,
+      "token_start": 719,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0023",
+      "n_tokens": 163,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 1058,
+      "token_start": 895,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0024",
+      "n_tokens": 165,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 1223,
+      "token_start": 1058,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0025",
+      "n_tokens": 135,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 1358,
+      "token_start": 1223,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0026",
+      "n_tokens": 123,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 1481,
+      "token_start": 1358,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0027",
+      "n_tokens": 127,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 1608,
+      "token_start": 1481,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 2,
+      "decision": "ACCEPT",
+      "doc_id": "D0028",
+      "n_tokens": 105,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 1713,
+      "token_start": 1608,
+      "type": "code"
+    },
+    {
+      "admitted_in_pass": 2,
+      "decision": "ACCEPT",
+      "doc_id": "D0029",
+      "n_tokens": 126,
+      "prompt_tokens": 0,
+      "shard_id": "code__train",
+      "token_end": 1839,
+      "token_start": 1713,
+      "type": "code"
+    }
+  ],
+  "indic": [
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0046",
+      "n_tokens": 168,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 168,
+      "token_start": 0,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0047",
+      "n_tokens": 167,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 335,
+      "token_start": 168,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0048",
+      "n_tokens": 134,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 469,
+      "token_start": 335,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0049",
+      "n_tokens": 167,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 636,
+      "token_start": 469,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0050",
+      "n_tokens": 126,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 762,
+      "token_start": 636,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0051",
+      "n_tokens": 143,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 905,
+      "token_start": 762,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0052",
+      "n_tokens": 101,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 1006,
+      "token_start": 905,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0053",
+      "n_tokens": 147,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 1153,
+      "token_start": 1006,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0054",
+      "n_tokens": 87,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 1240,
+      "token_start": 1153,
+      "type": "indic"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0055",
+      "n_tokens": 127,
+      "prompt_tokens": 0,
+      "shard_id": "indic__train",
+      "token_end": 1367,
+      "token_start": 1240,
+      "type": "indic"
+    }
+  ],
+  "math_science": [
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0032",
+      "n_tokens": 125,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 125,
+      "token_start": 0,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0033",
+      "n_tokens": 125,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 250,
+      "token_start": 125,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0034",
+      "n_tokens": 163,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 413,
+      "token_start": 250,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0035",
+      "n_tokens": 128,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 541,
+      "token_start": 413,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0036",
+      "n_tokens": 158,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 699,
+      "token_start": 541,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0037",
+      "n_tokens": 122,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 821,
+      "token_start": 699,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0038",
+      "n_tokens": 119,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 940,
+      "token_start": 821,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0039",
+      "n_tokens": 144,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 1084,
+      "token_start": 940,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0040",
+      "n_tokens": 144,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 1228,
+      "token_start": 1084,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0041",
+      "n_tokens": 139,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 1367,
+      "token_start": 1228,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 2,
+      "decision": "ACCEPT",
+      "doc_id": "D0042",
+      "n_tokens": 173,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 1540,
+      "token_start": 1367,
+      "type": "math"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0043",
+      "n_tokens": 117,
+      "prompt_tokens": 0,
+      "shard_id": "math_science__train",
+      "token_end": 1657,
+      "token_start": 1540,
+      "type": "math"
+    }
+  ],
+  "reasoning": [
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0056",
+      "n_tokens": 140,
+      "prompt_tokens": 51,
+      "shard_id": "reasoning__train",
+      "token_end": 140,
+      "token_start": 0,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0057",
+      "n_tokens": 173,
+      "prompt_tokens": 43,
+      "shard_id": "reasoning__train",
+      "token_end": 313,
+      "token_start": 140,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0058",
+      "n_tokens": 133,
+      "prompt_tokens": 27,
+      "shard_id": "reasoning__train",
+      "token_end": 446,
+      "token_start": 313,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0059",
+      "n_tokens": 185,
+      "prompt_tokens": 43,
+      "shard_id": "reasoning__train",
+      "token_end": 631,
+      "token_start": 446,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0060",
+      "n_tokens": 182,
+      "prompt_tokens": 34,
+      "shard_id": "reasoning__train",
+      "token_end": 813,
+      "token_start": 631,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0061",
+      "n_tokens": 138,
+      "prompt_tokens": 36,
+      "shard_id": "reasoning__train",
+      "token_end": 951,
+      "token_start": 813,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0062",
+      "n_tokens": 176,
+      "prompt_tokens": 42,
+      "shard_id": "reasoning__train",
+      "token_end": 1127,
+      "token_start": 951,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0063",
+      "n_tokens": 166,
+      "prompt_tokens": 31,
+      "shard_id": "reasoning__train",
+      "token_end": 1293,
+      "token_start": 1127,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0064",
+      "n_tokens": 168,
+      "prompt_tokens": 41,
+      "shard_id": "reasoning__train",
+      "token_end": 1461,
+      "token_start": 1293,
+      "type": "qa"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "FLOOR_OVERRIDE",
+      "doc_id": "D0065",
+      "n_tokens": 159,
+      "prompt_tokens": 20,
+      "shard_id": "reasoning__train",
+      "token_end": 1620,
+      "token_start": 1461,
+      "type": "qa"
+    }
+  ],
+  "web": [
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0000",
+      "n_tokens": 131,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 131,
+      "token_start": 0,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0001",
+      "n_tokens": 127,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 258,
+      "token_start": 131,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0002",
+      "n_tokens": 115,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 373,
+      "token_start": 258,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0003",
+      "n_tokens": 138,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 511,
+      "token_start": 373,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0004",
+      "n_tokens": 146,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 657,
+      "token_start": 511,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0005",
+      "n_tokens": 148,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 805,
+      "token_start": 657,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0006",
+      "n_tokens": 134,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 939,
+      "token_start": 805,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0007",
+      "n_tokens": 113,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1052,
+      "token_start": 939,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0008",
+      "n_tokens": 101,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1153,
+      "token_start": 1052,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0009",
+      "n_tokens": 115,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1268,
+      "token_start": 1153,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0010",
+      "n_tokens": 126,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1394,
+      "token_start": 1268,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0011",
+      "n_tokens": 109,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1503,
+      "token_start": 1394,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0012",
+      "n_tokens": 127,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1630,
+      "token_start": 1503,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0013",
+      "n_tokens": 108,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1738,
+      "token_start": 1630,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0014",
+      "n_tokens": 108,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1846,
+      "token_start": 1738,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 1,
+      "decision": "ACCEPT",
+      "doc_id": "D0015",
+      "n_tokens": 121,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 1967,
+      "token_start": 1846,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 2,
+      "decision": "ACCEPT",
+      "doc_id": "D0016",
+      "n_tokens": 121,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 2088,
+      "token_start": 1967,
+      "type": "prose"
+    },
+    {
+      "admitted_in_pass": 2,
+      "decision": "ACCEPT",
+      "doc_id": "D0017",
+      "n_tokens": 114,
+      "prompt_tokens": 0,
+      "shard_id": "web__train",
+      "token_end": 2202,
+      "token_start": 2088,
+      "type": "prose"
+    }
+  ]
+}

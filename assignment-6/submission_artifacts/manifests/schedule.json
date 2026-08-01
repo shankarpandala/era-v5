@@ -1,0 +1,1124 @@
+{
+  "floor_basis": "fraction of scheduled sequence slots per stage",
+  "floors": {
+    "agentic": 0.02,
+    "indic": 0.08,
+    "reasoning": 0.03
+  },
+  "per_step": [
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 3,
+        "indic": 1,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 3
+      },
+      "lane_slots": [
+        "code",
+        "web",
+        "web",
+        "indic",
+        "web",
+        "code",
+        "code",
+        "math_science"
+      ],
+      "stage": "A_foundation",
+      "step": 0
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 2,
+        "indic": 0,
+        "math_science": 0,
+        "reasoning": 2,
+        "web": 4
+      },
+      "lane_slots": [
+        "reasoning",
+        "web",
+        "web",
+        "web",
+        "code",
+        "web",
+        "reasoning",
+        "code"
+      ],
+      "stage": "A_foundation",
+      "step": 1
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 0,
+        "indic": 2,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 5
+      },
+      "lane_slots": [
+        "web",
+        "indic",
+        "math_science",
+        "indic",
+        "web",
+        "web",
+        "web",
+        "web"
+      ],
+      "stage": "A_foundation",
+      "step": 2
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 0,
+        "indic": 1,
+        "math_science": 2,
+        "reasoning": 0,
+        "web": 5
+      },
+      "lane_slots": [
+        "math_science",
+        "web",
+        "indic",
+        "web",
+        "web",
+        "math_science",
+        "web",
+        "web"
+      ],
+      "stage": "A_foundation",
+      "step": 3
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 1,
+        "indic": 2,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 4
+      },
+      "lane_slots": [
+        "math_science",
+        "web",
+        "web",
+        "code",
+        "web",
+        "indic",
+        "indic",
+        "web"
+      ],
+      "stage": "A_foundation",
+      "step": 4
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 3,
+        "indic": 0,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 3
+      },
+      "lane_slots": [
+        "code",
+        "web",
+        "code",
+        "math_science",
+        "web",
+        "reasoning",
+        "web",
+        "code"
+      ],
+      "stage": "A_foundation",
+      "step": 5
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 0,
+        "indic": 1,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 5
+      },
+      "lane_slots": [
+        "web",
+        "agentic",
+        "indic",
+        "web",
+        "web",
+        "web",
+        "web",
+        "math_science"
+      ],
+      "stage": "A_foundation",
+      "step": 6
+    },
+    {
+      "lane_counts": {
+        "agentic": 2,
+        "code": 0,
+        "indic": 1,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 4
+      },
+      "lane_slots": [
+        "agentic",
+        "agentic",
+        "web",
+        "web",
+        "web",
+        "web",
+        "math_science",
+        "indic"
+      ],
+      "stage": "A_foundation",
+      "step": 7
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 2,
+        "indic": 0,
+        "math_science": 0,
+        "reasoning": 1,
+        "web": 4
+      },
+      "lane_slots": [
+        "code",
+        "web",
+        "web",
+        "agentic",
+        "web",
+        "reasoning",
+        "web",
+        "code"
+      ],
+      "stage": "A_foundation",
+      "step": 8
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 0,
+        "indic": 3,
+        "math_science": 0,
+        "reasoning": 0,
+        "web": 5
+      },
+      "lane_slots": [
+        "indic",
+        "web",
+        "web",
+        "web",
+        "indic",
+        "web",
+        "web",
+        "indic"
+      ],
+      "stage": "A_foundation",
+      "step": 9
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 4,
+        "indic": 0,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 2
+      },
+      "lane_slots": [
+        "code",
+        "math_science",
+        "web",
+        "web",
+        "code",
+        "code",
+        "reasoning",
+        "code"
+      ],
+      "stage": "A_foundation",
+      "step": 10
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 2,
+        "indic": 1,
+        "math_science": 4,
+        "reasoning": 0,
+        "web": 1
+      },
+      "lane_slots": [
+        "math_science",
+        "math_science",
+        "math_science",
+        "web",
+        "indic",
+        "code",
+        "math_science",
+        "code"
+      ],
+      "stage": "A_foundation",
+      "step": 11
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 4,
+        "indic": 1,
+        "math_science": 0,
+        "reasoning": 0,
+        "web": 3
+      },
+      "lane_slots": [
+        "web",
+        "code",
+        "indic",
+        "code",
+        "web",
+        "code",
+        "web",
+        "code"
+      ],
+      "stage": "A_foundation",
+      "step": 12
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 3,
+        "indic": 3,
+        "math_science": 0,
+        "reasoning": 0,
+        "web": 2
+      },
+      "lane_slots": [
+        "indic",
+        "indic",
+        "code",
+        "web",
+        "code",
+        "web",
+        "indic",
+        "code"
+      ],
+      "stage": "A_foundation",
+      "step": 13
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 1,
+        "indic": 1,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 4
+      },
+      "lane_slots": [
+        "indic",
+        "code",
+        "web",
+        "web",
+        "web",
+        "math_science",
+        "reasoning",
+        "web"
+      ],
+      "stage": "A_foundation",
+      "step": 14
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 0,
+        "indic": 2,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 5
+      },
+      "lane_slots": [
+        "math_science",
+        "web",
+        "web",
+        "web",
+        "indic",
+        "indic",
+        "web",
+        "web"
+      ],
+      "stage": "A_foundation",
+      "step": 15
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 3,
+        "indic": 1,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 2
+      },
+      "lane_slots": [
+        "code",
+        "web",
+        "reasoning",
+        "math_science",
+        "code",
+        "web",
+        "indic",
+        "code"
+      ],
+      "stage": "A_foundation",
+      "step": 16
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 0,
+        "indic": 4,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 3
+      },
+      "lane_slots": [
+        "indic",
+        "indic",
+        "web",
+        "math_science",
+        "indic",
+        "web",
+        "indic",
+        "web"
+      ],
+      "stage": "A_foundation",
+      "step": 17
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 2,
+        "indic": 3,
+        "math_science": 0,
+        "reasoning": 1,
+        "web": 2
+      },
+      "lane_slots": [
+        "web",
+        "code",
+        "indic",
+        "code",
+        "web",
+        "indic",
+        "indic",
+        "reasoning"
+      ],
+      "stage": "A_foundation",
+      "step": 18
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 3,
+        "indic": 1,
+        "math_science": 1,
+        "reasoning": 2,
+        "web": 0
+      },
+      "lane_slots": [
+        "agentic",
+        "code",
+        "code",
+        "code",
+        "math_science",
+        "indic",
+        "reasoning",
+        "reasoning"
+      ],
+      "stage": "B_rebalance",
+      "step": 19
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 2,
+        "indic": 0,
+        "math_science": 2,
+        "reasoning": 2,
+        "web": 2
+      },
+      "lane_slots": [
+        "code",
+        "web",
+        "math_science",
+        "code",
+        "math_science",
+        "reasoning",
+        "web",
+        "reasoning"
+      ],
+      "stage": "B_rebalance",
+      "step": 20
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 3,
+        "indic": 1,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 1
+      },
+      "lane_slots": [
+        "code",
+        "code",
+        "indic",
+        "code",
+        "reasoning",
+        "web",
+        "agentic",
+        "math_science"
+      ],
+      "stage": "B_rebalance",
+      "step": 21
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 2,
+        "indic": 0,
+        "math_science": 2,
+        "reasoning": 1,
+        "web": 2
+      },
+      "lane_slots": [
+        "reasoning",
+        "web",
+        "web",
+        "code",
+        "math_science",
+        "agentic",
+        "code",
+        "math_science"
+      ],
+      "stage": "B_rebalance",
+      "step": 22
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 1,
+        "indic": 1,
+        "math_science": 4,
+        "reasoning": 2,
+        "web": 0
+      },
+      "lane_slots": [
+        "reasoning",
+        "math_science",
+        "math_science",
+        "indic",
+        "reasoning",
+        "math_science",
+        "code",
+        "math_science"
+      ],
+      "stage": "B_rebalance",
+      "step": 23
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 4,
+        "indic": 1,
+        "math_science": 2,
+        "reasoning": 0,
+        "web": 0
+      },
+      "lane_slots": [
+        "code",
+        "code",
+        "code",
+        "agentic",
+        "code",
+        "indic",
+        "math_science",
+        "math_science"
+      ],
+      "stage": "B_rebalance",
+      "step": 24
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 1,
+        "indic": 1,
+        "math_science": 2,
+        "reasoning": 1,
+        "web": 3
+      },
+      "lane_slots": [
+        "web",
+        "web",
+        "reasoning",
+        "indic",
+        "math_science",
+        "math_science",
+        "code",
+        "web"
+      ],
+      "stage": "B_rebalance",
+      "step": 25
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 2,
+        "indic": 1,
+        "math_science": 2,
+        "reasoning": 1,
+        "web": 1
+      },
+      "lane_slots": [
+        "reasoning",
+        "indic",
+        "code",
+        "agentic",
+        "math_science",
+        "code",
+        "web",
+        "math_science"
+      ],
+      "stage": "B_rebalance",
+      "step": 26
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 2,
+        "indic": 1,
+        "math_science": 2,
+        "reasoning": 1,
+        "web": 1
+      },
+      "lane_slots": [
+        "code",
+        "code",
+        "agentic",
+        "indic",
+        "math_science",
+        "reasoning",
+        "web",
+        "math_science"
+      ],
+      "stage": "B_rebalance",
+      "step": 27
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 3,
+        "indic": 0,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 3
+      },
+      "lane_slots": [
+        "web",
+        "web",
+        "code",
+        "reasoning",
+        "code",
+        "math_science",
+        "code",
+        "web"
+      ],
+      "stage": "B_rebalance",
+      "step": 28
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 3,
+        "indic": 1,
+        "math_science": 2,
+        "reasoning": 0,
+        "web": 2
+      },
+      "lane_slots": [
+        "code",
+        "code",
+        "web",
+        "indic",
+        "math_science",
+        "code",
+        "web",
+        "math_science"
+      ],
+      "stage": "B_rebalance",
+      "step": 29
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 4,
+        "indic": 0,
+        "math_science": 3,
+        "reasoning": 1,
+        "web": 0
+      },
+      "lane_slots": [
+        "math_science",
+        "reasoning",
+        "code",
+        "code",
+        "code",
+        "math_science",
+        "code",
+        "math_science"
+      ],
+      "stage": "B_rebalance",
+      "step": 30
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 2,
+        "indic": 0,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 4
+      },
+      "lane_slots": [
+        "web",
+        "math_science",
+        "code",
+        "web",
+        "web",
+        "code",
+        "web",
+        "agentic"
+      ],
+      "stage": "B_rebalance",
+      "step": 31
+    },
+    {
+      "lane_counts": {
+        "agentic": 2,
+        "code": 3,
+        "indic": 1,
+        "math_science": 0,
+        "reasoning": 1,
+        "web": 1
+      },
+      "lane_slots": [
+        "indic",
+        "reasoning",
+        "code",
+        "code",
+        "web",
+        "agentic",
+        "code",
+        "agentic"
+      ],
+      "stage": "B_rebalance",
+      "step": 32
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 3,
+        "indic": 1,
+        "math_science": 0,
+        "reasoning": 1,
+        "web": 2
+      },
+      "lane_slots": [
+        "code",
+        "web",
+        "reasoning",
+        "web",
+        "indic",
+        "code",
+        "code",
+        "agentic"
+      ],
+      "stage": "B_rebalance",
+      "step": 33
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 4,
+        "indic": 0,
+        "math_science": 2,
+        "reasoning": 1,
+        "web": 0
+      },
+      "lane_slots": [
+        "code",
+        "math_science",
+        "reasoning",
+        "code",
+        "code",
+        "agentic",
+        "math_science",
+        "code"
+      ],
+      "stage": "C_long_context",
+      "step": 34
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 2,
+        "indic": 0,
+        "math_science": 1,
+        "reasoning": 2,
+        "web": 3
+      },
+      "lane_slots": [
+        "code",
+        "reasoning",
+        "reasoning",
+        "web",
+        "web",
+        "math_science",
+        "code",
+        "web"
+      ],
+      "stage": "C_long_context",
+      "step": 35
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 3,
+        "indic": 3,
+        "math_science": 0,
+        "reasoning": 0,
+        "web": 1
+      },
+      "lane_slots": [
+        "agentic",
+        "code",
+        "code",
+        "code",
+        "indic",
+        "indic",
+        "indic",
+        "web"
+      ],
+      "stage": "C_long_context",
+      "step": 36
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 3,
+        "indic": 0,
+        "math_science": 0,
+        "reasoning": 3,
+        "web": 1
+      },
+      "lane_slots": [
+        "code",
+        "agentic",
+        "code",
+        "reasoning",
+        "code",
+        "web",
+        "reasoning",
+        "reasoning"
+      ],
+      "stage": "C_long_context",
+      "step": 37
+    },
+    {
+      "lane_counts": {
+        "agentic": 2,
+        "code": 1,
+        "indic": 2,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 1
+      },
+      "lane_slots": [
+        "reasoning",
+        "indic",
+        "agentic",
+        "math_science",
+        "indic",
+        "agentic",
+        "code",
+        "web"
+      ],
+      "stage": "C_long_context",
+      "step": 38
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 3,
+        "indic": 3,
+        "math_science": 1,
+        "reasoning": 0,
+        "web": 1
+      },
+      "lane_slots": [
+        "indic",
+        "web",
+        "code",
+        "indic",
+        "code",
+        "indic",
+        "code",
+        "math_science"
+      ],
+      "stage": "C_long_context",
+      "step": 39
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 1,
+        "indic": 1,
+        "math_science": 0,
+        "reasoning": 1,
+        "web": 4
+      },
+      "lane_slots": [
+        "indic",
+        "agentic",
+        "reasoning",
+        "web",
+        "web",
+        "web",
+        "web",
+        "code"
+      ],
+      "stage": "C_long_context",
+      "step": 40
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 2,
+        "indic": 2,
+        "math_science": 1,
+        "reasoning": 2,
+        "web": 1
+      },
+      "lane_slots": [
+        "math_science",
+        "web",
+        "reasoning",
+        "reasoning",
+        "code",
+        "indic",
+        "indic",
+        "code"
+      ],
+      "stage": "D_anneal",
+      "step": 41
+    },
+    {
+      "lane_counts": {
+        "agentic": 2,
+        "code": 1,
+        "indic": 1,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 2
+      },
+      "lane_slots": [
+        "reasoning",
+        "web",
+        "web",
+        "math_science",
+        "indic",
+        "agentic",
+        "code",
+        "agentic"
+      ],
+      "stage": "D_anneal",
+      "step": 42
+    },
+    {
+      "lane_counts": {
+        "agentic": 2,
+        "code": 2,
+        "indic": 0,
+        "math_science": 2,
+        "reasoning": 2,
+        "web": 0
+      },
+      "lane_slots": [
+        "agentic",
+        "code",
+        "math_science",
+        "math_science",
+        "reasoning",
+        "reasoning",
+        "code",
+        "agentic"
+      ],
+      "stage": "D_anneal",
+      "step": 43
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 2,
+        "indic": 0,
+        "math_science": 2,
+        "reasoning": 2,
+        "web": 1
+      },
+      "lane_slots": [
+        "reasoning",
+        "code",
+        "code",
+        "web",
+        "math_science",
+        "reasoning",
+        "agentic",
+        "math_science"
+      ],
+      "stage": "D_anneal",
+      "step": 44
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 3,
+        "indic": 2,
+        "math_science": 1,
+        "reasoning": 1,
+        "web": 0
+      },
+      "lane_slots": [
+        "agentic",
+        "indic",
+        "indic",
+        "code",
+        "reasoning",
+        "code",
+        "math_science",
+        "code"
+      ],
+      "stage": "D_anneal",
+      "step": 45
+    },
+    {
+      "lane_counts": {
+        "agentic": 0,
+        "code": 2,
+        "indic": 3,
+        "math_science": 0,
+        "reasoning": 2,
+        "web": 1
+      },
+      "lane_slots": [
+        "code",
+        "web",
+        "reasoning",
+        "code",
+        "indic",
+        "indic",
+        "indic",
+        "reasoning"
+      ],
+      "stage": "D_anneal",
+      "step": 46
+    },
+    {
+      "lane_counts": {
+        "agentic": 1,
+        "code": 2,
+        "indic": 1,
+        "math_science": 2,
+        "reasoning": 1,
+        "web": 1
+      },
+      "lane_slots": [
+        "code",
+        "indic",
+        "math_science",
+        "agentic",
+        "code",
+        "reasoning",
+        "web",
+        "math_science"
+      ],
+      "stage": "D_anneal",
+      "step": 47
+    }
+  ],
+  "planned_fractions": {
+    "A_foundation": {
+      "agentic": 0.02197802197802198,
+      "code": 0.1978021978021978,
+      "indic": 0.17582417582417584,
+      "math_science": 0.10989010989010989,
+      "reasoning": 0.054945054945054944,
+      "web": 0.43956043956043955
+    },
+    "B_rebalance": {
+      "agentic": 0.08333333333333333,
+      "code": 0.3125,
+      "indic": 0.08333333333333333,
+      "math_science": 0.20833333333333334,
+      "reasoning": 0.125,
+      "web": 0.1875
+    },
+    "C_long_context": {
+      "agentic": 0.1,
+      "code": 0.3,
+      "indic": 0.16,
+      "math_science": 0.1,
+      "reasoning": 0.14,
+      "web": 0.2
+    },
+    "D_anneal": {
+      "agentic": 0.12371134020618557,
+      "code": 0.25773195876288657,
+      "indic": 0.15463917525773196,
+      "math_science": 0.15463917525773196,
+      "reasoning": 0.20618556701030927,
+      "web": 0.10309278350515463
+    }
+  },
+  "seqs_per_step": 8,
+  "stage_boundaries": [
+    {
+      "end": 19,
+      "stage": "A_foundation",
+      "start": 0
+    },
+    {
+      "end": 34,
+      "stage": "B_rebalance",
+      "start": 19
+    },
+    {
+      "end": 41,
+      "stage": "C_long_context",
+      "start": 34
+    },
+    {
+      "end": 48,
+      "stage": "D_anneal",
+      "start": 41
+    }
+  ],
+  "total_steps": 48
+}

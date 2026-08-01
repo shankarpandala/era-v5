@@ -1,0 +1,34 @@
+{
+  "parent_checkpoint": "run_main_step16",
+  "parent_consumption_head": "1d8339e76877673725fa7428de64ae49798573f7debfe94a358a0e602bda24e7",
+  "parent_cursor": {
+    "agentic": {
+      "doc": 4,
+      "off": 0
+    },
+    "code": {
+      "doc": 29,
+      "off": 0
+    },
+    "indic": {
+      "doc": 35,
+      "off": 1
+    },
+    "math_science": {
+      "doc": 27,
+      "off": 113
+    },
+    "reasoning": {
+      "doc": 6,
+      "off": 0
+    },
+    "web": {
+      "doc": 123,
+      "off": 46
+    }
+  },
+  "parent_model_tensor_hash": "f1a06db41ef18d66222275bb06ea85e2afdf400411c0dcac0126e8fdb1495a98",
+  "parent_run_id": "run_main",
+  "parent_step": 16,
+  "run_id": "run_fork"
+}
