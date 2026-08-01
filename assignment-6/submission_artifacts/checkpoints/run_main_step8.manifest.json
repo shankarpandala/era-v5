@@ -1,0 +1,51 @@
+{
+  "blob_file": "run_main_step8.pt",
+  "blob_hash": "612eb69bf0dbf967481f3395560c4ec1c9885cdcb2da12557001a3c7df7746f7",
+  "consumption_offset": {
+    "count": 8,
+    "head": "41cca949395f3e4d0bf5ea9ba6956bc4c64e41a5f2b3a4012011dd14db6a289d"
+  },
+  "cursor": {
+    "agentic": {
+      "doc": 3,
+      "off": 0
+    },
+    "code": {
+      "doc": 10,
+      "off": 0
+    },
+    "indic": {
+      "doc": 14,
+      "off": 45
+    },
+    "math_science": {
+      "doc": 14,
+      "off": 141
+    },
+    "reasoning": {
+      "doc": 3,
+      "off": 0
+    },
+    "web": {
+      "doc": 68,
+      "off": 104
+    }
+  },
+  "learning_offset": {
+    "count": 8,
+    "head": "955439f56ac15bce316a52a50afe1982cf5dfb548bd0a2e1a67b9b6cba43da70"
+  },
+  "lineage": {},
+  "model_tensor_hash": "8a74d9c4bca426fc5a78175befd531d818b82508634b0f6c99fa95fc05a2c765",
+  "perf_counters": {
+    "loss_tokens": 14697,
+    "real_tokens": 15145,
+    "steps": 8,
+    "total_slot_tokens": 16384,
+    "wall_seconds": 0.4957180009996591
+  },
+  "run_id": "run_main",
+  "stage": "A_foundation",
+  "step": 8,
+  "tag": "run_main_step8"
+}

@@ -1,0 +1,153 @@
+{
+  "documents": [
+    {
+      "doc_id": "D0032",
+      "n_tokens": 125,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "4337d70de0e36a62987fb38d4c01910b81c29b360713a91082afdade2921e924",
+      "token_end": 125,
+      "token_start": 0,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0033",
+      "n_tokens": 125,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "a48aa2bb915149f6cefb06bbfcf41be44c8b4dcf9b6fc6ce62db49bbc78b83e9",
+      "token_end": 250,
+      "token_start": 125,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0034",
+      "n_tokens": 163,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "78a301ddec5cb2c8c6fb30d95d9f2e9e7775487693701f075cfdb6503460d551",
+      "token_end": 413,
+      "token_start": 250,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0035",
+      "n_tokens": 128,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "a75d9e735e044150449cc6759338d5bd3ced3250b942a2fef19f297dab98e309",
+      "token_end": 541,
+      "token_start": 413,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0036",
+      "n_tokens": 158,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "6a57e94bd3b8615b67c3d74152ab6ab277a82b75111d47879f12b2e8b4d86719",
+      "token_end": 699,
+      "token_start": 541,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0037",
+      "n_tokens": 122,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "db8a03d813364c69b0730265105ac26b94eeafc8d56cd5c950390915f6cfc0f3",
+      "token_end": 821,
+      "token_start": 699,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0038",
+      "n_tokens": 119,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "4b7f513a556e1d413e322eb423a79c2f326734ccfc674cbfa1098863790fdff9",
+      "token_end": 940,
+      "token_start": 821,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0039",
+      "n_tokens": 144,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "b233ca700ca8525aa874e51c1b44f373edb5b4712feb328b3db97709bb7f8ff3",
+      "token_end": 1084,
+      "token_start": 940,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0040",
+      "n_tokens": 144,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "672d45a8cb218ac14b7e993491bba9bb7ff59d47df68d58ff7cc1cf3596c8591",
+      "token_end": 1228,
+      "token_start": 1084,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0041",
+      "n_tokens": 139,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "7ce1ed3c033e092ffd0efeb100b38ca330184f257e99de938bbcc9e9d395c42b",
+      "token_end": 1367,
+      "token_start": 1228,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0042",
+      "n_tokens": 173,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "0d9e6506298e71e2a8ca957201543a3f22d1f36597339a6ec28976217879a079",
+      "token_end": 1540,
+      "token_start": 1367,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0043",
+      "n_tokens": 117,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "68b97884089fcf80826641e4e37fdda7bf3e845321e26aa29271efa1c3a9512e",
+      "token_end": 1657,
+      "token_start": 1540,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0044",
+      "n_tokens": 116,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "a396b32d15c628673ae53459a9757bee78e4eb5887db72daa842eff06f502b7d",
+      "token_end": 1773,
+      "token_start": 1657,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0045",
+      "n_tokens": 111,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "bd96604c7a3d768aeacb5ea76802a7633ad9fbc71c15148a16efb0f9fcd74955",
+      "token_end": 1884,
+      "token_start": 1773,
+      "type": "math"
+    }
+  ],
+  "lane": "math_science",
+  "manifest_hash": "0eae379f450ddc63c2199c701effdba03ad598fc1535f362feefb3d216087aee",
+  "n_docs": 14,
+  "n_tokens": 1884,
+  "shard_hash": "af35dba0d8200be6aec656e2827a33e2ec99f10a1884f9f7811d08267bff5ca5",
+  "shard_id": "math_science__train",
+  "split": "train",
+  "token_file": "math_science__train.tokens.bin",
+  "tokenizer_hash": "ae4ea5abcd2d9573b3c50e8cbe946851f32ba3336171a2b6fa04e25598ef434b"
+}

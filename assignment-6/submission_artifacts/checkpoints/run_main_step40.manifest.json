@@ -1,0 +1,51 @@
+{
+  "blob_file": "run_main_step40.pt",
+  "blob_hash": "95c165e61f065a57edd89510dde38259fa5ecf85cf8b57f05ca77c3f193a4461",
+  "consumption_offset": {
+    "count": 40,
+    "head": "378354f222499ce9cd4a217410972cda7f2935b3efffc380c037307d2f4da160"
+  },
+  "cursor": {
+    "agentic": {
+      "doc": 19,
+      "off": 0
+    },
+    "code": {
+      "doc": 100,
+      "off": 0
+    },
+    "indic": {
+      "doc": 83,
+      "off": 115
+    },
+    "math_science": {
+      "doc": 87,
+      "off": 20
+    },
+    "reasoning": {
+      "doc": 30,
+      "off": 0
+    },
+    "web": {
+      "doc": 198,
+      "off": 98
+    }
+  },
+  "learning_offset": {
+    "count": 40,
+    "head": "58738cf4bb142cb65c3d4bcbc58fd46a6a9f7015c73a4c35fd7fde2cb46203e4"
+  },
+  "lineage": {},
+  "model_tensor_hash": "78725199775f6f2b2753aab3eab11e2e7c28718e8e5760adc089b380ae654c52",
+  "perf_counters": {
+    "loss_tokens": 68860,
+    "real_tokens": 71686,
+    "steps": 40,
+    "total_slot_tokens": 81920,
+    "wall_seconds": 2.355234962999475
+  },
+  "run_id": "run_main",
+  "stage": "C_long_context",
+  "step": 40,
+  "tag": "run_main_step40"
+}

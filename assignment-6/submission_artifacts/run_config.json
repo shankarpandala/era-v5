@@ -1,0 +1,19 @@
+{
+  "checkpoint_every": 8,
+  "crash_at": 28,
+  "d_model": 64,
+  "fork_from_step": 16,
+  "fork_steps": 6,
+  "lr": 0.003,
+  "n_head": 4,
+  "n_layer": 2,
+  "replay_interval": [
+    8,
+    20
+  ],
+  "seed": 20260801,
+  "seq_len": 256,
+  "seqs_per_step": 8,
+  "total_steps": 48,
+  "vocab_size": 1024
+}

@@ -1,0 +1,7 @@
+{
+  "loss_tokens": 9964,
+  "real_tokens": 10431,
+  "steps": 6,
+  "total_slot_tokens": 12288,
+  "wall_seconds": 0.34457176200066897
+}

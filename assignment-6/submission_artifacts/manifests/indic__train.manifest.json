@@ -1,0 +1,113 @@
+{
+  "documents": [
+    {
+      "doc_id": "D0046",
+      "n_tokens": 168,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "807bd11d90531f51a53ed8bebd162e5f16021163e3a10d9debf0ad5385d3c173",
+      "token_end": 168,
+      "token_start": 0,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0047",
+      "n_tokens": 167,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "ec4dca290bd5138c99c6046187bf816cca2ff251b6de60b721bebe996196734b",
+      "token_end": 335,
+      "token_start": 168,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0048",
+      "n_tokens": 134,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "637a387496920fc0e5ebc209b93af2389c6b3c28c1361128223b5b243e685fc7",
+      "token_end": 469,
+      "token_start": 335,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0049",
+      "n_tokens": 167,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "a18168f4156fea82534338eb36c2039b24e67da183f1affb53de9a77e92bb8f0",
+      "token_end": 636,
+      "token_start": 469,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0050",
+      "n_tokens": 126,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "4430608137008ba075a07f71a369231e5b34d5a965d5da37e4c7f51f4fcc50ac",
+      "token_end": 762,
+      "token_start": 636,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0051",
+      "n_tokens": 143,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "150e596f315ba01624fcc278626980ff4cae032b101e8f3c8d77e5fee6d34ebb",
+      "token_end": 905,
+      "token_start": 762,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0052",
+      "n_tokens": 101,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "4aafb31e3db7420987582e9b0bb6d857ac181fa9c510796dcd941773f0248b1f",
+      "token_end": 1006,
+      "token_start": 905,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0053",
+      "n_tokens": 147,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "7ced7f1c33487d8e0aa91aacb4ab30ce9fbdf8ab8bc6da4b4276e0696c03e484",
+      "token_end": 1153,
+      "token_start": 1006,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0054",
+      "n_tokens": 87,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "20292bf04c047feea45ca94bc59175b1d270e8e23e77b73cec829dc666e0a778",
+      "token_end": 1240,
+      "token_start": 1153,
+      "type": "indic"
+    },
+    {
+      "doc_id": "D0055",
+      "n_tokens": 127,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "0e297594f7c510fe512617e0c3800ed4c1c5efcb890e09a1b48b5c2529864404",
+      "token_end": 1367,
+      "token_start": 1240,
+      "type": "indic"
+    }
+  ],
+  "lane": "indic",
+  "manifest_hash": "289b7bc2000a55674f79431da64d0d40307a6ac2c770f29dc377cd06ffed6534",
+  "n_docs": 10,
+  "n_tokens": 1367,
+  "shard_hash": "9357fe7ea29793e9d1f3d9d5eb4f6f30aee5fe01c3d11db8e60732466f54d6f3",
+  "shard_id": "indic__train",
+  "split": "train",
+  "token_file": "indic__train.tokens.bin",
+  "tokenizer_hash": "ae4ea5abcd2d9573b3c50e8cbe946851f32ba3336171a2b6fa04e25598ef434b"
+}

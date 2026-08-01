@@ -1,0 +1,53 @@
+{
+  "documents": [
+    {
+      "doc_id": "D0076",
+      "n_tokens": 55,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "dca4bd8a31ccd0a4772e7a84aea2e8514abf32516e21399712881601e54d489f",
+      "token_end": 55,
+      "token_start": 0,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0077",
+      "n_tokens": 49,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "c920d1c7a85c03c9f756c119940cf27d5c04e7013869405c8b6edcc8a0e98f8f",
+      "token_end": 104,
+      "token_start": 55,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0078",
+      "n_tokens": 50,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "e8ed7c536d2f7c9ed32efa4401d55c3e26edd8ed18b8086639b0641af7899d03",
+      "token_end": 154,
+      "token_start": 104,
+      "type": "math"
+    },
+    {
+      "doc_id": "D0079",
+      "n_tokens": 48,
+      "prompt_tokens": 0,
+      "quality": "ok",
+      "text_hash": "6ef701be8a8a6ebb7f9d217336a4021e266e536e9e55dc50437c3172c14d2302",
+      "token_end": 202,
+      "token_start": 154,
+      "type": "math"
+    }
+  ],
+  "lane": "math_science",
+  "manifest_hash": "d31d09baa5ed9eb42736a4051ac9185a6235220550069d7da4e2e77486c52670",
+  "n_docs": 4,
+  "n_tokens": 202,
+  "shard_hash": "481f0fbf9d7892fcac8d9de0bf838c7561d44aa4e7aa972705ed7b24a7c894bf",
+  "shard_id": "math_science__validation",
+  "split": "validation",
+  "token_file": "math_science__validation.tokens.bin",
+  "tokenizer_hash": "ae4ea5abcd2d9573b3c50e8cbe946851f32ba3336171a2b6fa04e25598ef434b"
+}

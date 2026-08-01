@@ -1,0 +1,48 @@
+{
+  "admitted_tokens_per_lane": {
+    "agentic": 744,
+    "code": 1839,
+    "indic": 1367,
+    "math_science": 1657,
+    "reasoning": 1620,
+    "web": 2202
+  },
+  "budgets": {
+    "agentic": 400,
+    "code": 1700,
+    "indic": 1000,
+    "math_science": 1500,
+    "reasoning": 1200,
+    "web": 2000
+  },
+  "by_decision": {
+    "ACCEPT": 57,
+    "DEFER": 13,
+    "FLOOR_OVERRIDE": 9,
+    "REJECT": 14
+  },
+  "by_reason": {
+    "budget_exhausted": 13,
+    "duplicate": 1,
+    "eval_firewall": 7,
+    "ok": 52,
+    "protected_floor_starved": 9,
+    "quality_flagged": 2,
+    "requeued_admitted": 5,
+    "validation_firewall": 4
+  },
+  "final_by_decision": {
+    "ACCEPT": 57,
+    "DEFER": 4,
+    "FLOOR_OVERRIDE": 9,
+    "REJECT": 14
+  },
+  "floor_token_demand": {
+    "agentic": 1966,
+    "indic": 7864,
+    "reasoning": 2949
+  },
+  "requeue_budget_factor": 1.15,
+  "total_documents": 84,
+  "total_events": 93
+}
