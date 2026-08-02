@@ -46,6 +46,8 @@ submission_artifacts/
   performance.json           raw counters + derived throughput, cross-checked against the ledger
   packing_report.json        per-policy utilization, mask invariant violations, worked examples
   replay_report.json         per-step original vs replay batch ids, hashes and token spans
+  perf_counters_<run>.json   raw per-run counters; the audit re-derives every rate from these
+  run_config.json            the exact CONFIG the run executed under
   manifests/                 tokenizer.json, root_manifest.json, per-shard manifests + .tokens.bin,
                              schedule.json, inventory.json, firewall.json, opus_summary.json
   ledgers/                   opus_ledger.jsonl, consumption_*.jsonl, learning_*.jsonl,
@@ -76,12 +78,23 @@ submission_artifacts/
 
 ## Design decisions
 
-### Randomness is a coordinate, not a stream
+### In the data path, randomness is a coordinate, not a stream
 
-Anywhere the system needs a random choice it calls `rand_*(seed, *coordinate)`,
-which hashes the coordinate. There is no RNG object to advance, so regenerating
-step 27 does not require having generated steps 0–26 in the same process. This is
-what makes replay cheap and resume exact.
+The one random choice the data path makes — spreading a stage's sequence slots
+across its steps — goes through `rand_*(seed, *coordinate)`, which hashes the
+coordinate rather than advancing an RNG object. So the compiled schedule is a
+pure function of `(SCHEDULE_SEED, stage)`, and reproducing it never requires
+having drawn the earlier values in the same process.
+
+The batch stream itself is not random at all: it is a deterministic walk over
+the admitted inventory driven by the cursor (below). Between the two,
+regenerating step 27 needs neither steps 0–26 nor a model — which is what makes
+replay cheap and resume exact.
+
+The *model* path is different and uses ordinary RNG streams (torch, numpy,
+python) for initialization. Those are mutable, so the checkpoint saves and
+restores all three states — that is why a resumed step reproduces its pre-crash
+loss and parameter hash bit for bit.
 
 ### The cursor is the only mutable data state
 
@@ -229,4 +242,5 @@ over a 1,024-token vocabulary — small enough that the committed checkpoints st
 modest, large enough to learn. Step-0 loss is 6.93 against `ln(1024) = 6.93`,
 which is exactly where a correctly initialized model should start.
 
-The whole run takes about 16 seconds on a laptop CPU.
+The whole run takes roughly 12–16 seconds on a CPU (`run.log` timestamps every
+event, so the actual figure for any given run is in the log itself).
