@@ -1,6 +1,6 @@
 {
   "blob_file": "run_main_step16.pt",
-  "blob_hash": "02508ebc158c1129e69322c20b3045ca9089981e4a845b31539603d39d9c7f11",
+  "blob_hash": "87e499d8635a915bb0e5673c760cc3b89341ddffdb5dd6d4c32f55f22c826f6a",
   "consumption_offset": {
     "count": 16,
     "head": "1d8339e76877673725fa7428de64ae49798573f7debfe94a358a0e602bda24e7"
@@ -40,16 +40,16 @@
   },
   "learning_offset": {
     "count": 16,
-    "head": "c50b307ffa763f5ed23b79621ae419b86fcdd6a200f30170444c3d08a0f5624d"
+    "head": "b15c87f1e6ac8ad8d41ce74ea2247467db57aef516c5128e0513ddc3ecc6ddd8"
   },
   "lineage": {},
-  "model_tensor_hash": "b842cbd064fac9f2868a48e2ab76c02205ebd0196f30321fddb72710e59535b3",
+  "model_tensor_hash": "f1a06db41ef18d66222275bb06ea85e2afdf400411c0dcac0126e8fdb1495a98",
   "perf_counters": {
     "loss_tokens": 29311,
     "real_tokens": 30076,
     "steps": 16,
     "total_slot_tokens": 32768,
-    "wall_seconds": 0.208511917386204
+    "wall_seconds": 0.6581955219998008
   },
   "run_id": "run_main",
   "stage": "A_foundation",

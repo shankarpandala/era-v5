@@ -31,11 +31,13 @@ sys.path.insert(0, HERE)
 from datasys import mixture as mix  # noqa: E402
 from datasys.audit import run_audit  # noqa: E402
 from datasys.batcher import Batcher  # noqa: E402
+from datasys.checkpoint import verify_checkpoint  # noqa: E402
 from datasys.ledger import Ledger  # noqa: E402
 from datasys.packing import POLICY_RATIONALE, verify_sample_invariants  # noqa: E402
 from datasys.prepare import prepare  # noqa: E402
 from datasys.replay import replay_and_compare  # noqa: E402
-from datasys.util import ensure_dir, read_json, write_json  # noqa: E402
+from datasys.shards import load_manifests, validate_shard  # noqa: E402
+from datasys.util import ensure_dir, read_json, sha256_json, write_json  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Run configuration (small on purpose -- the point is provability, not scale)
@@ -68,6 +70,9 @@ class RunLog:
         ensure_dir(os.path.dirname(path))
         self.f = open(path, "w", encoding="utf-8")
         self.t0 = time.time()
+        # Every [FAIL] the log ever emits is remembered, so the exit code
+        # reflects the whole demonstration and not only the audit's verdict.
+        self.failures: List[str] = []
 
     def _w(self, line: str):
         stamp = f"[{time.time() - self.t0:8.3f}s]"
@@ -81,6 +86,8 @@ class RunLog:
         self._w(f"EVENT  {name}" + (f"  {extra}" if extra else ""))
 
     def check(self, name: str, ok: bool, **kw):
+        if not ok:
+            self.failures.append(name)
         tag = "[PASS]" if ok else "[FAIL]"
         extra = " ".join(f"{k}={_fmt(v)}" for k, v in kw.items())
         self._w(f"{tag} {name}" + (f"  {extra}" if extra else ""))
@@ -143,7 +150,11 @@ def run_trainer(log: RunLog, artifacts: str, run_id: str, *, crash_at=None,
                              f"loss={ev['loss']:.4f} loss_tokens={ev['loss_tokens']} "
                              f"batch={ev['batch_id'][:12]}")
             elif ev["event"] == "checkpoint_saved":
-                log.check("checkpoint_saved", True, tag=ev["tag"], step=ev["step"],
+                # Verify the blob the trainer claims it wrote actually exists and
+                # re-hashes to the value recorded in its manifest.
+                v = verify_checkpoint(os.path.join(artifacts, "checkpoints"), ev["tag"])
+                log.check("checkpoint_saved", bool(v["ok"]), tag=ev["tag"],
+                          step=ev["step"], blob_hash_verified=bool(v["ok"]),
                           consumption_entries=ev["consumption_count"])
             elif ev["event"] == "crash":
                 log.event("crash simulated", last_completed_step=ev["at_step_completed"],
@@ -194,12 +205,27 @@ def stage_prepare(log: RunLog, artifacts: str, corpus: str, tokenizer_path: str)
     log.check("tokenizer_hash_verified", ok, hash=tok_hash[:16],
               vocab=session["tokenizer"].vocab_size)
     # Required sequence markers (assignment text) + structured [PASS] checks.
-    log.event("shards created", n=root["n_shards"],
-              tokens=sum(s["n_tokens"] for s in root["shards"]))
-    log.check("shards_created", True, n=root["n_shards"],
-              tokens=sum(s["n_tokens"] for s in root["shards"]))
+    # Both results are *derived*: the shard count/bytes are re-read off disk and
+    # every manifest is re-validated here, so a [PASS] in the log is a computed
+    # outcome rather than an assertion that the stage was reached.
+    on_disk = load_manifests(manifests_dir)
+    shards_ok = (len(on_disk["shards"]) == root["n_shards"] > 0
+                 and all(m["n_tokens"] > 0 for m in on_disk["shards"].values())
+                 and all(os.path.exists(os.path.join(manifests_dir, m["token_file"]))
+                         for m in on_disk["shards"].values()))
+    total_tokens = sum(m["n_tokens"] for m in on_disk["shards"].values())
+    log.event("shards created", n=root["n_shards"], tokens=total_tokens)
+    log.check("shards_created", shards_ok, n=root["n_shards"], tokens=total_tokens)
+
+    manifest_errors: List[str] = []
+    for m in on_disk["shards"].values():
+        manifest_errors += validate_shard(manifests_dir, m, tok_hash)
+    root_recomputed = sha256_json({k: v for k, v in on_disk["root"].items()
+                                   if k != "root_hash"})
+    manifests_ok = not manifest_errors and root_recomputed == root["root_hash"]
     log.event("manifests validated", root_hash=root["root_hash"][:16])
-    log.check("manifests_validated", True, root_hash=root["root_hash"][:16])
+    log.check("manifests_validated", manifests_ok, root_hash=root["root_hash"][:16],
+              shards_revalidated=len(on_disk["shards"]), errors=manifest_errors[:3])
 
     # firewall proof: eval/validation shards exist but are refused admission
     fw = read_json(os.path.join(manifests_dir, "firewall.json"))
@@ -231,10 +257,23 @@ def stage_prepare(log: RunLog, artifacts: str, corpus: str, tokenizer_path: str)
     log.info(f"protected-floor token demand: {summary['floor_token_demand']}")
 
     sched = session["schedule"]
+    # Derived, not asserted: the compiled schedule must have one record per step,
+    # exactly seqs_per_step slots in each, and hold every protected floor in
+    # every stage. A schedule that failed any of those logs [FAIL] here.
+    slots_ok = (len(sched["per_step"]) == sched["total_steps"]
+                and all(len(r["lane_slots"]) == sched["seqs_per_step"]
+                        for r in sched["per_step"]))
+    realized = mix.scheduled_shares(sched["per_step"])
+    floor_breaches = [(stage, lane, shares.get(lane, 0.0))
+                      for stage, shares in realized.items()
+                      for lane, fl in mix.FLOORS.items()
+                      if shares.get(lane, 0.0) + 1e-9 < fl]
+    mixture_ok = slots_ok and not floor_breaches
     log.event("mixture compiled", steps=sched["total_steps"],
               seqs_per_step=sched["seqs_per_step"], floors=mix.FLOORS)
-    log.check("mixture_compiled", True, steps=sched["total_steps"],
-              seqs_per_step=sched["seqs_per_step"], floors=mix.FLOORS)
+    log.check("mixture_compiled", mixture_ok, steps=sched["total_steps"],
+              seqs_per_step=sched["seqs_per_step"], floors=mix.FLOORS,
+              floor_breaches=floor_breaches)
     for b in sched["stage_boundaries"]:
         log.info(f"stage {b['stage']:<14} steps [{b['start']:3d}, {b['end']:3d})")
     return session
@@ -525,11 +564,16 @@ def main(argv=None) -> int:
 
     log.section("RESULT")
     log.info(f"total wall time {time.time() - t0:.1f}s")
-    log.check("demonstration_complete", evidence["all_passed"],
-              checks_passed=f"{evidence['n_passed']}/{evidence['n_checks']}")
+    # `failures` already holds every [FAIL] emitted so far; a green audit does
+    # not excuse a check that failed earlier in the run.
+    prior_failures = list(log.failures)
+    log.check("demonstration_complete",
+              evidence["all_passed"] and not prior_failures,
+              checks_passed=f"{evidence['n_passed']}/{evidence['n_checks']}",
+              earlier_failed_checks=prior_failures)
     log.info(f"artifacts written to {artifacts}")
     log.close()
-    return 0 if evidence["all_passed"] else 1
+    return 0 if evidence["all_passed"] and not prior_failures else 1
 
 
 if __name__ == "__main__":

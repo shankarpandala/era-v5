@@ -1,6 +1,6 @@
 {
   "blob_file": "run_main_step32.pt",
-  "blob_hash": "25ce4b13ca082c2194b86b18ebee255dd13bd43de9f39caa1eea97bdffca488a",
+  "blob_hash": "3962a7860670ab327745179a650d8a079ed2bf4f12a4cec07c3ea99f5ee90dc9",
   "consumption_offset": {
     "count": 32,
     "head": "4d794c758c15b8bcf7cbc01e9d4e7bbba8f35b0dee8d5bbe88a3df5b6ae31466"
@@ -40,16 +40,16 @@
   },
   "learning_offset": {
     "count": 32,
-    "head": "84ea39e03644438fde4292584f4eeb2940b20542578e0c2c949cdcbe4c437f39"
+    "head": "4d9cb73013a0426e9f043892d59b71089d0b4690553e078f4bd1d0b1f5bc82fa"
   },
   "lineage": {},
-  "model_tensor_hash": "48ac69c8894c976ef189981fc96fb6d8fe8b80c740933ad12823ebd86c109437",
+  "model_tensor_hash": "ffe4b4f5bd7fa263cca31c863d9851220fd31d1e52d64ed059fb6f056374fa85",
   "perf_counters": {
     "loss_tokens": 56297,
     "real_tokens": 58257,
     "steps": 32,
     "total_slot_tokens": 65536,
-    "wall_seconds": 0.4190695006400347
+    "wall_seconds": 1.2350896549995696
   },
   "run_id": "run_main",
   "stage": "B_rebalance",
