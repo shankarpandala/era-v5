@@ -1,6 +1,6 @@
 {
   "blob_file": "run_main_step48.pt",
-  "blob_hash": "e2e995c1332475ea699382be69d7b93308730fee38a108c94980297680c93854",
+  "blob_hash": "9337509f6d2a4c8ba717b2e0a3f22c95f6849b10166d9189d408a98a867c6ae9",
   "consumption_offset": {
     "count": 48,
     "head": "a35ecca4c7ee6536edbba3a96a3266b092c0d3de1ccce02496dbd6c61444efaf"
@@ -40,16 +40,16 @@
   },
   "learning_offset": {
     "count": 48,
-    "head": "ce0e435a9a9979fff9e70ae54c2b9c54717d4bc1932456be3ed4747fa329922a"
+    "head": "574653cb3d08f2ccfce1314f36bd9023dd0922f738082712b1bd92d3092df0b1"
   },
   "lineage": {},
-  "model_tensor_hash": "a0e2cb1f49754c1738ccd38d939b7bf337ca2938e8f2424da8e21793367c9f91",
+  "model_tensor_hash": "363076fde0f34aaa54c4d93293241b8546d135c74a4edfdecdb4850bba4ea639",
   "perf_counters": {
     "loss_tokens": 81420,
     "real_tokens": 85259,
     "steps": 48,
     "total_slot_tokens": 98304,
-    "wall_seconds": 0.6118186247767881
+    "wall_seconds": 1.844936861999372
   },
   "run_id": "run_main",
   "stage": "D_anneal",

@@ -2,130 +2,130 @@
 [   0.000s] ========================================================================
 [   0.000s] == ERA-V5 ASSIGNMENT 6 — TRAINING DATA EXECUTION SYSTEM
 [   0.000s] ========================================================================
-[   0.000s]        python 3.13.13  artifacts=/Users/shankarpandala/projects/era-v5/assignment-6/submission_artifacts
+[   0.000s]        python 3.11.15  artifacts=/home/user/era-v5/assignment-6/submission_artifacts
 [   0.000s] EVENT  run_config  seed=20260801 seq_len=256 seqs_per_step=8 total_steps=48 checkpoint_every=8 crash_at=28 replay_interval=[8, 20] fork_from_step=16 fork_steps=6 d_model=64 n_layer=2 n_head=4 lr=0.0030 vocab_size=1024
-[   0.000s] 
-[   0.000s] ========================================================================
-[   0.000s] == 1. DATA PREPARATION — shards, manifests, firewall, OPUS, mixture
-[   0.000s] ========================================================================
+[   0.001s] 
+[   0.001s] ========================================================================
+[   0.001s] == 1. DATA PREPARATION — shards, manifests, firewall, OPUS, mixture
+[   0.001s] ========================================================================
 [   0.001s] EVENT  documents_loaded  n=84
-[   0.002s] EVENT  tokenizer_frozen  hash=ae4ea5abcd2d9573 vocab=1024
-[   0.279s] EVENT  shards_created  n=8
-[   0.280s] EVENT  manifests_validated  shards=8
-[   0.281s] EVENT  firewall_built  blocked=10
-[   0.284s] EVENT  opus_admission  ACCEPT=57 DEFER=13 FLOOR_OVERRIDE=9 REJECT=14
-[   0.286s] EVENT  mixture_compiled  steps=48 seqs_per_step=8
-[   0.286s] [PASS] tokenizer_hash_verified  hash=ae4ea5abcd2d9573 vocab=1024
-[   0.286s] EVENT  shards created  n=8 tokens=10747
-[   0.286s] [PASS] shards_created  n=8 tokens=10747
-[   0.286s] EVENT  manifests validated  root_hash=cb2a471b41cda7b8
-[   0.286s] [PASS] manifests_validated  root_hash=cb2a471b41cda7b8
-[   0.286s] EVENT  evaluation data blocked  blocked_hashes=10 rejected_docs=11 poisoned_train_docs_caught=["D0083"]
-[   0.286s] [PASS] eval_shard_blocked  blocked_hashes=10 rejected_docs=11 poisoned_train_docs_caught=["D0083"]
-[   0.286s] EVENT  opus_decision_accept  events=57 final=57
-[   0.286s] EVENT  opus_decision_reject  events=14 final=14
-[   0.286s] EVENT  opus_decision_defer  events=13 final=4
-[   0.286s] EVENT  opus_decision_floor_override  events=9 final=9
-[   0.286s] EVENT  OPUS decisions recorded  by_decision={"ACCEPT": 57, "DEFER": 13, "FLOOR_OVERRIDE": 9, "REJECT": 14}
-[   0.286s] [PASS] opus_decisions_recorded  by_reason={"budget_exhausted": 13, "duplicate": 1, "eval_firewall": 7, "ok": 52, "protected_floor_starved": 9, "quality_flagged": 2, "requeued_admitted": 5, "validation_firewall": 4}
-[   0.286s]        admitted tokens per lane: {'web': 2202, 'code': 1839, 'math_science': 1657, 'indic': 1367, 'reasoning': 1620, 'agentic': 744}
-[   0.286s]        protected-floor token demand: {'indic': 7864, 'reasoning': 2949, 'agentic': 1966}
-[   0.286s] EVENT  mixture compiled  steps=48 seqs_per_step=8 floors={"agentic": 0.02, "indic": 0.08, "reasoning": 0.03}
-[   0.286s] [PASS] mixture_compiled  steps=48 seqs_per_step=8 floors={"agentic": 0.02, "indic": 0.08, "reasoning": 0.03}
-[   0.286s]        stage A_foundation   steps [  0,  19)
-[   0.286s]        stage B_rebalance    steps [ 19,  34)
-[   0.286s]        stage C_long_context steps [ 34,  41)
-[   0.286s]        stage D_anneal       steps [ 41,  48)
-[   0.286s] 
-[   0.286s] ========================================================================
-[   0.286s] == 2. PACKING — policies, loss masks, attention masks, position ids
-[   0.286s] ========================================================================
-[   0.318s] EVENT  batches packed  samples=384 policies=["concat", "prompt_completion", "whole_unit"] violations=0
-[   0.318s] [PASS] batches_packed  samples=384 policies=["concat", "prompt_completion", "whole_unit"] violations=0
-[   0.318s]        policy concat             utilization=1.000 loss_fraction=0.988
-[   0.318s]        policy prompt_completion  utilization=0.668 loss_fraction=0.739
-[   0.318s]        policy whole_unit         utilization=0.717 loss_fraction=0.994
-[   0.318s]        lane agentic       utilization=0.725 loss_fraction=0.697
-[   0.318s]        lane code          utilization=0.717 loss_fraction=0.994
-[   0.318s]        lane indic         utilization=1.000 loss_fraction=0.989
-[   0.318s]        lane math_science  utilization=1.000 loss_fraction=0.989
-[   0.318s]        lane reasoning     utilization=0.632 loss_fraction=0.769
-[   0.318s]        lane web           utilization=1.000 loss_fraction=0.988
-[   0.318s] 
-[   0.318s] ========================================================================
-[   0.318s] == 3. TRAINING — consumption + learning ledgers, checkpoints, CRASH
-[   0.318s] ========================================================================
-[   0.980s]        pre-crash step   0 stage=A_foundation   loss=6.9331 loss_tokens=1782 batch=244a45d53215
-[   1.089s] [PASS] checkpoint_saved  tag=run_main_step8 step=8 consumption_entries=8
-[   1.105s]        pre-crash step   8 stage=A_foundation   loss=6.3942 loss_tokens=1702 batch=5ede36954072
-[   1.212s] [PASS] checkpoint_saved  tag=run_main_step16 step=16 consumption_entries=16
-[   1.227s]        pre-crash step  16 stage=A_foundation   loss=6.1266 loss_tokens=1606 batch=06cedacdff33
-[   1.335s] [PASS] checkpoint_saved  tag=run_main_step24 step=24 consumption_entries=24
-[   1.350s]        pre-crash step  24 stage=B_rebalance    loss=5.9355 loss_tokens=1620 batch=485cb3858404
-[   1.394s] EVENT  crash simulated  last_completed_step=27 consumption_entries=28
-[   1.394s] EVENT  crash_simulated  last_completed_step=27 consumption_entries=28
-[   1.399s] [PASS] crash_simulated  exit_code=137 signal_like=SIGKILL/137 completed_steps=28
-[   1.401s]        pre-crash consumption ledger: 28 entries, steps 0..27
-[   1.401s] EVENT  checkpoint_selected_for_resume  tag=run_main_step24 next_step=24 committed_consumption_entries=24 expected_next_batch_id=485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea
-[   1.401s] 
-[   1.401s] ========================================================================
-[   1.401s] == 4. RESUME — rebuild from checkpoint, prove the next batch matches
-[   1.401s] ========================================================================
-[   2.049s] EVENT  run resumed  from_checkpoint=run_main_step24 next_step=24 consumption_entries=24
-[   2.049s] EVENT  run_resumed  from_checkpoint=run_main_step24 next_step=24 consumption_entries=24
-[   2.081s]        post-resume step  24 stage=B_rebalance    loss=5.9355 loss_tokens=1620 batch=485cb3858404
-[   2.191s] [PASS] checkpoint_saved  tag=run_main_step32 step=32 consumption_entries=32
-[   2.206s]        post-resume step  32 stage=B_rebalance    loss=5.7344 loss_tokens=1451 batch=1f3fa3b095b7
-[   2.314s] [PASS] checkpoint_saved  tag=run_main_step40 step=40 consumption_entries=40
-[   2.330s]        post-resume step  40 stage=C_long_context loss=5.5770 loss_tokens=1674 batch=37f4ff2861d3
-[   2.436s] [PASS] checkpoint_saved  tag=run_main_step48 step=48 consumption_entries=48
-[   2.436s] EVENT  training_complete  run_id=run_main last_step=47 consumption_entries=48
-[   2.627s] [PASS] resume_next_batch_matched  step=24 expected=485cb38584049454 actual=485cb38584049454
-[   2.627s] [PASS] resume_no_skipped_or_repeated_batches  total_steps=48 contiguous=True duplicates=False rewritten_window=[24, 27] rewritten_identical=True
-[   2.628s] [PASS] resume_learning_state_matched  steps=[24, 25, 26, 27] first_loss_before=5.9355 first_loss_after=5.9355
-[   2.628s] 
-[   2.628s] ========================================================================
-[   2.628s] == 5. REPLAY — reconstruct a historical interval from artifacts alone
-[   2.628s] ========================================================================
-[   2.639s] EVENT  historical stream replayed  interval=[8, 20] steps=12 all_match=True
-[   2.639s] [PASS] replay_hash_matched  interval=[8, 20] steps=12
-[   2.639s]        step   8 original=5ede3695407226c2 replay=5ede3695407226c2 spans_match=True
-[   2.639s]        step   9 original=a033d90514ad7f9b replay=a033d90514ad7f9b spans_match=True
-[   2.639s]        step  10 original=7a9d3c2b0e28012b replay=7a9d3c2b0e28012b spans_match=True
-[   2.639s] 
-[   2.639s] ========================================================================
-[   2.639s] == 6. FORK — branch a new run from an earlier checkpoint
-[   2.639s] ========================================================================
-[   3.262s] EVENT  branch forked  from_checkpoint=run_main_step16 next_step=16
-[   3.262s] EVENT  branch_forked  from_checkpoint=run_main_step16 next_step=16
-[   3.292s]        fork step  16 stage=A_foundation   loss=6.1266 loss_tokens=1606 batch=04535bbde6ac
-[   3.370s] [PASS] checkpoint_saved  tag=run_fork_step22 step=22 consumption_entries=6
-[   3.370s] EVENT  training_complete  run_id=run_fork last_step=21 consumption_entries=6
-[   3.548s] [PASS] branch_forked  parent_checkpoint=run_main_step16 fork_run_id=run_fork steps=6
-[   3.549s] 
-[   3.549s] ========================================================================
-[   3.549s] == 7. AUDIT — independent re-derivation and evidence bundle
-[   3.549s] ========================================================================
-[   3.594s] [PASS] audit_tokenizer_integrity
-[   3.594s] [PASS] audit_shard_immutability
-[   3.594s] [PASS] audit_evaluation_firewall
-[   3.594s] [PASS] audit_packing_correctness
-[   3.594s] [PASS] audit_mixture_compliance
-[   3.594s] [PASS] audit_opus_audit_trail
-[   3.594s] [PASS] audit_consumption_ledger
-[   3.594s] [PASS] audit_learning_trace
-[   3.594s] [PASS] audit_crash_recovery
-[   3.594s] [PASS] audit_replay
-[   3.594s] [PASS] audit_fork
-[   3.594s] [PASS] audit_throughput
-[   3.594s] EVENT  performance measured  packing_utilization=0.8673 loss_bearing_fraction=0.9550 tokens_per_sec=139353.3909 loss_tokens_per_sec=133078.6555
-[   3.594s] [PASS] performance_measured  packing_utilization=0.8673 loss_bearing_fraction=0.9550 tokens_per_sec=139353.3909 loss_tokens_per_sec=133078.6555
-[   3.594s] EVENT  audit completed  passed=12 total=12
-[   3.594s] [PASS] audit_completed  passed=12 total=12
-[   3.594s] 
-[   3.594s] ========================================================================
-[   3.594s] == RESULT
-[   3.594s] ========================================================================
-[   3.595s]        total wall time 3.6s
-[   3.595s] [PASS] demonstration_complete  checks_passed=12/12
-[   3.595s]        artifacts written to /Users/shankarpandala/projects/era-v5/assignment-6/submission_artifacts
+[   0.005s] EVENT  tokenizer_frozen  hash=ae4ea5abcd2d9573 vocab=1024
+[   0.762s] EVENT  shards_created  n=8
+[   0.828s] EVENT  manifests_validated  shards=8
+[   0.829s] EVENT  firewall_built  blocked=10
+[   0.835s] EVENT  opus_admission  ACCEPT=57 DEFER=13 FLOOR_OVERRIDE=9 REJECT=14
+[   0.837s] EVENT  mixture_compiled  steps=48 seqs_per_step=8
+[   0.838s] [PASS] tokenizer_hash_verified  hash=ae4ea5abcd2d9573 vocab=1024
+[   0.838s] EVENT  shards created  n=8 tokens=10747
+[   0.838s] [PASS] shards_created  n=8 tokens=10747
+[   0.839s] EVENT  manifests validated  root_hash=cb2a471b41cda7b8
+[   0.839s] [PASS] manifests_validated  root_hash=cb2a471b41cda7b8 shards_revalidated=8 errors=[]
+[   0.840s] EVENT  evaluation data blocked  blocked_hashes=10 rejected_docs=11 poisoned_train_docs_caught=["D0083"]
+[   0.840s] [PASS] eval_shard_blocked  blocked_hashes=10 rejected_docs=11 poisoned_train_docs_caught=["D0083"]
+[   0.840s] EVENT  opus_decision_accept  events=57 final=57
+[   0.840s] EVENT  opus_decision_reject  events=14 final=14
+[   0.840s] EVENT  opus_decision_defer  events=13 final=4
+[   0.840s] EVENT  opus_decision_floor_override  events=9 final=9
+[   0.840s] EVENT  OPUS decisions recorded  by_decision={"ACCEPT": 57, "DEFER": 13, "FLOOR_OVERRIDE": 9, "REJECT": 14}
+[   0.840s] [PASS] opus_decisions_recorded  by_reason={"budget_exhausted": 13, "duplicate": 1, "eval_firewall": 7, "ok": 52, "protected_floor_starved": 9, "quality_flagged": 2, "requeued_admitted": 5, "validation_firewall": 4}
+[   0.840s]        admitted tokens per lane: {'web': 2202, 'code': 1839, 'math_science': 1657, 'indic': 1367, 'reasoning': 1620, 'agentic': 744}
+[   0.840s]        protected-floor token demand: {'indic': 7864, 'reasoning': 2949, 'agentic': 1966}
+[   0.840s] EVENT  mixture compiled  steps=48 seqs_per_step=8 floors={"agentic": 0.02, "indic": 0.08, "reasoning": 0.03}
+[   0.840s] [PASS] mixture_compiled  steps=48 seqs_per_step=8 floors={"agentic": 0.02, "indic": 0.08, "reasoning": 0.03} floor_breaches=[]
+[   0.840s]        stage A_foundation   steps [  0,  19)
+[   0.840s]        stage B_rebalance    steps [ 19,  34)
+[   0.840s]        stage C_long_context steps [ 34,  41)
+[   0.840s]        stage D_anneal       steps [ 41,  48)
+[   0.840s] 
+[   0.840s] ========================================================================
+[   0.840s] == 2. PACKING — policies, loss masks, attention masks, position ids
+[   0.840s] ========================================================================
+[   0.920s] EVENT  batches packed  samples=384 policies=["concat", "prompt_completion", "whole_unit"] violations=0
+[   0.920s] [PASS] batches_packed  samples=384 policies=["concat", "prompt_completion", "whole_unit"] violations=0
+[   0.920s]        policy concat             utilization=1.000 loss_fraction=0.988
+[   0.920s]        policy prompt_completion  utilization=0.668 loss_fraction=0.739
+[   0.920s]        policy whole_unit         utilization=0.717 loss_fraction=0.994
+[   0.920s]        lane agentic       utilization=0.725 loss_fraction=0.697
+[   0.920s]        lane code          utilization=0.717 loss_fraction=0.994
+[   0.920s]        lane indic         utilization=1.000 loss_fraction=0.989
+[   0.920s]        lane math_science  utilization=1.000 loss_fraction=0.989
+[   0.920s]        lane reasoning     utilization=0.632 loss_fraction=0.769
+[   0.920s]        lane web           utilization=1.000 loss_fraction=0.988
+[   0.920s] 
+[   0.920s] ========================================================================
+[   0.920s] == 3. TRAINING — consumption + learning ledgers, checkpoints, CRASH
+[   0.920s] ========================================================================
+[   3.373s]        pre-crash step   0 stage=A_foundation   loss=6.9331 loss_tokens=1782 batch=244a45d53215
+[   3.780s] [PASS] checkpoint_saved  tag=run_main_step8 step=8 blob_hash_verified=True consumption_entries=8
+[   3.837s]        pre-crash step   8 stage=A_foundation   loss=6.3942 loss_tokens=1702 batch=5ede36954072
+[   4.222s] [PASS] checkpoint_saved  tag=run_main_step16 step=16 blob_hash_verified=True consumption_entries=16
+[   4.273s]        pre-crash step  16 stage=A_foundation   loss=6.1266 loss_tokens=1606 batch=06cedacdff33
+[   4.601s] [PASS] checkpoint_saved  tag=run_main_step24 step=24 blob_hash_verified=True consumption_entries=24
+[   4.653s]        pre-crash step  24 stage=B_rebalance    loss=5.9355 loss_tokens=1620 batch=485cb3858404
+[   4.787s] EVENT  crash simulated  last_completed_step=27 consumption_entries=28
+[   4.788s] EVENT  crash_simulated  last_completed_step=27 consumption_entries=28
+[   4.804s] [PASS] crash_simulated  exit_code=137 signal_like=SIGKILL/137 completed_steps=28
+[   4.810s]        pre-crash consumption ledger: 28 entries, steps 0..27
+[   4.810s] EVENT  checkpoint_selected_for_resume  tag=run_main_step24 next_step=24 committed_consumption_entries=24 expected_next_batch_id=485cb38584049454f7ea8ca5ee4071f96a7f23e6d45ec96439440206069b83ea
+[   4.810s] 
+[   4.810s] ========================================================================
+[   4.810s] == 4. RESUME — rebuild from checkpoint, prove the next batch matches
+[   4.810s] ========================================================================
+[   7.089s] EVENT  run resumed  from_checkpoint=run_main_step24 next_step=24 consumption_entries=24
+[   7.089s] EVENT  run_resumed  from_checkpoint=run_main_step24 next_step=24 consumption_entries=24
+[   7.156s]        post-resume step  24 stage=B_rebalance    loss=5.9355 loss_tokens=1620 batch=485cb3858404
+[   7.507s] [PASS] checkpoint_saved  tag=run_main_step32 step=32 blob_hash_verified=True consumption_entries=32
+[   7.564s]        post-resume step  32 stage=B_rebalance    loss=5.7344 loss_tokens=1451 batch=1f3fa3b095b7
+[   7.936s] [PASS] checkpoint_saved  tag=run_main_step40 step=40 blob_hash_verified=True consumption_entries=40
+[   7.993s]        post-resume step  40 stage=C_long_context loss=5.5770 loss_tokens=1674 batch=37f4ff2861d3
+[   8.343s] [PASS] checkpoint_saved  tag=run_main_step48 step=48 blob_hash_verified=True consumption_entries=48
+[   8.345s] EVENT  training_complete  run_id=run_main last_step=47 consumption_entries=48
+[   9.036s] [PASS] resume_next_batch_matched  step=24 expected=485cb38584049454 actual=485cb38584049454
+[   9.036s] [PASS] resume_no_skipped_or_repeated_batches  total_steps=48 contiguous=True duplicates=False rewritten_window=[24, 27] rewritten_identical=True
+[   9.040s] [PASS] resume_learning_state_matched  steps=[24, 25, 26, 27] first_loss_before=5.9355 first_loss_after=5.9355
+[   9.041s] 
+[   9.041s] ========================================================================
+[   9.041s] == 5. REPLAY — reconstruct a historical interval from artifacts alone
+[   9.041s] ========================================================================
+[   9.069s] EVENT  historical stream replayed  interval=[8, 20] steps=12 all_match=True
+[   9.069s] [PASS] replay_hash_matched  interval=[8, 20] steps=12
+[   9.069s]        step   8 original=5ede3695407226c2 replay=5ede3695407226c2 spans_match=True
+[   9.069s]        step   9 original=a033d90514ad7f9b replay=a033d90514ad7f9b spans_match=True
+[   9.069s]        step  10 original=7a9d3c2b0e28012b replay=7a9d3c2b0e28012b spans_match=True
+[   9.069s] 
+[   9.069s] ========================================================================
+[   9.069s] == 6. FORK — branch a new run from an earlier checkpoint
+[   9.069s] ========================================================================
+[  11.409s] EVENT  branch forked  from_checkpoint=run_main_step16 next_step=16
+[  11.409s] EVENT  branch_forked  from_checkpoint=run_main_step16 next_step=16
+[  11.557s]        fork step  16 stage=A_foundation   loss=6.1266 loss_tokens=1606 batch=04535bbde6ac
+[  12.119s] [PASS] checkpoint_saved  tag=run_fork_step22 step=22 blob_hash_verified=True consumption_entries=6
+[  12.125s] EVENT  training_complete  run_id=run_fork last_step=21 consumption_entries=6
+[  12.669s] [PASS] branch_forked  parent_checkpoint=run_main_step16 fork_run_id=run_fork steps=6
+[  12.669s] 
+[  12.669s] ========================================================================
+[  12.669s] == 7. AUDIT — independent re-derivation and evidence bundle
+[  12.669s] ========================================================================
+[  12.827s] [PASS] audit_tokenizer_integrity
+[  12.827s] [PASS] audit_shard_immutability
+[  12.827s] [PASS] audit_evaluation_firewall
+[  12.827s] [PASS] audit_packing_correctness
+[  12.827s] [PASS] audit_mixture_compliance
+[  12.827s] [PASS] audit_opus_audit_trail
+[  12.827s] [PASS] audit_consumption_ledger
+[  12.827s] [PASS] audit_learning_trace
+[  12.827s] [PASS] audit_crash_recovery
+[  12.827s] [PASS] audit_replay
+[  12.827s] [PASS] audit_fork
+[  12.827s] [PASS] audit_throughput
+[  12.827s] EVENT  performance measured  packing_utilization=0.8673 loss_bearing_fraction=0.9550 tokens_per_sec=46212.4216 loss_tokens_per_sec=44131.5915
+[  12.827s] [PASS] performance_measured  packing_utilization=0.8673 loss_bearing_fraction=0.9550 tokens_per_sec=46212.4216 loss_tokens_per_sec=44131.5915
+[  12.827s] EVENT  audit completed  passed=12 total=12
+[  12.827s] [PASS] audit_completed  passed=12 total=12
+[  12.827s] 
+[  12.827s] ========================================================================
+[  12.827s] == RESULT
+[  12.827s] ========================================================================
+[  12.827s]        total wall time 12.8s
+[  12.827s] [PASS] demonstration_complete  checks_passed=12/12 earlier_failed_checks=[]
+[  12.827s]        artifacts written to /home/user/era-v5/assignment-6/submission_artifacts

@@ -29,7 +29,8 @@ It wipes and regenerates `submission_artifacts/` end to end with no manual
 intervention: prepares shards, compiles the mixture, trains, **kills its own
 training process mid-run**, resumes, replays a historical interval, forks a
 branch from an earlier checkpoint, and audits everything. Exit code is 0 only if
-all twelve audit checks pass.
+all twelve audit checks pass **and** no `[FAIL]` was logged at any earlier point
+in the run — a green audit does not excuse a check that failed before it.
 
 ```bash
 python -m pytest tests -q          # invariant tests (unit + artifact checks)
@@ -174,6 +175,14 @@ consumption ledger (never from the schedule that produced it), re-derives
 throughput from raw counters, and re-checks packing invariants. If it reused the
 trainer's in-memory objects it would confirm the trainer's own mistakes.
 
+Every `[PASS]` in `run.log` is likewise a *computed* result, never a literal:
+`shards_created` and `manifests_validated` re-read the manifests off disk and
+re-run `validate_shard` (plus a root-hash recomputation), `mixture_compiled`
+re-derives the realized slot shares and re-checks every floor, and
+`checkpoint_saved` re-hashes the blob the trainer claims it just wrote. Breaking
+any of those properties turns the corresponding line red and the run non-zero;
+that is verified by deliberately corrupting each one.
+
 Crash recovery and replay are **re-derived independently** from
 `*.precrash.jsonl`, checkpoints and the immutable schedule/inventory/shards —
 not merely echoed from the orchestrator's in-memory proof dicts. Packing is
@@ -193,7 +202,7 @@ source document ids) as well as per-lane aggregates.
 | OPUS | All four decision types occur, hash-chained, with reasons; every consumed document traces back to an admission event |
 | Ledgers | Both chains verify; steps contiguous 0–47 with no duplicates; per-lane loss tokens reconcile exactly with the consumption ledger's loss-token count |
 | Crash | Trainer exits with code 137 via `os._exit` mid-run — a real process death, four steps past the last checkpoint |
-| Resume | The next batch id after resume equals the one recorded before the crash; the four rewritten steps are byte-identical; **the recomputed loss and parameter hash also match exactly** |
+| Resume | The next batch id after resume equals the one recorded before the crash; the four rewritten steps are byte-identical; **the recomputed loss and parameter hash also match exactly**; every checkpoint blob is re-hashed against its manifest |
 | Replay | Steps 8–19 rebuilt from artifacts alone match on batch ids, per-sample hashes and every token span |
 | Fork | A new run branches from checkpoint step 16 with recorded lineage, consumes the same data at the branch step, and carries its own batch-id namespace |
 | Learning | Step-0 loss 6.93 against `ln(1024) = 6.93`; mean loss falls from 6.64 (first 10 steps) to 5.64 (last 10); every step linked to its batch id **and** every packed sample's `sample_hash` / source docs via `per_sample_loss` |

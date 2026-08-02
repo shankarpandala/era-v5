@@ -208,6 +208,9 @@ def test_audit_reverified_crash_and_replay_independently(evidence):
     assert ind["rewritten_batches_identical"] is True
     assert ind["learning_state_matched"] is True
     assert ind["checkpoint_offset_matches_step"] is True
+    # a resume is only trustworthy if the blob it restores from is intact
+    assert ind["checkpoint_blobs_verified"] is True
+    assert ind["checkpoint_blob_errors"] == []
 
     rp = evidence["checks"]["replay"]["detail"]
     assert rp["all_match"] is True
@@ -232,6 +235,26 @@ def test_checkpoints_are_tied_to_ledger_offsets():
         assert count == m["step"]
         # the recorded chain head must be the hash of the last committed entry
         assert m["consumption_offset"]["head"] == by_seq[count - 1]
+
+
+def test_every_checkpoint_blob_still_hashes_to_its_manifest():
+    """Independent of the audit: re-hash each committed blob off disk."""
+    from datasys.checkpoint import verify_checkpoint
+
+    ckpt_dir = os.path.join(ART, "checkpoints")
+    tags = [f[: -len(".manifest.json")] for f in os.listdir(ckpt_dir)
+            if f.endswith(".manifest.json")]
+    assert tags
+    for tag in tags:
+        assert verify_checkpoint(ckpt_dir, tag)["ok"], tag
+
+
+def test_run_log_records_no_failed_check():
+    """The execution log is a deliverable: a [FAIL] anywhere in it means the
+    demonstration did not hold, even if the audit summary is green."""
+    with open(os.path.join(ART, "run.log"), encoding="utf-8") as f:
+        failed = [l.strip() for l in f if "[FAIL]" in l]
+    assert failed == [], failed
 
 
 def test_fork_lineage_records_its_parent():

@@ -25,7 +25,7 @@ Checks passed: **12 / 12**
 - Shards: 8 verified, 84 documents, 10747 tokens.
 - Packing: 384 samples checked, 0 invariant violations, 3 policies exercised; independent re-pack mismatches: [].
 - OPUS decision events: {'ACCEPT': 57, 'DEFER': 13, 'FLOOR_OVERRIDE': 9, 'REJECT': 14}; final per document: {'ACCEPT': 57, 'DEFER': 4, 'FLOOR_OVERRIDE': 9, 'REJECT': 14}.
-- Packing utilization: 0.867; loss-bearing fraction 0.955; 133078.7 loss-bearing tokens/sec.
+- Packing utilization: 0.867; loss-bearing fraction 0.955; 44131.6 loss-bearing tokens/sec.
 - Loss: 6.6440 (first 10 steps) → 5.6375 (last 10 steps); sample-level loss entries: 48.
 - Crash at step 28, resumed from `run_main_step24`; expected next batch `485cb38584049454…` matched: True (independent disk re-check).
 - Replay interval [8, 20]: 12 steps, all hashes matched: True; report agrees with recompute: True.

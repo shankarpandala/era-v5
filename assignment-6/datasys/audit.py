@@ -19,6 +19,7 @@ from typing import Dict, List, Optional
 from . import mixture as mix
 from . import perf as perf_mod
 from .batcher import Batcher
+from .checkpoint import verify_checkpoint
 from .ledger import Ledger, verify_chain
 from .packing import verify_sample_invariants
 from .replay import replay_and_compare
@@ -399,6 +400,18 @@ def run_audit(artifacts_dir: str, run_id: str, fork_run_id: Optional[str],
             })
         else:
             independent["error"] = "no resume checkpoint found in pre-crash prefix"
+    # Every checkpoint blob must still hash to the value its manifest records --
+    # a resume is only trustworthy if the state it restores from is intact.
+    blob_errors: List[str] = []
+    for f in sorted(os.listdir(ckpt_dir)):
+        if not f.endswith(".manifest.json"):
+            continue
+        v = verify_checkpoint(ckpt_dir, f[: -len(".manifest.json")])
+        if not v["ok"]:
+            blob_errors.append(f"{f}: {v.get('error')}")
+    independent["checkpoint_blobs_verified"] = not blob_errors
+    independent["checkpoint_blob_errors"] = blob_errors
+
     orch_ok = (bool(resume_proof.get("next_batch_matched"))
                and bool(resume_proof.get("no_gaps_or_duplicates"))
                and bool(resume_proof.get("learning_state_matched"))
@@ -407,7 +420,8 @@ def run_audit(artifacts_dir: str, run_id: str, fork_run_id: Optional[str],
               and bool(independent.get("no_gaps_or_duplicates"))
               and bool(independent.get("learning_state_matched"))
               and bool(independent.get("checkpoint_offset_matches_step"))
-              and bool(independent.get("checkpoint_data_binding_ok", True)))
+              and bool(independent.get("checkpoint_data_binding_ok", True))
+              and bool(independent.get("checkpoint_blobs_verified")))
     c.passed = orch_ok and ind_ok and pre_exists
     c.detail = {
         "orchestrator_proof": {**crash_proof, **resume_proof},

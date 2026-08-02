@@ -1,6 +1,6 @@
 {
   "blob_file": "run_fork_step22.pt",
-  "blob_hash": "9f150be5dcb715c17ef90e19e38d2cb32919e81207b3a08e998e658f5679a44c",
+  "blob_hash": "200f189785849b6433831a578b43b3f2d0d18a27eafb69f7721683c10beacf76",
   "consumption_offset": {
     "count": 6,
     "head": "b5c450d62c84b8c868dc5c88191fca57507b7384a292dfd149d15961c9902da7"
@@ -40,7 +40,7 @@
   },
   "learning_offset": {
     "count": 6,
-    "head": "1ff29f28d8ce6cdbccc914facc24a1fe2829e314005a88d8b1b24f1abba3709c"
+    "head": "667d1701bde3c855bc27713cb5fc0ed59cc4bf51d9b9177a5110ff71e30b38b1"
   },
   "lineage": {
     "parent_checkpoint": "run_main_step16",
@@ -78,17 +78,17 @@
       "seqs_per_step": 8,
       "tokenizer_hash": "ae4ea5abcd2d9573b3c50e8cbe946851f32ba3336171a2b6fa04e25598ef434b"
     },
-    "parent_model_tensor_hash": "b842cbd064fac9f2868a48e2ab76c02205ebd0196f30321fddb72710e59535b3",
+    "parent_model_tensor_hash": "f1a06db41ef18d66222275bb06ea85e2afdf400411c0dcac0126e8fdb1495a98",
     "parent_run_id": "run_main",
     "parent_step": 16
   },
-  "model_tensor_hash": "b6b894ff661777785076754967f51cb878d6149732aa3c4d492cac23de5beda5",
+  "model_tensor_hash": "ff2341478c2aaeeb57b6e0c03c427329c112e179553a2d51bf31da5bfb624012",
   "perf_counters": {
     "loss_tokens": 9964,
     "real_tokens": 10431,
     "steps": 6,
     "total_slot_tokens": 12288,
-    "wall_seconds": 0.08758108271285892
+    "wall_seconds": 0.6129810249999537
   },
   "run_id": "run_fork",
   "stage": "B_rebalance",
