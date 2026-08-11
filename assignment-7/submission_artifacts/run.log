@@ -1,0 +1,95 @@
+[   0.000s] 
+[   0.000s] ========================================================================
+[   0.000s] == Kronecker Embedding V2 — math-structure embeddings
+[   0.000s] ========================================================================
+[   0.000s]        mode=full plan={"arms": ["kron_v2", "kron_char", "readout_only", "learned", "xval"], "curve_arms": ["kron_v2", "learned"], "curve_sizes": [500, 2000], "main_size": 8000, "probe_arms": ["kron_v2", "learned"], "seeds": [0, 1, 2]}
+[   0.019s]        vocab=1009 tokens hash=282bc87bdeef
+[   0.019s]        embedding[kron_v2] sha256=22574d5af9d9
+[   0.019s]        embedding[kron_char] sha256=1b115a40f737
+[   0.019s]        embedding[readout_only] sha256=02a370241585
+[   0.019s] 
+[   0.019s] ========================================================================
+[   0.019s] == Claim A: the embedding is an algebra (zero training)
+[   0.019s] ========================================================================
+[   0.461s] [PASS] claimA/lin_additivity  pairs=10000 bit_exact_failures=0
+[   0.461s] [PASS] claimA/showcase_9_plus_9  decoded=18
+[   0.461s] [PASS] claimA/log_multiplicativity  pairs=10000 max_abs_error=0.0000 tolerance=0.0000
+[   0.461s] [PASS] claimA/char_invertibility  vocab_words=1009 random_words=2000
+[   0.461s] [PASS] claimA/value_invertibility  exhaustive_upto=2000 sampled=5000
+[   0.461s] [PASS] claimA/nonnumeric_zero_block
+[   0.461s] [PASS] claimA/codebook_margin  max_pairwise_cosine=0.8916 min_pairwise_angle_deg=26.9252 allowed_max_cosine=0.9500
+[   0.461s] [PASS] claimA/fourier_digit_readout  min_pairwise_distance=0.6180 required=0.5000
+[   0.461s]        showcase: decode_value(emb('9')+emb('9')) = 18
+[   0.461s] 
+[   0.461s] ========================================================================
+[   0.461s] == Data: deterministic splits with a structural operand hole
+[   0.461s] ========================================================================
+[   0.486s] [PASS] data/size_500_structural_invariants  counts={"eval_extra": 2000, "eval_hole": 1000, "eval_in": 1000, "train": 500}
+[   0.513s] [PASS] data/size_2000_structural_invariants  counts={"eval_extra": 2000, "eval_hole": 1000, "eval_in": 1000, "train": 2000}
+[   0.550s] [PASS] data/size_8000_structural_invariants  counts={"eval_extra": 2000, "eval_hole": 1000, "eval_in": 1000, "train": 8000}
+[   0.550s] 
+[   0.550s] ========================================================================
+[   0.550s] == Determinism: identical (arm, size, seed) => identical bits
+[   0.550s] ========================================================================
+[   1.643s] [PASS] determinism/param_hash_bit_identical  hash=1c0764e910b2
+[   1.643s] 
+[   1.643s] ========================================================================
+[   1.643s] == Claim B: the experiment matrix
+[   1.643s] ========================================================================
+[  37.945s]        run 1/27 kron_v2@8000 seed0: in-add=1.000 hole-add=0.751 (36s)
+[  75.359s]        run 2/27 kron_v2@8000 seed1: in-add=0.965 hole-add=0.212 (37s)
+[ 110.520s]        run 3/27 kron_v2@8000 seed2: in-add=0.971 hole-add=0.514 (35s)
+[ 145.567s]        run 4/27 kron_char@8000 seed0: in-add=0.821 hole-add=0.010 (35s)
+[ 182.192s]        run 5/27 kron_char@8000 seed1: in-add=0.926 hole-add=0.000 (37s)
+[ 217.519s]        run 6/27 kron_char@8000 seed2: in-add=0.842 hole-add=0.010 (35s)
+[ 252.613s]        run 7/27 readout_only@8000 seed0: in-add=0.973 hole-add=0.427 (35s)
+[ 287.658s]        run 8/27 readout_only@8000 seed1: in-add=1.000 hole-add=0.761 (35s)
+[ 322.989s]        run 9/27 readout_only@8000 seed2: in-add=0.936 hole-add=0.214 (35s)
+[ 361.530s]        run 10/27 learned@8000 seed0: in-add=0.938 hole-add=0.022 (38s)
+[ 398.541s]        run 11/27 learned@8000 seed1: in-add=0.938 hole-add=0.016 (37s)
+[ 435.139s]        run 12/27 learned@8000 seed2: in-add=0.940 hole-add=0.035 (37s)
+[ 472.282s]        run 13/27 xval@8000 seed0: in-add=0.719 hole-add=0.333 (37s)
+[ 509.539s]        run 14/27 xval@8000 seed1: in-add=0.721 hole-add=0.251 (37s)
+[ 546.772s]        run 15/27 xval@8000 seed2: in-add=0.887 hole-add=0.306 (37s)
+[ 582.406s]        run 16/27 kron_v2@500 seed0: in-add=0.341 hole-add=0.298 (36s)
+[ 617.979s]        run 17/27 kron_v2@500 seed1: in-add=0.341 hole-add=0.255 (36s)
+[ 653.634s]        run 18/27 kron_v2@500 seed2: in-add=0.382 hole-add=0.161 (36s)
+[ 689.563s]        run 19/27 kron_v2@2000 seed0: in-add=0.891 hole-add=0.661 (36s)
+[ 725.318s]        run 20/27 kron_v2@2000 seed1: in-add=0.959 hole-add=0.663 (36s)
+[ 761.179s]        run 21/27 kron_v2@2000 seed2: in-add=0.945 hole-add=0.796 (36s)
+[ 797.955s]        run 22/27 learned@500 seed0: in-add=0.039 hole-add=0.012 (37s)
+[ 834.673s]        run 23/27 learned@500 seed1: in-add=0.051 hole-add=0.010 (37s)
+[ 871.349s]        run 24/27 learned@500 seed2: in-add=0.060 hole-add=0.004 (37s)
+[ 907.965s]        run 25/27 learned@2000 seed0: in-add=0.109 hole-add=0.002 (37s)
+[ 944.642s]        run 26/27 learned@2000 seed1: in-add=0.154 hole-add=0.004 (37s)
+[ 981.752s]        run 27/27 learned@2000 seed2: in-add=0.144 hole-add=0.020 (37s)
+[ 981.754s] [PASS] matrix/architecture_identical_across_arms  n_runs=27
+[ 981.754s] [PASS] claimB/hole_generalization_kron_vs_learned  kron_v2=0.4925 learned=0.0245 ratio=20.1000
+[ 981.754s] [PASS] claimB/in_range_at_every_train_size  sizes_compared=[500, 2000, 8000]
+[ 981.754s] [PASS] claimB/magnitude_extrapolation_reported_negative
+[ 981.754s] 
+[ 981.754s] ========================================================================
+[ 981.754s] == Figures and report
+[ 981.754s] ========================================================================
+[ 982.078s]        6 figures + report.html written
+[ 982.078s] 
+[ 982.078s] ========================================================================
+[ 982.078s] == Independent audit (re-derives everything from disk)
+[ 982.078s] ========================================================================
+[ 982.313s] [PASS] audit/claimA_reproduced_at_fresh_coordinate
+[ 982.313s] [PASS] audit/embedding_matrix_hashes_match
+[ 982.313s] [PASS] audit/vocab_hash_matches
+[ 982.313s] [PASS] audit/data_manifests_rebuild_identically
+[ 982.313s] [PASS] audit/aggregates_match_per_run_files
+[ 982.313s] [PASS] audit/architecture_identical_across_arms
+[ 982.313s] [PASS] audit/frozen_embeddings_match_recomputed_hashes
+[ 982.313s] [PASS] audit/claimB_hole_generalization
+[ 982.313s] [PASS] audit/claimB_in_range_at_every_size
+[ 982.313s] [PASS] audit/claimB_extrapolation_negative_reported
+[ 982.313s] [PASS] audit/claimB_probe_localizes_failure_to_trunk
+[ 982.313s] [PASS] audit/verdict
+[ 982.313s] 
+[ 982.313s] ========================================================================
+[ 982.313s] == Done
+[ 982.313s] ========================================================================
+[ 982.313s]        ALL CHECKS PASSED

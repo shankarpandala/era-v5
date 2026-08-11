@@ -1,0 +1,125 @@
+{
+  "base_seed": 20260811,
+  "embedding_hashes": {
+    "kron_char": "1b115a40f737e9d684cb1cad9d00ef0dedb9859f18f403b78787f53a71008c99",
+    "kron_v2": "22574d5af9d99beb8983368f7ac76a36f3e060789107ca7e5ef8c634c6274d28",
+    "readout_only": "02a3702415858497030d96ccc9792e4f207ffd98cdd7d0931a8d817811d43d74"
+  },
+  "layout": {
+    "alphabet": "abcdefghijklmnopqrstuvwxyz0123456789+*=<>-_#",
+    "char_block": {
+      "char_dims": 3,
+      "hi": 96,
+      "lo": 0,
+      "n_slots": 32
+    },
+    "constants": {
+      "LIN_SCALE": 16384,
+      "LOG_ZERO": -8.0,
+      "MAX_EXACT_VALUE": 1048576,
+      "TARGET_SCALE": 256
+    },
+    "d_model": 128,
+    "dim_taxonomy": {
+      "homomorphic_add": [
+        "LIN",
+        "SIGN"
+      ],
+      "homomorphic_mul_via_add": [
+        "LOG"
+      ],
+      "orthographic": [
+        "char_block"
+      ],
+      "readout_only": [
+        "NUMFLAG",
+        "fourier_val",
+        "fourier_log"
+      ]
+    },
+    "numeric_block": {
+      "LIN": 96,
+      "LOG": 98,
+      "NUMFLAG": 99,
+      "SIGN": 97,
+      "fourier_log": {
+        "lo": 112,
+        "periods": [
+          1.0,
+          2.0,
+          4.0,
+          8.0
+        ]
+      },
+      "fourier_val": {
+        "lo": 100,
+        "periods": [
+          10,
+          100,
+          1000,
+          10000,
+          100000,
+          1000000
+        ]
+      },
+      "reserved_lo": 120
+    }
+  },
+  "plan": {
+    "arms": [
+      "kron_v2",
+      "kron_char",
+      "readout_only",
+      "learned",
+      "xval"
+    ],
+    "curve_arms": [
+      "kron_v2",
+      "learned"
+    ],
+    "curve_sizes": [
+      500,
+      2000
+    ],
+    "main_size": 8000,
+    "probe_arms": [
+      "kron_v2",
+      "learned"
+    ],
+    "seeds": [
+      0,
+      1,
+      2
+    ]
+  },
+  "thresholds": {
+    "extra_add_exact_max": 0.1,
+    "hole_add_ratio_min": 2.0,
+    "in_add_margin": -0.02
+  },
+  "train_defaults": {
+    "base_seed": 20260811,
+    "batch_size": 128,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "d_model": 128,
+    "eval_chunk": 512,
+    "grad_clip": 1.0,
+    "loss_log_every": 25,
+    "lr": 0.003,
+    "n_head": 4,
+    "n_layer": 2,
+    "probe": false,
+    "steps": 3000,
+    "w_cls": 0.5,
+    "w_fourier": 4.0,
+    "w_lin": 1.0,
+    "w_log": 1.0,
+    "warmup_frac": 0.1,
+    "weight_decay": 0.01
+  },
+  "vocab_hash": "282bc87bdeef564cde7b83150d464cde7694a37553f405c06d057370630a28cd",
+  "vocab_size": 1009
+}

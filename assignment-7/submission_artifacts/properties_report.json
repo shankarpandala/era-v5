@@ -1,0 +1,61 @@
+{
+  "all_ok": true,
+  "checks": [
+    {
+      "bit_exact_failures": 0,
+      "name": "lin_additivity",
+      "ok": true,
+      "pairs": 10000,
+      "range": [
+        0,
+        524288
+      ]
+    },
+    {
+      "decoded": 18,
+      "name": "showcase_9_plus_9",
+      "ok": true
+    },
+    {
+      "max_abs_error": 3.5762786865234375e-07,
+      "name": "log_multiplicativity",
+      "ok": true,
+      "pairs": 10000,
+      "tolerance": 1e-05
+    },
+    {
+      "failures": [],
+      "name": "char_invertibility",
+      "ok": true,
+      "random_words": 2000,
+      "vocab_words": 1009
+    },
+    {
+      "exhaustive_upto": 2000,
+      "failures": [],
+      "name": "value_invertibility",
+      "ok": true,
+      "sampled": 5000
+    },
+    {
+      "failures": [],
+      "name": "nonnumeric_zero_block",
+      "ok": true
+    },
+    {
+      "allowed_max_cosine": 0.95,
+      "max_pairwise_cosine": 0.8915986874589095,
+      "min_pairwise_angle_deg": 26.92517022995399,
+      "name": "codebook_margin",
+      "ok": true
+    },
+    {
+      "min_pairwise_distance": 0.6180339783156181,
+      "name": "fourier_digit_readout",
+      "ok": true,
+      "required": 0.5
+    }
+  ],
+  "coord": "properties",
+  "seed": 20260811
+}

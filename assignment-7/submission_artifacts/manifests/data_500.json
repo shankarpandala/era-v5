@@ -1,0 +1,31 @@
+{
+  "counts": {
+    "eval_extra": 2000,
+    "eval_hole": 1000,
+    "eval_in": 1000,
+    "train": 500
+  },
+  "disjoint_train_eval": true,
+  "extra_bucket_counts": {
+    "100-199": 667,
+    "200-499": 667,
+    "500-999": 666
+  },
+  "hashes": {
+    "eval_extra": "e23c1e732266c2ae6e15c66e6e5067b0ce78892de6d03bcca5cbe8b003e22bf2",
+    "eval_hole": "a5f054d3cc9faa8771e8cf8d13bd9b90d32036e06bc94ed712e932601907eb1a",
+    "eval_in": "d02519f2e9efc65d01691fb094900a4c365f1c0e90c1015895b5804493f87ced",
+    "train": "cdb4738f993a9d33233231dbd6f95d9f7d123908d092f920b426e0c437f9d53e"
+  },
+  "hole": [
+    40,
+    59
+  ],
+  "hole_always_touched": true,
+  "max_product": 920511,
+  "seed": 20260811,
+  "train_answers_in_hole_band": 23,
+  "train_never_touches_hole": true,
+  "train_size": 500,
+  "word_form_fraction": 0.29
+}
