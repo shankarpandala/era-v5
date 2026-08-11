@@ -1,0 +1,135 @@
+"""Claim A — training-free algebraic verification of the embedding scheme.
+
+Every property below is checked by *computing*, not asserting: the report
+records sample counts, worst-case errors, and margins. The audit re-runs the
+same battery at a different PRNG coordinate, so a lucky sample cannot fake a
+pass.
+
+Properties:
+  P1 lin_additivity        emb(a)[LIN] + emb(b)[LIN] == emb(a+b)[LIN], bit-exact
+  P2 showcase_9_plus_9     decode_value(emb("9") + emb("9")) == 18
+  P3 log_multiplicativity  |logdim(a) + logdim(b) - logdim(a*b)| <= 1e-5
+  P4 char_invertibility    decode_chars(embed_word(w)) == w for vocab + random words
+  P5 value_invertibility   decode_value(emb(v)) == v, exhaustive small + sampled large
+  P6 nonnumeric_zero_block non-numeric tokens have an all-zero numeric block
+  P7 codebook_margin       max pairwise cosine of char codes below threshold
+  P8 fourier_digit_readout the 10 phase points of the T=10 pair are well separated
+"""
+
+from __future__ import annotations
+
+import math
+
+import numpy as np
+
+from .embedding import (codebook_max_cosine, decode_chars, decode_value,
+                        embed_token, embed_word, numeric_features)
+from .layout import ALPHABET, LAYOUT, MAX_EXACT_VALUE
+from .util import rand_int
+
+LOG_TOL = 1e-5
+CODEBOOK_MAX_COSINE_ALLOWED = 0.95
+FOURIER_MIN_SEPARATION = 0.5
+
+
+def run_properties(seed: int, coord: str = "properties",
+                   n_pairs: int = 10_000, n_words: int = 2_000) -> dict:
+    layout = LAYOUT
+    checks = []
+
+    # -- P1: exact additivity of the LIN dim --------------------------------
+    fails = 0
+    for i in range(n_pairs):
+        a = rand_int(seed, 0, MAX_EXACT_VALUE // 2, coord, "add_a", i)
+        b = rand_int(seed, 0, MAX_EXACT_VALUE // 2, coord, "add_b", i)
+        ea = numeric_features(a)[layout.LIN]
+        eb = numeric_features(b)[layout.LIN]
+        es = numeric_features(a + b)[layout.LIN]
+        if not (np.float32(ea + eb) == es):  # bit-exact float32 equality
+            fails += 1
+    checks.append({"name": "lin_additivity", "ok": fails == 0,
+                   "pairs": n_pairs, "range": [0, MAX_EXACT_VALUE // 2],
+                   "bit_exact_failures": fails})
+
+    # -- P2: the literal showcase ------------------------------------------
+    s = embed_token("9") + embed_token("9")
+    got = decode_value(s)
+    checks.append({"name": "showcase_9_plus_9", "ok": got == 18, "decoded": got})
+
+    # -- P3: multiplication via the log dim --------------------------------
+    max_err = 0.0
+    n_mul = 0
+    for i in range(n_pairs):
+        a = rand_int(seed, 1, 1024, coord, "mul_a", i)
+        b = rand_int(seed, 1, MAX_EXACT_VALUE // 1024, coord, "mul_b", i)
+        la = float(numeric_features(a)[layout.LOG])
+        lb = float(numeric_features(b)[layout.LOG])
+        lab = float(numeric_features(a * b)[layout.LOG])
+        max_err = max(max_err, abs(la + lb - lab))
+        n_mul += 1
+    checks.append({"name": "log_multiplicativity", "ok": max_err <= LOG_TOL,
+                   "pairs": n_mul, "max_abs_error": max_err, "tolerance": LOG_TOL})
+
+    # -- P4: char-block invertibility --------------------------------------
+    from .vocab import build_vocab
+    bad = []
+    for tok in build_vocab():
+        if decode_chars(embed_token(tok)) != tok:
+            bad.append(tok)
+    for i in range(n_words):
+        length = rand_int(seed, 1, layout.n_slots + 1, coord, "wlen", i)
+        w = "".join(ALPHABET[rand_int(seed, 0, len(ALPHABET), coord, "wch", i, j)]
+                    for j in range(length))
+        if decode_chars(embed_word(w)) != w:
+            bad.append(w)
+    checks.append({"name": "char_invertibility", "ok": not bad,
+                   "vocab_words": len(build_vocab()), "random_words": n_words,
+                   "failures": bad[:10]})
+
+    # -- P5: value invertibility -------------------------------------------
+    bad_v = [v for v in range(2001)
+             if decode_value(numeric_features(v)) != v]
+    for i in range(5_000):
+        v = rand_int(seed, 0, MAX_EXACT_VALUE, coord, "vinv", i)
+        if decode_value(numeric_features(v)) != v:
+            bad_v.append(v)
+    checks.append({"name": "value_invertibility", "ok": not bad_v,
+                   "exhaustive_upto": 2000, "sampled": 5_000,
+                   "failures": bad_v[:10]})
+
+    # -- P6: non-numeric tokens leave the numeric block empty ---------------
+    dirty = []
+    for tok in ["<pad>", "<bos>", "<eos>", "<ans>", "+", "*", "=", "plus", "times"]:
+        vec = embed_token(tok)
+        if float(np.abs(vec[layout.char_hi:]).max()) != 0.0:
+            dirty.append(tok)
+        if decode_value(vec) is not None:
+            dirty.append(tok + ":decodes")
+    checks.append({"name": "nonnumeric_zero_block", "ok": not dirty,
+                   "failures": dirty})
+
+    # -- P7: codebook decoding margin --------------------------------------
+    mc = codebook_max_cosine()
+    checks.append({"name": "codebook_margin", "ok": mc <= CODEBOOK_MAX_COSINE_ALLOWED,
+                   "max_pairwise_cosine": mc,
+                   "min_pairwise_angle_deg": math.degrees(math.acos(mc)),
+                   "allowed_max_cosine": CODEBOOK_MAX_COSINE_ALLOWED})
+
+    # -- P8: the T=10 Fourier pair separates the ten digits ----------------
+    pts = []
+    for d in range(10):
+        vec = numeric_features(d)
+        pts.append((float(vec[layout.fourier_val_lo]),
+                    float(vec[layout.fourier_val_lo + 1])))
+    min_sep = min(math.dist(pts[i], pts[j])
+                  for i in range(10) for j in range(i + 1, 10))
+    checks.append({"name": "fourier_digit_readout", "ok": min_sep >= FOURIER_MIN_SEPARATION,
+                   "min_pairwise_distance": min_sep,
+                   "required": FOURIER_MIN_SEPARATION})
+
+    return {
+        "seed": seed,
+        "coord": coord,
+        "all_ok": all(c["ok"] for c in checks),
+        "checks": checks,
+    }
