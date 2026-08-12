@@ -1,7 +1,101 @@
 // Header, adapted from the math4ai reference: same look (node-graph mark, ~/pandala.in
 // tag, theme toggle, portfolio + LinkedIn + GitHub links) but rebranded to
-// ERA-V5 · Assignment 1, with the react-router center nav removed (this is a
-// single page — the logo is a plain anchor).
+// ERA-V5, with an Assignments dropdown replacing the old side-by-side cross
+// links (the list outgrew the bar). The dropdown is the single source of
+// truth for every assignment; pages identify themselves via the `label` prop
+// and get the current entry highlighted.
+
+import { useEffect, useRef, useState } from 'react'
+
+const GITHUB_TREE = 'https://github.com/shankarpandala/era-v5/tree/main'
+
+// Web pages resolve against BASE_URL; write-ups without a page link to their
+// README on GitHub so the dropdown always covers every assignment.
+export const ASSIGNMENTS = [
+  { n: 1, text: 'Assignment 1', desc: 'Interactive proofs', page: '' },
+  { n: 2, text: 'Assignment 2', desc: 'Multilingual tokenizer', page: 'tokenizer/' },
+  { n: 3, text: 'Assignment 3', desc: 'Data collection design', page: 'data-collection/' },
+  { n: 4, text: 'Assignment 4', desc: 'Data cleaning & dedup', page: 'data-cleaning/' },
+  { n: 5, text: 'Assignment 5', desc: 'Mixture & curriculum (README)', href: `${GITHUB_TREE}/assignment-5` },
+  { n: 6, text: 'Assignment 6', desc: 'Training data system (README)', href: `${GITHUB_TREE}/assignment-6` },
+  { n: 7, text: 'Assignment 7', desc: 'Kronecker Embedding V2', page: 'assignment-7/' },
+]
+
+function ChevronIcon({ open }) {
+  return (
+    <svg
+      width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+      style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  )
+}
+
+function AssignmentsDropdown({ current }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const base = import.meta.env.BASE_URL
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+      >
+        Assignments
+        <ChevronIcon open={open} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-zinc-800 dark:bg-zinc-900"
+        >
+          {ASSIGNMENTS.map((a) => {
+            const href = a.href ?? `${base}${a.page}`
+            const isCurrent = a.text === current
+            return (
+              <a
+                key={a.n}
+                role="menuitem"
+                href={href}
+                aria-current={isCurrent ? 'page' : undefined}
+                className={`flex items-baseline justify-between gap-3 px-3.5 py-2.5 text-sm transition-colors ${
+                  isCurrent
+                    ? 'bg-zinc-100 font-semibold text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50'
+                    : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <span className="whitespace-nowrap">{a.text}</span>
+                <span className="truncate text-xs text-zinc-400 dark:text-zinc-500">{a.desc}</span>
+              </a>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
 
 function SunIcon() {
   return (
@@ -52,8 +146,9 @@ function UserIcon() {
   )
 }
 
-export default function Navbar({ theme, onToggleTheme, label = 'Assignment 1', crossLink = null, crossLinks = null }) {
-  const links = crossLinks ?? (crossLink ? [crossLink] : [])
+// crossLink / crossLinks are accepted for backward compatibility but no
+// longer rendered: the Assignments dropdown covers every assignment.
+export default function Navbar({ theme, onToggleTheme, label = 'Assignment 1' }) {
   return (
     <header
       className="sticky top-0 z-50 h-14 w-full border-b border-zinc-200 bg-white/80 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/80"
@@ -101,17 +196,9 @@ export default function Navbar({ theme, onToggleTheme, label = 'Assignment 1', c
           </a>
         </div>
 
-        {/* Right: theme + links */}
+        {/* Right: assignments dropdown + theme + links */}
         <div className="flex items-center gap-1">
-          {links.map((l) => (
-            <a
-              key={l.href}
-              href={l.href}
-              className="mr-1 hidden rounded-md px-2.5 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 sm:inline-flex"
-            >
-              {l.text}
-            </a>
-          ))}
+          <AssignmentsDropdown current={label} />
           <button
             type="button"
             onClick={onToggleTheme}
