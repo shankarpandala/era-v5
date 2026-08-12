@@ -85,11 +85,33 @@ def _fmt(v):
     return str(v)
 
 
+def verify_only() -> int:
+    """Fail-closed verification: re-run the Claim A properties and the full
+    independent audit against the committed artifacts — no training, ~30 s."""
+    print("verify-only: re-running Claim A properties ...", flush=True)
+    report = run_properties(DEFAULT_CFG["base_seed"], coord="verify",
+                            n_pairs=5_000, n_words=1_000)
+    for c in report["checks"]:
+        print(f"  [{'PASS' if c['ok'] else 'FAIL'}] {c['name']}")
+    print("verify-only: re-running the independent audit ...", flush=True)
+    evidence = run_audit(ARTIFACTS)
+    for c in evidence["checks"]:
+        print(f"  [{'PASS' if c['ok'] else 'FAIL'}] {c['name']}")
+    ok = report["all_ok"] and evidence["verdict"] == "PASS"
+    print(f"verify-only verdict: {'PASS' if ok else 'FAIL'}")
+    return 0 if ok else 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--fast", action="store_true",
-                    help="reduced matrix (~3 min) instead of the full one")
+                    help="reduced matrix (~4 min) instead of the full one")
+    ap.add_argument("--verify-only", action="store_true",
+                    help="re-verify Claim A + audit the committed artifacts "
+                         "without training (~30 s)")
     args = ap.parse_args()
+    if args.verify_only:
+        return verify_only()
     plan = FAST_PLAN if args.fast else FULL_PLAN
 
     log = RunLog(os.path.join(ARTIFACTS, "run.log"))
@@ -129,7 +151,7 @@ def main() -> int:
 
     # -- 2. data manifests ---------------------------------------------------
     log.section("Data: deterministic splits with a structural operand hole")
-    sizes = sorted({plan["main_size"], *plan["curve_sizes"]})
+    sizes = sorted({*plan["sizes"], *plan["curve_sizes"], *plan["nl_sizes"]})
     for size in sizes:
         m = build_splits(DEFAULT_CFG["base_seed"], size)["manifest"]
         write_json(os.path.join(ARTIFACTS, "manifests", f"data_{size}.json"), m)
@@ -156,28 +178,44 @@ def main() -> int:
 
     # -- 5. Claim B threshold checks ----------------------------------------
     g = results["by_group"]
-    ms = plan["main_size"]
+    ms = plan["primary_size"]
 
-    def m(arm, metric):
-        return g[f"{arm}@{ms}"][metric]["mean"]
+    def mean_of(task, arm, size, metric):
+        key = f"{task}:{arm}@{size}"
+        return g[key][metric]["mean"] if key in g else None
 
-    ratio = m("kron_v2", "hole_add_exact") / max(m("learned", "hole_add_exact"), 1e-9)
-    log.check("claimB/hole_generalization_kron_vs_learned",
-              ratio >= THRESHOLDS["hole_add_ratio_min"],
-              kron_v2=m("kron_v2", "hole_add_exact"),
-              learned=m("learned", "hole_add_exact"), ratio=round(ratio, 1))
-    in_pairs = [sz for sz in sizes
-                if f"kron_v2@{sz}" in g and f"learned@{sz}" in g]
+    def ratio_check(name, base_arm, threshold_key, task="arith", size=ms):
+        k = mean_of(task, "kron_v2", size, "hole_add_exact")
+        b = mean_of(task, base_arm, size, "hole_add_exact")
+        if k is None or b is None:
+            log.check(name, False, reason="missing groups")
+            return
+        ratio = k / max(b, 1e-9)
+        log.check(name, ratio >= THRESHOLDS[threshold_key], kron_v2=k,
+                  **{base_arm: b}, ratio=round(ratio, 1))
+
+    ratio_check("claimB/hole_generalization_kron_vs_learned", "learned",
+                "hole_add_ratio_min")
+    ratio_check("claimB/capacity_control_frozen_rand", "frozen_rand",
+                "frozen_rand_ratio_min")
+    ratio_check("claimB/nl_transfer_hole", "learned", "nl_hole_ratio_min",
+                task="nl", size=min(plan["nl_sizes"]))
+
+    arith_sizes = sorted({*plan["sizes"], *plan["curve_sizes"]})
+    in_pairs = [sz for sz in arith_sizes
+                if f"arith:kron_v2@{sz}" in g and f"arith:learned@{sz}" in g]
     in_ok = bool(in_pairs) and all(
-        g[f"kron_v2@{sz}"]["in_add_exact"]["mean"]
-        >= g[f"learned@{sz}"]["in_add_exact"]["mean"] + THRESHOLDS["in_add_margin"]
+        mean_of("arith", "kron_v2", sz, "in_add_exact")
+        >= mean_of("arith", "learned", sz, "in_add_exact")
+        + THRESHOLDS["in_add_margin"]
         for sz in in_pairs)
     log.check("claimB/in_range_at_every_train_size", in_ok,
               sizes_compared=in_pairs)
-    extra_low = all(g[k]["extra_add_exact"]["mean"]
-                    <= THRESHOLDS["extra_add_exact_max"] for k in g
-                    if k.endswith(f"@{ms}"))
-    log.check("claimB/magnitude_extrapolation_reported_negative", extra_low)
+    extra_vals = [g[k]["extra_add_exact"]["mean"] for k in g
+                  if k.startswith("arith:")]
+    log.check("claimB/magnitude_extrapolation_reported_negative",
+              bool(extra_vals) and all(v <= THRESHOLDS["extra_add_exact_max"]
+                                       for v in extra_vals))
 
     # -- 6. figures + report -------------------------------------------------
     log.section("Figures and report")

@@ -3,8 +3,9 @@
 Integers 0..999 are single tokens (the xVal / FoNE single-token setting), so
 an "unseen number" is a real token whose embedding was simply never trained —
 the honest out-of-distribution unit for comparing deterministic vs learned
-embeddings. Operators exist in symbolic and word form so the word path of the
-unified scheme is exercised by the same model.
+embeddings. Operators exist in symbolic and word form, and a small natural-
+language vocabulary supports the transfer task ("what is 9 plus 9") — every
+word goes through the same unified embedding as the numbers.
 """
 
 from __future__ import annotations
@@ -14,12 +15,15 @@ from .util import sha256_json
 
 PAD, BOS, EOS, ANS = "<pad>", "<bos>", "<eos>", "<ans>"
 SPECIALS = [PAD, BOS, EOS, ANS]
-OPERATORS = ["+", "*", "=", "plus", "times"]
+OPERATORS = ["+", "*", "-", "=", "plus", "times", "minus"]
+NL_WORDS = ["what", "is", "compute", "the", "sum", "product", "difference",
+            "of", "and", "tell", "me"]
 MAX_INT_TOKEN = 999
 
 
 def build_vocab() -> list[str]:
-    return SPECIALS + OPERATORS + [str(v) for v in range(MAX_INT_TOKEN + 1)]
+    return SPECIALS + OPERATORS + NL_WORDS + [str(v) for v in
+                                              range(MAX_INT_TOKEN + 1)]
 
 
 class Vocab:

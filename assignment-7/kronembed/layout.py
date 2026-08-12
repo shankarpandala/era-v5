@@ -56,16 +56,24 @@ class Layout:
     char_hi: int = 96
 
     # --- numeric block: dims [96, 128) ------------------------------------
-    LIN: int = 96              # v / LIN_SCALE            (exactly additive)
-    SIGN: int = 97             # sign(v) in {-1, 0, +1}   (additive, same sign)
-    LOG: int = 98              # log10(v) for v>=1        (mult -> addition)
+    # NOTE on LOG conventions: the embedding's LOG dim is the algebraic object
+    # log10(|v|) (sentinel LOG_ZERO at v=0) — exact math, used by Claim A. The
+    # regression HEAD's log target is log10(|c|+1) instead, because answers
+    # include 0 and a trainable head needs a smooth target there; the two are
+    # deliberately different and this is the one place that documents why.
+    LIN: int = 96              # v / LIN_SCALE, signed    (exactly additive)
+    SIGN: int = 97             # sign(v) in {-1, 0, +1}   (subtraction readout)
+    LOG: int = 98              # log10(|v|) for v!=0      (mult/div -> +/-)
     NUMFLAG: int = 99          # 1.0 iff token is numeric (0 disambiguates v=0)
 
     # sin/cos pairs of 2*pi*(v mod T)/T -- digit/period readout (NOT homomorphic)
     fourier_val_periods: tuple = (10, 100, 1_000, 10_000, 100_000, 1_000_000)
     fourier_val_lo: int = 100  # dims [100, 112): 6 periods x (sin, cos)
 
-    # sin/cos pairs of 2*pi*log10(v)/L -- magnitude readout for multiplication
+    # sin/cos pairs of 2*pi*log10(|v|)/L -- INPUT-side magnitude readout for
+    # multiplication. Deliberately not used by any output decoder (the output
+    # side decodes digits from fourier_val + sign); kept because ablating it
+    # is part of the readout_only/hom_only arm design.
     fourier_log_periods: tuple = (1.0, 2.0, 4.0, 8.0)
     fourier_log_lo: int = 112  # dims [112, 120): 4 periods x (sin, cos)
 

@@ -1,9 +1,10 @@
 {
   "base_seed": 20260811,
   "embedding_hashes": {
-    "kron_char": "1b115a40f737e9d684cb1cad9d00ef0dedb9859f18f403b78787f53a71008c99",
-    "kron_v2": "22574d5af9d99beb8983368f7ac76a36f3e060789107ca7e5ef8c634c6274d28",
-    "readout_only": "02a3702415858497030d96ccc9792e4f207ffd98cdd7d0931a8d817811d43d74"
+    "hom_only": "6439b8edf8c3fae275f30df6f5d3f5cc4bcbedfcf9b036790fa28685368f3836",
+    "kron_char": "19fcaf39bef07ac4668af48c0d9e3914db1d10e208d287b7e3b90fa788f03ed6",
+    "kron_v2": "0e811091b421768bcce18eda7160c65fe649b89137d94f81953cf5bc0a2ad41a",
+    "readout_only": "d83ce3aa50e58eb43838283dc9f63ff9be246cd96bc4c6272412234cb516fb99"
   },
   "layout": {
     "alphabet": "abcdefghijklmnopqrstuvwxyz0123456789+*=<>-_#",
@@ -70,6 +71,8 @@
       "kron_v2",
       "kron_char",
       "readout_only",
+      "hom_only",
+      "frozen_rand",
       "learned",
       "xval"
     ],
@@ -78,24 +81,47 @@
       "learned"
     ],
     "curve_sizes": [
-      500,
-      2000
+      500
     ],
-    "main_size": 8000,
+    "nl_arms": [
+      "kron_v2",
+      "learned"
+    ],
+    "nl_seeds": [
+      0,
+      1,
+      2
+    ],
+    "nl_sizes": [
+      2000,
+      8000
+    ],
+    "primary_size": 2000,
     "probe_arms": [
       "kron_v2",
+      "readout_only",
+      "hom_only",
+      "frozen_rand",
       "learned"
     ],
     "seeds": [
       0,
       1,
-      2
+      2,
+      3,
+      4
+    ],
+    "sizes": [
+      2000,
+      8000
     ]
   },
   "thresholds": {
     "extra_add_exact_max": 0.1,
+    "frozen_rand_ratio_min": 2.0,
     "hole_add_ratio_min": 2.0,
-    "in_add_margin": -0.02
+    "in_add_margin": -0.02,
+    "nl_hole_ratio_min": 2.0
   },
   "train_defaults": {
     "base_seed": 20260811,
@@ -113,13 +139,15 @@
     "n_layer": 2,
     "probe": false,
     "steps": 3000,
+    "task": "arith",
     "w_cls": 0.5,
     "w_fourier": 4.0,
     "w_lin": 1.0,
     "w_log": 1.0,
+    "w_sign": 0.5,
     "warmup_frac": 0.1,
     "weight_decay": 0.01
   },
-  "vocab_hash": "282bc87bdeef564cde7b83150d464cde7694a37553f405c06d057370630a28cd",
-  "vocab_size": 1009
+  "vocab_hash": "42753426af64fca80d7b8a1ce7de09c2be1a23bc3e44fadf59132afc43622a5b",
+  "vocab_size": 1022
 }

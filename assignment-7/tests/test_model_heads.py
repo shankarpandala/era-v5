@@ -22,19 +22,25 @@ def test_head_is_not_tied_to_embedding():
     assert m.cls_head.weight.data_ptr() != m.embedding.emb.weight.data_ptr()
 
 
-WEIGHTS = {"w_lin": 1.0, "w_log": 1.0, "w_fourier": 1.0, "w_cls": 0.5}
+WEIGHTS = {"w_lin": 1.0, "w_log": 1.0, "w_sign": 0.5, "w_fourier": 1.0,
+           "w_cls": 0.5}
+
+
+def _batch(n=4):
+    return {"ans_pos": torch.full((n,), 5, dtype=torch.long),
+            "y_lin": torch.rand(n), "y_log": torch.rand(n),
+            "y_sign": torch.ones(n), "y_fourier": torch.rand(n, 12),
+            "y_cls": torch.randint(0, 100, (n,))}
 
 
 def test_frozen_embedding_gets_no_gradient_learned_does():
     frozen = _model(FrozenEmbedding(build_embedding_matrix(VOCAB.tokens)))
     learned = _model(LearnedEmbedding(len(VOCAB), 128))
     ids = torch.randint(0, len(VOCAB), (4, 7))
-    batch = {"y_lin": torch.rand(4), "y_log": torch.rand(4),
-             "y_fourier": torch.rand(4, 12),
-             "y_cls": torch.randint(0, 100, (4,))}
+    batch = _batch()
     for m, has_emb_params in ((frozen, False), (learned, True)):
         out = m(ids)
-        compute_loss(out, batch, 5, WEIGHTS)["total"].backward()
+        compute_loss(out, batch, WEIGHTS)["total"].backward()
         emb_params = [p for n, p in m.named_parameters()
                       if n.startswith("embedding.")]
         assert bool(emb_params) == has_emb_params
@@ -58,8 +64,21 @@ def test_forward_shapes_and_heads():
     m = _model(FrozenEmbedding(build_embedding_matrix(VOCAB.tokens)))
     ids = torch.randint(0, len(VOCAB), (8, 7))
     out = m(ids)
-    assert out["reg"].shape == (8, 7, 14)
+    assert out["reg"].shape == (8, 7, 15)
     assert out["cls_logits"].shape == (8, 7, len(VOCAB))
+    # trunk_layers exposes one state per depth (embedding + 2 blocks)
+    states = m.trunk_layers(ids)
+    assert len(states) == 3
+    assert all(s.shape == (8, 7, 128) for s in states)
+
+
+def test_loss_gathers_per_example_ans_positions():
+    m = _model(LearnedEmbedding(len(VOCAB), 128))
+    ids = torch.randint(0, len(VOCAB), (4, 10))
+    batch = _batch()
+    batch["ans_pos"] = torch.tensor([5, 7, 6, 8])
+    losses = compute_loss(m(ids), batch, WEIGHTS)
+    assert torch.isfinite(losses["total"])
 
 
 def test_xval_numeric_tokens_use_scaled_direction():
@@ -79,9 +98,8 @@ def test_xval_numeric_tokens_use_scaled_direction():
 def test_cls_loss_skipped_when_all_answers_out_of_vocab():
     m = _model(LearnedEmbedding(len(VOCAB), 128))
     ids = torch.randint(0, len(VOCAB), (4, 7))
-    batch = {"y_lin": torch.rand(4), "y_log": torch.rand(4),
-             "y_fourier": torch.rand(4, 12),
-             "y_cls": torch.full((4,), -100, dtype=torch.long)}
-    losses = compute_loss(m(ids), batch, 5, WEIGHTS)
+    batch = _batch()
+    batch["y_cls"] = torch.full((4,), -100, dtype=torch.long)
+    losses = compute_loss(m(ids), batch, WEIGHTS)
     assert float(losses["cls"].item()) == 0.0
     assert torch.isfinite(losses["total"])

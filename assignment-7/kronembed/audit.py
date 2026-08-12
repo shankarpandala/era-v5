@@ -20,11 +20,13 @@ from .properties import run_properties
 from .util import read_json, sha256_array, write_json
 from .vocab import Vocab
 
-# Pre-registered Claim B thresholds (mirrored in run_demo and the README).
+# Claim B thresholds, pre-specified in code (mirrored in run_demo and README).
 THRESHOLDS = {
     "hole_add_ratio_min": 2.0,     # kron_v2 hole-add exact >= 2x learned
+    "frozen_rand_ratio_min": 2.0,  # ... and >= 2x the random frozen control
     "in_add_margin": -0.02,        # kron_v2 in-add >= learned - 0.02 at every size
     "extra_add_exact_max": 0.10,   # magnitude extrapolation is (honestly) low
+    "nl_hole_ratio_min": 2.0,      # the NL transfer slice repeats the hole gap
 }
 
 
@@ -67,6 +69,8 @@ def run_audit(artifacts_dir: str) -> dict:
     # -- 3. Data manifests rebuild identically ------------------------------
     results = read_json(os.path.join(artifacts_dir, "results.json"))
     sizes = sorted({int(k.split("@")[1]) for k in results["by_group"]})
+    arith_sizes = sorted({int(k.split("@")[1]) for k in results["by_group"]
+                          if k.startswith("arith:")})
     manifest_ok = []
     for size in sizes:
         rebuilt = build_splits(run_config["base_seed"], size)["manifest"]
@@ -87,7 +91,8 @@ def run_audit(artifacts_dir: str) -> dict:
     run_files = {}
     for spec in results["run_index"]:
         r = read_json(os.path.join(artifacts_dir, spec["dir"], "result.json"))
-        run_files.setdefault(f"{r['arm']}@{r['train_size']}", []).append(r)
+        run_files.setdefault(f"{r['task']}:{r['arm']}@{r['train_size']}",
+                             []).append(r)
     mismatches = []
     n_compared = 0
     for key, entry in results["by_group"].items():
@@ -118,24 +123,37 @@ def run_audit(artifacts_dir: str) -> dict:
                          frozen_ok, n_frozen_runs=len(frozen_runs)))
 
     # -- 6. Claim B thresholds re-derived from run files --------------------
-    main_size = max(sizes)
+    primary = results["plan"].get("primary_size", max(arith_sizes or sizes))
 
-    def group(arm, size):
-        return run_files.get(f"{arm}@{size}", [])
+    def group(arm, size, task="arith"):
+        return run_files.get(f"{task}:{arm}@{size}", [])
 
-    kron_hole = _mean(group("kron_v2", main_size),
-                      "eval_hole", "add", "primary", "exact")
-    learned_hole = _mean(group("learned", main_size),
-                         "eval_hole", "add", "primary", "exact")
-    ratio = kron_hole / max(learned_hole, 1e-9)
-    checks.append(_check("claimB_hole_generalization",
-                         ratio >= THRESHOLDS["hole_add_ratio_min"],
-                         kron_v2=kron_hole, learned=learned_hole,
-                         ratio=round(ratio, 2),
-                         threshold=THRESHOLDS["hole_add_ratio_min"]))
+    def hole_ratio_check(name, base_arm, threshold_key, task="arith",
+                         size=primary):
+        kron = group("kron_v2", size, task)
+        base = group(base_arm, size, task)
+        if not kron or not base:
+            return _check(name, False, reason="missing runs",
+                          kron=len(kron), base=len(base))
+        k = _mean(kron, "eval_hole", "add", "primary", "exact")
+        b = _mean(base, "eval_hole", "add", "primary", "exact")
+        ratio = k / max(b, 1e-9)
+        return _check(name, ratio >= THRESHOLDS[threshold_key],
+                      kron_v2=k, **{base_arm: b}, ratio=round(ratio, 2),
+                      threshold=THRESHOLDS[threshold_key])
+
+    checks.append(hole_ratio_check("claimB_hole_generalization", "learned",
+                                   "hole_add_ratio_min"))
+    checks.append(hole_ratio_check("claimB_capacity_control_frozen_rand",
+                                   "frozen_rand", "frozen_rand_ratio_min"))
+    nl_sizes = sorted({int(k.split("@")[1]) for k in results["by_group"]
+                       if k.startswith("nl:")})
+    checks.append(hole_ratio_check("claimB_nl_transfer_hole", "learned",
+                                   "nl_hole_ratio_min", task="nl",
+                                   size=min(nl_sizes) if nl_sizes else primary))
 
     in_ok, in_detail = True, {}
-    for size in sizes:
+    for size in arith_sizes:
         if not group("kron_v2", size) or not group("learned", size):
             continue
         k = _mean(group("kron_v2", size), "eval_in", "add", "primary", "exact")
@@ -148,15 +166,16 @@ def run_audit(artifacts_dir: str) -> dict:
     checks.append(_check("claimB_in_range_at_every_size", in_ok,
                          sizes_compared=len(in_detail), **in_detail))
 
-    extra_vals = {arm: _mean(group(arm, main_size),
-                             "eval_extra", "add", "primary", "exact")
-                  for arm in sorted({r["arm"] for runs in run_files.values()
-                                     for r in runs})
-                  if group(arm, main_size)}
+    extra_vals = {}
+    for key, runs in run_files.items():
+        if key.startswith("arith:"):
+            extra_vals[key] = _mean(runs, "eval_extra", "add", "primary",
+                                    "exact")
     checks.append(_check("claimB_extrapolation_negative_reported",
-                         all(v <= THRESHOLDS["extra_add_exact_max"]
-                             for v in extra_vals.values()),
-                         per_arm=extra_vals))
+                         bool(extra_vals)
+                         and all(v <= THRESHOLDS["extra_add_exact_max"]
+                                 for v in extra_vals.values()),
+                         per_group=extra_vals))
 
     probes = results.get("probes", {})
     kron_probes = [p for key, p in sorted(probes.items())
