@@ -58,6 +58,7 @@ def test_variant_zeroing_is_exactly_the_declared_dims():
     full = embed_token("137")
     char_only = embed_token("137", variant="kron_char")
     readout = embed_token("137", variant="readout_only")
+    hom = embed_token("137", variant="hom_only")
     # kron_char: numeric block entirely zero, char block identical
     assert np.array_equal(char_only[:LAYOUT.char_hi], full[:LAYOUT.char_hi])
     assert np.abs(char_only[LAYOUT.char_hi:]).max() == 0.0
@@ -65,6 +66,15 @@ def test_variant_zeroing_is_exactly_the_declared_dims():
     diff = np.nonzero(readout != full)[0].tolist()
     assert diff == sorted([LAYOUT.LIN, LAYOUT.SIGN, LAYOUT.LOG])
     assert all(readout[d] == 0.0 for d in diff)
+    # hom_only differs from full in exactly the Fourier dims
+    diff_h = np.nonzero(hom != full)[0].tolist()
+    assert diff_h == list(range(LAYOUT.fourier_val_lo, LAYOUT.reserved_lo))
+    assert all(hom[d] == 0.0 for d in diff_h)
+    # hom_only and readout_only partition the numeric block (flag shared)
+    assert np.array_equal(hom[LAYOUT.char_hi:] + readout[LAYOUT.char_hi:]
+                          - np.where(np.arange(LAYOUT.d_model) == LAYOUT.NUMFLAG,
+                                     1.0, 0.0)[LAYOUT.char_hi:].astype(np.float32),
+                          full[LAYOUT.char_hi:])
 
 
 def test_embedding_matrix_deterministic_and_variant_shapes():
@@ -75,6 +85,21 @@ def test_embedding_matrix_deterministic_and_variant_shapes():
     assert m1.shape == (len(vocab), LAYOUT.d_model)
     for v in VARIANTS:
         assert build_embedding_matrix(vocab.tokens, variant=v).shape == m1.shape
+
+
+def test_random_matrix_is_deterministic_and_norm_matched():
+    from kronembed.embedding import build_random_matrix
+    vocab = Vocab()
+    m1 = build_random_matrix(vocab.tokens)
+    m2 = build_random_matrix(vocab.tokens)
+    assert np.array_equal(m1, m2)
+    ref = build_embedding_matrix(vocab.tokens)
+    assert np.isclose(np.linalg.norm(m1, axis=1).mean(),
+                      np.linalg.norm(ref, axis=1).mean(), rtol=1e-4)
+    # and it carries no numeric structure: LIN dim does not decode values
+    from kronembed.embedding import decode_value
+    row = m1[vocab.id("42")]
+    assert decode_value(row) != 42
 
 
 def test_token_value_parsing():

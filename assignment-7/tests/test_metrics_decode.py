@@ -38,5 +38,16 @@ def test_lin_and_log_decodes():
     y = np.array([42 / TARGET_SCALE, 1998 / TARGET_SCALE], dtype=np.float64)
     assert decode_lin(y).tolist() == [42, 1998]
     assert decode_log(np.log10(np.array([43.0, 1999.0]))).tolist() == [42, 1998]
-    # negative head output clamps to zero instead of going negative
-    assert decode_lin(np.array([-0.3])).tolist() == [0]
+    # lin decode is signed: subtraction answers go negative
+    assert decode_lin(np.array([-57 / TARGET_SCALE])).tolist() == [-57]
+    # log decode re-signs from the sign head
+    assert decode_log(np.log10(np.array([58.0])),
+                      np.array([-1.0])).tolist() == [-57]
+
+
+def test_signed_fourier_decode_inverts_negatives():
+    from kronembed.metrics import decode_fourier_signed
+    vals = [0, 42, -1, -57, -999, -12345]
+    phases = _phases(vals)
+    sign = np.array([0.0 if v == 0 else np.sign(v) for v in vals])
+    assert decode_fourier_signed(phases, sign).tolist() == vals

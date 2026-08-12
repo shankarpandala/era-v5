@@ -97,14 +97,15 @@ class KronGPT(nn.Module):
             [_Block(d_model, n_head) for _ in range(n_layer)])
         self.ln_f = nn.LayerNorm(d_model)
         self.cls_head = nn.Linear(d_model, vocab_size, bias=False)
-        # 14 outputs = the numeric block of the answer's embedding:
-        # [value/TARGET_SCALE, log10(c+1), 6 x (sin, cos) Fourier phases].
+        # 15 outputs = the numeric block of the answer's embedding:
+        # [value/TARGET_SCALE (signed), log10(|c|+1), sign(c),
+        #  6 x (sin, cos) Fourier phases].
         # Two parallel paths: a pure linear map (can extrapolate a linear
         # signal beyond the training range — a GELU MLP saturates there) plus
         # an MLP correction for in-range precision.
-        self.reg_lin = nn.Linear(d_model, 14)
+        self.reg_lin = nn.Linear(d_model, 15)
         self.reg_mlp = nn.Sequential(
-            nn.Linear(d_model, d_model), nn.GELU(), nn.Linear(d_model, 14))
+            nn.Linear(d_model, d_model), nn.GELU(), nn.Linear(d_model, 15))
         self.apply(self._init_weights)
 
     @staticmethod
@@ -116,16 +117,23 @@ class KronGPT(nn.Module):
         elif isinstance(module, nn.Embedding):
             nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
-    def trunk(self, ids: torch.Tensor) -> torch.Tensor:
-        """Pre-LN residual stream after all blocks — also used by the probe
-        analysis, which fits linear readouts on these hidden states."""
+    def trunk_layers(self, ids: torch.Tensor) -> list:
+        """Residual stream at every depth: [post-embedding, after block 1,
+        ..., after block N]. Used by the per-layer probe analysis that asks
+        WHERE linearly decodable structure is lost."""
         B, L = ids.shape
         pos = torch.arange(L, device=ids.device).unsqueeze(0)
         x = self.embedding(ids) * self.input_gain + self.pos_emb(pos)
+        states = [x]
         mask = _causal_mask(L, ids.device)
         for blk in self.blocks:
             x = blk(x, mask)
-        return x
+            states.append(x)
+        return states
+
+    def trunk(self, ids: torch.Tensor) -> torch.Tensor:
+        """Pre-LN residual stream after all blocks."""
+        return self.trunk_layers(ids)[-1]
 
     def forward(self, ids: torch.Tensor) -> dict:
         x = self.trunk(ids)
@@ -192,24 +200,31 @@ def _causal_mask(L: int, device) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 
 
-def compute_loss(out: dict, batch: dict, ans_pos: int, weights: dict) -> dict:
-    """Joint answer loss at the <ans> position.
+def compute_loss(out: dict, batch: dict, weights: dict) -> dict:
+    """Joint answer loss at each example's own <ans> position.
 
     The regression head is supervised on the answer's OWN numeric-block
-    features (value, log, Fourier phases), so training teaches the model to
-    emit the answer's embedding. The CE term skips batches whose every answer
-    is outside the token vocabulary (large products)."""
-    reg = out["reg"][:, ans_pos, :]
+    features (signed value, log-magnitude, sign, Fourier phases), so training
+    teaches the model to emit the answer's embedding. ``batch["ans_pos"]`` is
+    per-example — NL templates place <ans> at varying positions. The CE term
+    skips batches whose every answer is outside the token vocabulary
+    (large products, negative differences)."""
+    idx = batch["ans_pos"]
+    rows = torch.arange(idx.shape[0], device=idx.device)
+    reg = out["reg"][rows, idx, :]
     loss_lin = F.huber_loss(reg[:, 0], batch["y_lin"])
     loss_log = F.huber_loss(reg[:, 1], batch["y_log"])
-    loss_fourier = F.mse_loss(reg[:, 2:], batch["y_fourier"])
+    loss_sign = F.mse_loss(reg[:, 2], batch["y_sign"])
+    loss_fourier = F.mse_loss(reg[:, 3:], batch["y_fourier"])
     y_cls = batch["y_cls"]
     if (y_cls != -100).any():
-        loss_cls = F.cross_entropy(out["cls_logits"][:, ans_pos, :], y_cls,
+        loss_cls = F.cross_entropy(out["cls_logits"][rows, idx, :], y_cls,
                                    ignore_index=-100)
     else:
         loss_cls = torch.zeros((), device=reg.device)
     total = (weights["w_lin"] * loss_lin + weights["w_log"] * loss_log
+             + weights["w_sign"] * loss_sign
              + weights["w_fourier"] * loss_fourier + weights["w_cls"] * loss_cls)
     return {"total": total, "lin": loss_lin.detach(), "log": loss_log.detach(),
-            "fourier": loss_fourier.detach(), "cls": loss_cls.detach()}
+            "sign": loss_sign.detach(), "fourier": loss_fourier.detach(),
+            "cls": loss_cls.detach()}

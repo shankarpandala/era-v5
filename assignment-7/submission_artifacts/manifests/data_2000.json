@@ -12,10 +12,10 @@
     "500-999": 666
   },
   "hashes": {
-    "eval_extra": "e23c1e732266c2ae6e15c66e6e5067b0ce78892de6d03bcca5cbe8b003e22bf2",
-    "eval_hole": "a5f054d3cc9faa8771e8cf8d13bd9b90d32036e06bc94ed712e932601907eb1a",
-    "eval_in": "d02519f2e9efc65d01691fb094900a4c365f1c0e90c1015895b5804493f87ced",
-    "train": "2652f76fffbd5c77784ba724e1464340ee9ee72f02128166d6a155e48509e94f"
+    "eval_extra": "320b8380a983787d4cae94763a2fa92f201030145a0241da52249e171e64bf85",
+    "eval_hole": "af7128721b9beef9ea9f47848a33aae20ea64a16f98d5bb2d29deb2d71e54e87",
+    "eval_in": "cf27fdfda53644f9677f4da4acc78c46ff4bdbbc4f2700d5cd139d852b5143e6",
+    "train": "cedb1373733fe87bb5d206711a4dc957189d4ab53731057b3b4ce89ad821f6ef"
   },
   "hole": [
     40,
@@ -23,9 +23,14 @@
   ],
   "hole_always_touched": true,
   "max_product": 920511,
+  "ops": [
+    "add",
+    "mul",
+    "sub"
+  ],
   "seed": 20260811,
-  "train_answers_in_hole_band": 99,
+  "train_answers_in_hole_band": 179,
   "train_never_touches_hole": true,
   "train_size": 2000,
-  "word_form_fraction": 0.26
+  "word_form_fraction": 0.259
 }

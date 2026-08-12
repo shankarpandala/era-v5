@@ -14,7 +14,21 @@ def test_run_properties_all_pass():
     report = run_properties(SEED, coord="test", n_pairs=2_000, n_words=300)
     failed = [c["name"] for c in report["checks"] if not c["ok"]]
     assert report["all_ok"], failed
-    assert len(report["checks"]) == 8
+    assert len(report["checks"]) == 10
+
+
+def test_subtraction_is_bit_exact_including_negatives():
+    for a, b in [(9, 4), (4, 9), (0, 99), (99, 0), (57, 57)]:
+        diff = numeric_features(a) - numeric_features(b)
+        assert np.float32(diff[LAYOUT.LIN]) == numeric_features(a - b)[LAYOUT.LIN]
+
+
+def test_division_becomes_subtraction_on_log_dim():
+    for a, b in [(81, 9), (1000, 8), (7, 3)]:
+        got = (float(numeric_features(a)[LAYOUT.LOG])
+               - float(numeric_features(b)[LAYOUT.LOG]))
+        import math
+        assert abs(got - math.log10(a / b)) <= 1e-5
 
 
 def test_lin_additivity_is_bit_exact_not_approximate():

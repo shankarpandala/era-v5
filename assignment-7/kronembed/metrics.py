@@ -20,12 +20,17 @@ MAX_LOG_DECODE = 7.0  # clip before 10**x so an early wild head can't overflow
 
 
 def decode_lin(y: np.ndarray) -> np.ndarray:
-    return np.maximum(0, np.round(y * TARGET_SCALE)).astype(np.int64)
+    """Signed: subtraction answers are negative and decode as such."""
+    return np.round(y * TARGET_SCALE).astype(np.int64)
 
 
-def decode_log(y: np.ndarray) -> np.ndarray:
+def decode_log(y: np.ndarray, sign: np.ndarray | None = None) -> np.ndarray:
+    """Magnitude from the log head, re-signed from the sign head if given."""
     y = np.clip(y, 0.0, MAX_LOG_DECODE)
-    return np.maximum(0, np.round(np.power(10.0, y) - 1.0)).astype(np.int64)
+    mag = np.maximum(0, np.round(np.power(10.0, y) - 1.0)).astype(np.int64)
+    if sign is None:
+        return mag
+    return np.where(sign < -0.5, -mag, mag)
 
 
 def decode_fourier(phases: np.ndarray) -> np.ndarray:
@@ -48,9 +53,17 @@ def decode_fourier(phases: np.ndarray) -> np.ndarray:
     return v
 
 
+def decode_fourier_signed(phases: np.ndarray, sign: np.ndarray) -> np.ndarray:
+    """Negative values: phases encode v mod 10^6 (CRT-consistent, so
+    -57 -> 999943); the sign head selects the signed representative."""
+    T = LAYOUT.fourier_val_periods[-1]
+    v = decode_fourier(phases)
+    return np.where(sign < -0.5, v - T, v)
+
+
 def _rates(pred: np.ndarray, truth: np.ndarray) -> dict:
     err = np.abs(pred - truth).astype(np.float64)
-    rel = err / np.maximum(1.0, truth)
+    rel = err / np.maximum(1.0, np.abs(truth))
     return {
         "exact": float((pred == truth).mean()),
         "mae": float(err.mean()),
@@ -64,18 +77,23 @@ def _rates(pred: np.ndarray, truth: np.ndarray) -> dict:
 def evaluate_split(reg: np.ndarray, cls_ids: np.ndarray, values: np.ndarray,
                    ops: np.ndarray, vocab: Vocab,
                    buckets: list | None = None) -> dict:
-    """reg: (N, 14) head outputs at <ans>; cls_ids: (N,) argmax token ids;
-    values: (N,) true answers; ops: (N,) 0=add 1=mul; buckets: optional (N,)
-    magnitude-bucket labels for the extrapolation split."""
+    """reg: (N, 15) head outputs at <ans> — [lin, log, sign, 12 fourier];
+    cls_ids: (N,) argmax token ids; values: (N,) true answers (signed);
+    ops: (N,) 0=add 1=mul 2=sub; buckets: optional (N,) magnitude-bucket
+    labels for the extrapolation split."""
+    sign = reg[:, 2]
     c_lin = decode_lin(reg[:, 0])
-    c_log = decode_log(reg[:, 1])
-    primary = decode_fourier(reg[:, 2:14])
+    c_log = decode_log(reg[:, 1], sign)
+    primary = decode_fourier_signed(reg[:, 3:15], sign)
+    # sentinel for "argmax is a non-numeric token" must be impossible as a
+    # truth value: -1 would collide with legitimate negative sub answers
+    NON_NUMERIC = -(10 ** 9)
     cls_vals = np.array(
-        [v if (v := vocab.value_of_id(int(i))) is not None else -1
+        [v if (v := vocab.value_of_id(int(i))) is not None else NON_NUMERIC
          for i in cls_ids], dtype=np.int64)
 
     out = {"overall": _rates(primary, values)}
-    for op_id, op_name in ((0, "add"), (1, "mul")):
+    for op_id, op_name in ((0, "add"), (1, "mul"), (2, "sub")):
         m = ops == op_id
         if not m.any():
             continue
@@ -84,16 +102,18 @@ def evaluate_split(reg: np.ndarray, cls_ids: np.ndarray, values: np.ndarray,
             "lin_decode": _rates(c_lin[m], values[m]),
             "log_decode": _rates(c_log[m], values[m]),
             "cls_decode": _rates(cls_vals[m], values[m]),
-            "cls_expressible": float((values[m] <= 999).mean()),
+            "cls_expressible": float(((values[m] >= 0)
+                                      & (values[m] <= 999)).mean()),
         }
     if buckets is not None:
         buckets = np.asarray(buckets)
         out["by_bucket"] = {}
         for b in sorted(set(buckets.tolist())):
             bm = buckets == b
-            out["by_bucket"][b] = {
-                "overall": _rates(primary[bm], values[bm]),
-                "add": _rates(primary[bm & (ops == 0)], values[bm & (ops == 0)]),
-                "mul": _rates(primary[bm & (ops == 1)], values[bm & (ops == 1)]),
-            }
+            out["by_bucket"][b] = {"overall": _rates(primary[bm], values[bm])}
+            for op_id, op_name in ((0, "add"), (1, "mul"), (2, "sub")):
+                sel = bm & (ops == op_id)
+                if sel.any():
+                    out["by_bucket"][b][op_name] = _rates(primary[sel],
+                                                          values[sel])
     return out

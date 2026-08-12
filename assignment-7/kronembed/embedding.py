@@ -30,10 +30,22 @@ from .layout import (ALPHABET, LAYOUT, LIN_SCALE, LOG_ZERO, MAX_EXACT_VALUE,
 _INT_RE = re.compile(r"^[0-9]+$")
 
 # Embedding-matrix variants: which dim groups get zeroed relative to kron_v2.
-# "readout_only" is the FoNE-style arm: it keeps every readout feature and
-# drops exactly the homomorphic dims, so kron_v2 - readout_only isolates the
-# contribution of {LIN, SIGN, LOG}.
-VARIANTS = ("kron_v2", "kron_char", "readout_only")
+# Every variant keeps the char block (embed_token always starts from
+# embed_word), so each arm measures the MARGINAL value of its numeric dims on
+# top of orthography:
+#   "readout_only" (FoNE-style) keeps every Fourier readout feature and drops
+#       exactly the scalar dims {LIN, SIGN, LOG} (LIN/LOG homomorphic, SIGN
+#       their sign readout) -> kron_v2 - readout_only isolates those three.
+#   "hom_only" keeps exactly those scalar dims (+ NUMFLAG) and drops every
+#       Fourier readout -> the marginal value of the algebra dims alone.
+#   "kron_char" drops the whole numeric block.
+VARIANTS = ("kron_v2", "kron_char", "readout_only", "hom_only")
+
+# Seed for the frozen-random control table (disclosed, hashed into
+# run_config.embedding_hashes, and re-derived by the audit like every other
+# frozen matrix). One table serves all seeds by design: the control varies
+# the trained model, not the (structureless) embedding content.
+RAND_EMB_SEED = 7
 
 
 def token_value(token: str) -> Optional[int]:
@@ -125,23 +137,25 @@ def decode_chars(vec: np.ndarray, layout: Layout = LAYOUT) -> str:
 def numeric_features(v: int, layout: Layout = LAYOUT) -> np.ndarray:
     """(d_model,) with only the numeric block [96, 128) populated for value v.
 
-    LIN is computed as float64 v / 2**14 then cast — exact for v < 2**24
-    (integer fits the float32 mantissa; a power-of-two divide only shifts the
-    exponent). Fourier phases are reduced mod T *before* the trig call so
-    large values lose no phase precision.
+    Signed integers are supported: LIN carries v/2**14 with its sign (exact
+    for |v| < 2**24 — the integer fits the float32 mantissa and a power-of-two
+    divide only shifts the exponent), SIGN carries sign(v), LOG carries
+    log10(|v|). Fourier phases encode v mod T with Python's non-negative
+    modulo, so residues stay CRT-consistent for negative v (e.g. -57 mod 10
+    = 3) and the analytic decoder can reconstruct |v| and re-sign it from the
+    SIGN dim. Phases are reduced mod T *before* the trig call so large values
+    lose no precision.
     """
-    if v < 0:
-        raise ValueError("this study uses non-negative integers only")
     vec = np.zeros(layout.d_model, dtype=np.float32)
     vec[layout.LIN] = np.float32(v / LIN_SCALE)
-    vec[layout.SIGN] = np.float32(0.0 if v == 0 else 1.0)
-    vec[layout.LOG] = np.float32(LOG_ZERO if v == 0 else math.log10(v))
+    vec[layout.SIGN] = np.float32(0.0 if v == 0 else math.copysign(1.0, v))
+    vec[layout.LOG] = np.float32(LOG_ZERO if v == 0 else math.log10(abs(v)))
     vec[layout.NUMFLAG] = np.float32(1.0)
     for k, T in enumerate(layout.fourier_val_periods):
         theta = 2.0 * math.pi * (v % T) / T
         vec[layout.fourier_val_lo + 2 * k] = np.float32(math.sin(theta))
         vec[layout.fourier_val_lo + 2 * k + 1] = np.float32(math.cos(theta))
-    logv = 0.0 if v == 0 else math.log10(v)
+    logv = 0.0 if v == 0 else math.log10(abs(v))
     for k, L in enumerate(layout.fourier_log_periods):
         theta = 2.0 * math.pi * logv / L
         vec[layout.fourier_log_lo + 2 * k] = np.float32(math.sin(theta))
@@ -179,6 +193,9 @@ def embed_token(token: str, layout: Layout = LAYOUT,
             vec[layout.LIN] = 0.0
             vec[layout.SIGN] = 0.0
             vec[layout.LOG] = 0.0
+        elif variant == "hom_only":
+            # The complement: homomorphic dims + flag only, no Fourier readout.
+            vec[layout.fourier_val_lo:layout.reserved_lo] = 0.0
     return vec
 
 
@@ -188,4 +205,25 @@ def build_embedding_matrix(vocab: list[str], layout: Layout = LAYOUT,
     mat = np.zeros((len(vocab), layout.d_model), dtype=np.float32)
     for i, tok in enumerate(vocab):
         mat[i] = embed_token(tok, layout, variant)
+    return mat
+
+
+def build_random_matrix(vocab: list[str], layout: Layout = LAYOUT,
+                        seed: int = RAND_EMB_SEED) -> np.ndarray:
+    """A frozen table of deterministic random rows — the capacity control.
+
+    Same frozen-ness and identical trainable-parameter budget as kron_v2, but
+    zero structure: if frozen-ness or capacity (rather than the deterministic
+    structure) explained the results, this arm would match kron_v2. Rows are
+    scaled to the mean kron_v2 row norm so the comparison is scale-matched.
+    """
+    from .util import rand_float
+
+    ref = build_embedding_matrix(vocab, layout, "kron_v2")
+    target_norm = float(np.linalg.norm(ref, axis=1).mean())
+    mat = np.zeros((len(vocab), layout.d_model), dtype=np.float32)
+    for i in range(len(vocab)):
+        row = np.array([rand_float(seed, "rand_emb", i, d) * 2.0 - 1.0
+                        for d in range(layout.d_model)], dtype=np.float64)
+        mat[i] = (row / np.linalg.norm(row) * target_norm).astype(np.float32)
     return mat

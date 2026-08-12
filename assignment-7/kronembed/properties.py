@@ -10,10 +10,15 @@ Properties:
   P2 showcase_9_plus_9     decode_value(emb("9") + emb("9")) == 18
   P3 log_multiplicativity  |logdim(a) + logdim(b) - logdim(a*b)| <= 1e-5
   P4 char_invertibility    decode_chars(embed_word(w)) == w for vocab + random words
-  P5 value_invertibility   decode_value(emb(v)) == v, exhaustive small + sampled large
+  P5 value_invertibility   decode_value(emb(v)) == v, exhaustive small + sampled large,
+                           including negatives
   P6 nonnumeric_zero_block non-numeric tokens have an all-zero numeric block
   P7 codebook_margin       max pairwise cosine of char codes below threshold
   P8 fourier_digit_readout the 10 phase points of the T=10 pair are well separated
+  P9 subtraction_and_sign  emb(a)[LIN] - emb(b)[LIN] == emb(a-b)[LIN] bit-exact,
+                           negatives included; division = log-dim subtraction
+  P10 multi_step_chains    long sums exact on LIN; long products via LOG; mixed
+                           chains exact through analytic decode -> re-encode
 """
 
 from __future__ import annotations
@@ -86,15 +91,15 @@ def run_properties(seed: int, coord: str = "properties",
                    "vocab_words": len(build_vocab()), "random_words": n_words,
                    "failures": bad[:10]})
 
-    # -- P5: value invertibility -------------------------------------------
-    bad_v = [v for v in range(2001)
+    # -- P5: value invertibility (negatives included) -----------------------
+    bad_v = [v for v in range(-2000, 2001)
              if decode_value(numeric_features(v)) != v]
     for i in range(5_000):
-        v = rand_int(seed, 0, MAX_EXACT_VALUE, coord, "vinv", i)
+        v = rand_int(seed, -MAX_EXACT_VALUE, MAX_EXACT_VALUE, coord, "vinv", i)
         if decode_value(numeric_features(v)) != v:
             bad_v.append(v)
     checks.append({"name": "value_invertibility", "ok": not bad_v,
-                   "exhaustive_upto": 2000, "sampled": 5_000,
+                   "exhaustive_range": [-2000, 2000], "sampled": 5_000,
                    "failures": bad_v[:10]})
 
     # -- P6: non-numeric tokens leave the numeric block empty ---------------
@@ -126,6 +131,68 @@ def run_properties(seed: int, coord: str = "properties",
     checks.append({"name": "fourier_digit_readout", "ok": min_sep >= FOURIER_MIN_SEPARATION,
                    "min_pairwise_distance": min_sep,
                    "required": FOURIER_MIN_SEPARATION})
+
+    # -- P9: subtraction is exact and the SIGN dim reads it -----------------
+    sub_fails = 0
+    sign_fails = 0
+    div_max_err = 0.0
+    for i in range(n_pairs):
+        a = rand_int(seed, 0, MAX_EXACT_VALUE // 2, coord, "sub_a", i)
+        b = rand_int(seed, 0, MAX_EXACT_VALUE // 2, coord, "sub_b", i)
+        diff = numeric_features(a) - numeric_features(b)
+        if not (np.float32(diff[layout.LIN]) == numeric_features(a - b)[layout.LIN]):
+            sub_fails += 1
+        want_sign = 0.0 if a == b else math.copysign(1.0, a - b)
+        if float(numeric_features(a - b)[layout.SIGN]) != want_sign:
+            sign_fails += 1
+        # division becomes subtraction on the log dim (real-valued quotient)
+        if a >= 1 and b >= 1:
+            got = (float(numeric_features(a)[layout.LOG])
+                   - float(numeric_features(b)[layout.LOG]))
+            div_max_err = max(div_max_err, abs(got - math.log10(a / b)))
+    checks.append({"name": "subtraction_and_sign",
+                   "ok": sub_fails == 0 and sign_fails == 0
+                         and div_max_err <= 1e-5,
+                   "pairs": n_pairs, "lin_bit_exact_failures": sub_fails,
+                   "sign_failures": sign_fails,
+                   "division_via_log_max_err": div_max_err})
+
+    # -- P10: multi-step chains ---------------------------------------------
+    # (a) Long sums stay exact under pure vector addition on LIN.
+    chain_fails = 0
+    for i in range(200):
+        terms = [rand_int(seed, 0, MAX_EXACT_VALUE // 16, coord, "chain", i, j)
+                 for j in range(10)]
+        acc = numeric_features(terms[0])
+        for t in terms[1:]:
+            acc = acc + numeric_features(t)
+        if decode_value(acc) != sum(terms):
+            chain_fails += 1
+    # (b) Long products via LOG addition (real arithmetic, tolerance-checked).
+    prod_max_err = 0.0
+    for i in range(200):
+        terms = [rand_int(seed, 1, 16, coord, "pchain", i, j) for j in range(5)]
+        acc_log = sum(float(numeric_features(t)[layout.LOG]) for t in terms)
+        prod_max_err = max(prod_max_err,
+                           abs(acc_log - math.log10(math.prod(terms))))
+    # (c) Mixed chains through decode -> re-encode: invertibility makes the
+    # algebra composable across operation types, e.g. (9 + 9) * 2 = 36.
+    def reencode(vec):
+        return numeric_features(decode_value(vec))
+
+    mixed_ok = []
+    for a, b, m in [(9, 9, 2), (123, 877, 3), (40, 2, 25), (0, 5, 7)]:
+        summed = numeric_features(a) + numeric_features(b)          # a + b
+        relogged = reencode(summed)                                  # exact re-encode
+        prod_log = float(relogged[layout.LOG]) + float(numeric_features(m)[layout.LOG])
+        got = round(10 ** prod_log)
+        mixed_ok.append(got == (a + b) * m)
+    checks.append({"name": "multi_step_chains",
+                   "ok": chain_fails == 0 and prod_max_err <= 1e-5
+                         and all(mixed_ok),
+                   "ten_term_sum_failures": chain_fails,
+                   "five_term_product_max_log_err": prod_max_err,
+                   "mixed_decode_reencode_ok": mixed_ok})
 
     return {
         "seed": seed,

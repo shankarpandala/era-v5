@@ -28,10 +28,13 @@
       "name": "char_invertibility",
       "ok": true,
       "random_words": 2000,
-      "vocab_words": 1009
+      "vocab_words": 1022
     },
     {
-      "exhaustive_upto": 2000,
+      "exhaustive_range": [
+        -2000,
+        2000
+      ],
       "failures": [],
       "name": "value_invertibility",
       "ok": true,
@@ -54,6 +57,26 @@
       "name": "fourier_digit_readout",
       "ok": true,
       "required": 0.5
+    },
+    {
+      "division_via_log_max_err": 4.675820133859254e-07,
+      "lin_bit_exact_failures": 0,
+      "name": "subtraction_and_sign",
+      "ok": true,
+      "pairs": 10000,
+      "sign_failures": 0
+    },
+    {
+      "five_term_product_max_log_err": 1.6962141646814644e-07,
+      "mixed_decode_reencode_ok": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "name": "multi_step_chains",
+      "ok": true,
+      "ten_term_sum_failures": 0
     }
   ],
   "coord": "properties",

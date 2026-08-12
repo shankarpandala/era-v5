@@ -16,7 +16,7 @@ import numpy as np
 import torch
 
 from .data import IN_RANGE_MAX, build_splits, encode
-from .embedding import build_embedding_matrix
+from .embedding import (build_embedding_matrix, build_random_matrix)
 from .model import (FrozenEmbedding, KronGPT, LearnedEmbedding, XValEmbedding,
                     compute_loss)
 from .metrics import evaluate_split
@@ -24,7 +24,8 @@ from .util import (deterministic_shuffle, ensure_dir, rand_u64, sha256_array,
                    sha256_json, write_json)
 from .vocab import Vocab
 
-ARMS = ("kron_v2", "kron_char", "readout_only", "learned", "xval")
+ARMS = ("kron_v2", "kron_char", "readout_only", "hom_only", "frozen_rand",
+        "learned", "xval")
 
 DEFAULT_CFG = {
     "base_seed": 20260811,
@@ -37,8 +38,10 @@ DEFAULT_CFG = {
     "grad_clip": 1.0,
     "w_lin": 1.0,
     "w_log": 1.0,
+    "w_sign": 0.5,
     "w_fourier": 4.0,   # the primary (digit-phase) objective gets the weight
     "w_cls": 0.5,
+    "task": "arith",    # "arith" (fixed template) or "nl" (NL templates)
     "d_model": 128,
     "n_layer": 2,
     "n_head": 4,
@@ -49,10 +52,12 @@ DEFAULT_CFG = {
 
 
 def make_embedding(arm: str, vocab: Vocab, d_model: int) -> torch.nn.Module:
-    if arm in ("kron_v2", "kron_char", "readout_only"):
-        variant = {"kron_v2": "kron_v2", "kron_char": "kron_char",
-                   "readout_only": "readout_only"}[arm]
-        return FrozenEmbedding(build_embedding_matrix(vocab.tokens, variant=variant))
+    if arm in ("kron_v2", "kron_char", "readout_only", "hom_only"):
+        return FrozenEmbedding(build_embedding_matrix(vocab.tokens, variant=arm))
+    if arm == "frozen_rand":
+        # capacity/frozen-ness control: deterministic random rows, zero
+        # structure, identical trainable-parameter budget to the kron arms
+        return FrozenEmbedding(build_random_matrix(vocab.tokens))
     if arm == "learned":
         return LearnedEmbedding(len(vocab), d_model)
     if arm == "xval":
@@ -97,8 +102,10 @@ def _lr_at(step: int, cfg: dict) -> float:
 def _to_batch(enc: dict, idx: np.ndarray) -> dict:
     return {
         "ids": torch.from_numpy(enc["ids"][idx]),
+        "ans_pos": torch.from_numpy(enc["ans_pos"][idx]),
         "y_lin": torch.from_numpy(enc["y_lin"][idx]),
         "y_log": torch.from_numpy(enc["y_log"][idx]),
+        "y_sign": torch.from_numpy(enc["y_sign"][idx]),
         "y_fourier": torch.from_numpy(enc["y_fourier"][idx]),
         "y_cls": torch.from_numpy(enc["y_cls"][idx]),
     }
@@ -112,39 +119,56 @@ def _eval_encoded(model: KronGPT, enc: dict, vocab: Vocab, cfg: dict,
     n = enc["ids"].shape[0]
     for lo in range(0, n, cfg["eval_chunk"]):
         ids = torch.from_numpy(enc["ids"][lo:lo + cfg["eval_chunk"]])
+        pos = torch.from_numpy(enc["ans_pos"][lo:lo + cfg["eval_chunk"]])
+        rows = torch.arange(ids.shape[0])
         out = model(ids)
-        regs.append(out["reg"][:, enc["ans_pos"], :].numpy())
-        cls_ids.append(out["cls_logits"][:, enc["ans_pos"], :]
-                       .argmax(dim=-1).numpy())
+        regs.append(out["reg"][rows, pos, :].numpy())
+        cls_ids.append(out["cls_logits"][rows, pos, :].argmax(dim=-1).numpy())
     model.train()
     return evaluate_split(np.concatenate(regs), np.concatenate(cls_ids),
                           enc["values"], enc["ops"], vocab, buckets=buckets)
 
 
 @torch.no_grad()
-def _hidden_at_ans(model: KronGPT, enc: dict, chunk: int) -> np.ndarray:
-    outs = []
+def _layer_states_at_ans(model: KronGPT, enc: dict, chunk: int) -> list:
+    """Residual stream at every depth, gathered at each example's <ans>."""
+    n_layers = len(model.blocks) + 1
+    outs: list[list] = [[] for _ in range(n_layers)]
     for lo in range(0, enc["ids"].shape[0], chunk):
         ids = torch.from_numpy(enc["ids"][lo:lo + chunk])
-        outs.append(model.trunk(ids)[:, enc["ans_pos"], :].numpy())
-    return np.concatenate(outs)
+        pos = torch.from_numpy(enc["ans_pos"][lo:lo + chunk])
+        rows = torch.arange(ids.shape[0])
+        for d, state in enumerate(model.trunk_layers(ids)):
+            outs[d].append(state[rows, pos, :].numpy())
+    return [np.concatenate(o) for o in outs]
 
 
 @torch.no_grad()
 def _input_features(model: KronGPT, enc: dict) -> np.ndarray:
-    """Concatenated raw embeddings of the two operand positions (1 and 3) —
-    the information available BEFORE the trunk touches it."""
+    """Concatenated raw embeddings of the two operand positions (1 and 3 in
+    the arith template) — the information available BEFORE the trunk touches
+    it. Probe analysis is arith-task only (operand positions are fixed)."""
     ids = torch.from_numpy(enc["ids"])
     emb = model.embedding(ids)
     return torch.cat([emb[:, 1, :], emb[:, 3, :]], dim=-1).numpy()
 
 
 def _ridge_fit_eval(X_tr, y_tr, X_te, decode, truth, lam: float = 1e-3) -> dict:
-    Xb = np.concatenate([X_tr, np.ones((len(X_tr), 1))], axis=1).astype(np.float64)
+    """Ridge on features standardized by the TRAINING std (train statistics
+    only — no eval leakage). Standardization matters: the LIN dim's raw
+    amplitude in-range is ~0.006 against O(1) Fourier features, so an
+    unstandardized ridge penalizes the ~64x weight LIN needs and silently
+    ignores the one feature that extrapolates — a scale confound that made an
+    earlier version of this probe understate the deterministic embedding."""
+    mu = X_tr.mean(axis=0)
+    sd = np.maximum(X_tr.std(axis=0), 1e-8)
+    Z_tr = ((X_tr - mu) / sd).astype(np.float64)
+    Z_te = ((X_te - mu) / sd).astype(np.float64)
+    Xb = np.concatenate([Z_tr, np.ones((len(Z_tr), 1))], axis=1)
     w = np.linalg.solve(Xb.T @ Xb + lam * np.eye(Xb.shape[1]), Xb.T @ y_tr)
-    Xt = np.concatenate([X_te, np.ones((len(X_te), 1))], axis=1).astype(np.float64)
+    Xt = np.concatenate([Z_te, np.ones((len(Z_te), 1))], axis=1)
     pred = decode(Xt @ w)
-    rel = np.abs(pred - truth) / np.maximum(1.0, truth)
+    rel = np.abs(pred - truth) / np.maximum(1.0, np.abs(truth))
     return {"relerr_median": float(np.median(rel)),
             "within_1pct": float((rel <= 0.01).mean()),
             "exact": float((pred == truth).mean()), "n": int(truth.size)}
@@ -155,25 +179,26 @@ def probe_analysis(model: KronGPT, enc_train: dict, enc_extra: dict,
     """Where does magnitude extrapolation die? Ridge probes fit ONLY on
     in-range training data, evaluated on the extrapolation split:
 
-      * input probe  — raw operand embeddings. For the deterministic scheme
-        the LIN/LOG dims make the answer a linear function of these features,
-        so this probe succeeds analytically; for a learned table the held-out
-        rows are noise and it must fail.
-      * hidden probe — the trunk's residual stream at <ans>. If this fails
-        while the input probe succeeds, the trunk (not the embedding, not the
-        head) is what destroys out-of-range structure.
+      * input probe  — raw operand embeddings (standardized by train stats).
+        For schemes carrying the LIN dim the answer is a linear function of
+        these features, so the probe CAN succeed out-of-range; for a learned
+        table the held-out rows are noise and it must fail. How close each
+        arm gets is the measurement, not an assumption.
+      * layer probes — the residual stream at <ans> after the embedding and
+        after each block. Tracking OOD relative error per depth shows WHERE
+        linearly decodable structure is lost (a statement about linear
+        readability under distribution shift, not information destruction).
+        The deepest layer is also reported as "hidden" for continuity.
     """
     from .metrics import decode_lin, decode_log
 
-    out = {}
-    for name, feats in (("input", _input_features),
-                        ("hidden", lambda m, e: _hidden_at_ans(m, e, cfg["eval_chunk"]))):
-        X_tr, X_te = feats(model, enc_train), feats(model, enc_extra)
-        add_tr = enc_train["ops"] == 0
-        add_te = enc_extra["ops"] == 0
-        mul_tr = ~add_tr
-        mul_te = ~add_te
-        out[name] = {
+    add_tr = enc_train["ops"] == 0
+    add_te = enc_extra["ops"] == 0
+    mul_tr = enc_train["ops"] == 1
+    mul_te = enc_extra["ops"] == 1
+
+    def both(X_tr, X_te):
+        return {
             "add_lin": _ridge_fit_eval(X_tr[add_tr], enc_train["y_lin"][add_tr],
                                        X_te[add_te], decode_lin,
                                        enc_extra["values"][add_te]),
@@ -181,6 +206,16 @@ def probe_analysis(model: KronGPT, enc_train: dict, enc_extra: dict,
                                        X_te[mul_te], decode_log,
                                        enc_extra["values"][mul_te]),
         }
+
+    out = {"input": both(_input_features(model, enc_train),
+                         _input_features(model, enc_extra))}
+    tr_layers = _layer_states_at_ans(model, enc_train, cfg["eval_chunk"])
+    te_layers = _layer_states_at_ans(model, enc_extra, cfg["eval_chunk"])
+    layer_names = ["embedding"] + [f"block{i + 1}"
+                                   for i in range(len(tr_layers) - 1)]
+    out["layers"] = {name: both(tr, te)
+                     for name, tr, te in zip(layer_names, tr_layers, te_layers)}
+    out["hidden"] = out["layers"][layer_names[-1]]
     return out
 
 
@@ -193,11 +228,14 @@ def run_one(arm: str, train_size: int, seed_idx: int, out_dir: str,
     torch.use_deterministic_algorithms(True)
 
     vocab = Vocab()
+    task = cfg["task"]
     built = build_splits(cfg["base_seed"], train_size)
-    enc_train = encode(built["splits"]["train"], vocab)
-    enc_in = encode(built["splits"]["eval_in"], vocab)
-    enc_hole = encode(built["splits"]["eval_hole"], vocab)
-    enc_extra = encode(built["splits"]["eval_extra"], vocab)
+    enc_train = encode(built["splits"]["train"], vocab, task, cfg["base_seed"])
+    enc_in = encode(built["splits"]["eval_in"], vocab, task, cfg["base_seed"])
+    enc_hole = encode(built["splits"]["eval_hole"], vocab, task,
+                      cfg["base_seed"])
+    enc_extra = encode(built["splits"]["eval_extra"], vocab, task,
+                       cfg["base_seed"])
     extra_buckets = [e["bucket"] for e in built["splits"]["eval_extra"]]
 
     emb = make_embedding(arm, vocab, cfg["d_model"])
@@ -227,8 +265,9 @@ def run_one(arm: str, train_size: int, seed_idx: int, out_dir: str,
         for g in opt.param_groups:
             g["lr"] = _lr_at(step, cfg)
         out = model(batch["ids"])
-        weights = {k: cfg[k] for k in ("w_lin", "w_log", "w_fourier", "w_cls")}
-        losses = compute_loss(out, batch, enc_train["ans_pos"], weights)
+        weights = {k: cfg[k] for k in ("w_lin", "w_log", "w_sign",
+                                       "w_fourier", "w_cls")}
+        losses = compute_loss(out, batch, weights)
         opt.zero_grad(set_to_none=True)
         losses["total"].backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), cfg["grad_clip"])
@@ -238,11 +277,13 @@ def run_one(arm: str, train_size: int, seed_idx: int, out_dir: str,
                                "total": float(losses["total"].item()),
                                "lin": float(losses["lin"].item()),
                                "log": float(losses["log"].item()),
+                               "sign": float(losses["sign"].item()),
                                "fourier": float(losses["fourier"].item()),
                                "cls": float(losses["cls"].item())})
 
     result = {
         "arm": arm,
+        "task": task,
         "train_size": train_size,
         "seed_idx": seed_idx,
         "torch_seed": torch_seed,
@@ -263,7 +304,7 @@ def run_one(arm: str, train_size: int, seed_idx: int, out_dir: str,
         },
         "wall_time_s": round(time.time() - t0, 2),
     }
-    if cfg["probe"]:
+    if cfg["probe"] and task == "arith":
         result["probe"] = probe_analysis(model, enc_train, enc_extra, cfg)
     if out_dir:
         ensure_dir(out_dir)

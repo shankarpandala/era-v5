@@ -1,23 +1,25 @@
-"""Vocabulary identity and data-split invariants."""
+"""Vocabulary identity and data-split invariants, both task families."""
 
 import numpy as np
 
-from kronembed.data import (BUCKETS, EVAL_IN_SIZE, HOLE, HOLE_SIZE,
-                            IN_RANGE_MAX, SEQ_LEN, build_splits, encode,
-                            in_hole)
+from kronembed.data import (ARITH_SEQ_LEN, BUCKETS, EVAL_IN_SIZE, HOLE,
+                            HOLE_SIZE, IN_RANGE_MAX, NL_SEQ_LEN, OPS,
+                            build_splits, encode, in_hole)
 from kronembed.layout import MAX_EXACT_VALUE, TARGET_SCALE
-from kronembed.vocab import Vocab
+from kronembed.vocab import NL_WORDS, OPERATORS, SPECIALS, Vocab
 
 SEED = 20260811
 
 
 def test_vocab_layout():
     v = Vocab()
-    assert len(v) == 4 + 5 + 1000
+    assert len(v) == len(SPECIALS) + len(OPERATORS) + len(NL_WORDS) + 1000
     assert v.id("<pad>") == 0
     assert v.token(v.id("999")) == "999"
     assert v.value_of_id(v.id("42")) == 42
     assert v.value_of_id(v.id("plus")) is None
+    assert v.value_of_id(v.id("minus")) is None
+    assert v.value_of_id(v.id("difference")) is None
 
 
 def test_splits_deterministic_and_disjoint():
@@ -35,9 +37,22 @@ def test_train_sets_are_nested():
     small = build_splits(SEED, 500)["splits"]["train"]
     large = build_splits(SEED, 8000)["splits"]["train"]
     assert small == large[:500]
-    # eval is identical across sizes
     assert (build_splits(SEED, 500)["manifest"]["hashes"]["eval_in"]
             == build_splits(SEED, 8000)["manifest"]["hashes"]["eval_in"])
+
+
+def test_all_three_ops_present_and_correct():
+    d = build_splits(SEED, 8000)
+    seen_ops = {e["op"] for e in d["splits"]["train"]}
+    assert seen_ops == set(OPS)
+    for split in d["splits"].values():
+        for e in split:
+            want = {"add": e["a"] + e["b"], "mul": e["a"] * e["b"],
+                    "sub": e["a"] - e["b"]}[e["op"]]
+            assert e["c"] == want
+            assert abs(e["c"]) < MAX_EXACT_VALUE
+    # subtraction actually goes negative in-range
+    assert any(e["c"] < 0 for e in d["splits"]["train"] if e["op"] == "sub")
 
 
 def test_train_operands_in_range_extra_out_of_range():
@@ -62,34 +77,47 @@ def test_operand_hole_is_absolute():
     assert m["train_never_touches_hole"] is True
     assert m["hole_always_touched"] is True
     assert m["hole"] == list(HOLE)
+    # disclosure counter: hole-band values DO occur as training answers
+    assert m["train_answers_in_hole_band"] > 0
 
 
-def test_all_values_inside_exact_domain():
-    d = build_splits(SEED, 8000)
-    for split in d["splits"].values():
-        for e in split:
-            assert e["c"] < MAX_EXACT_VALUE
-            assert e["c"] == (e["a"] + e["b"] if e["op"] == "add"
-                              else e["a"] * e["b"])
-
-
-def test_encode_shapes_and_targets():
+def test_encode_arith_shapes_and_targets():
     v = Vocab()
     d = build_splits(SEED, 500)
-    enc = encode(d["splits"]["train"], v)
+    enc = encode(d["splits"]["train"], v, "arith", SEED)
     n = len(d["splits"]["train"])
-    assert enc["ids"].shape == (n, SEQ_LEN)
-    assert enc["ans_pos"] == 5
-    # every sequence starts <bos> and the <ans> slot is the <ans> token
+    assert enc["ids"].shape == (n, ARITH_SEQ_LEN)
+    assert (enc["ans_pos"] == 5).all()
     assert (enc["ids"][:, 0] == v.id("<bos>")).all()
     assert (enc["ids"][:, 5] == v.id("<ans>")).all()
-    # answers never appear as input tokens
-    for i, e in enumerate(d["splits"]["train"][:50]):
-        assert np.float32(e["c"] / TARGET_SCALE) == enc["y_lin"][i]
-        if e["c"] <= 999:
-            assert enc["y_cls"][i] == v.id(str(e["c"]))
+    for i, e in enumerate(d["splits"]["train"][:80]):
+        c = e["c"]
+        assert np.float32(c / TARGET_SCALE) == enc["y_lin"][i]
+        assert enc["y_sign"][i] == (0.0 if c == 0 else np.sign(c))
+        if 0 <= c <= 999:
+            assert enc["y_cls"][i] == v.id(str(c))
         else:
             assert enc["y_cls"][i] == -100
+
+
+def test_encode_nl_templates_and_positions():
+    v = Vocab()
+    d = build_splits(SEED, 500)
+    enc = encode(d["splits"]["train"], v, "nl", SEED)
+    n = len(d["splits"]["train"])
+    assert enc["ids"].shape == (n, NL_SEQ_LEN)
+    ans_id, pad_id = v.id("<ans>"), v.id("<pad>")
+    for i in range(n):
+        pos = enc["ans_pos"][i]
+        assert enc["ids"][i, pos] == ans_id
+        # tokens after <eos> are pads only
+        assert all(t == pad_id for t in enc["ids"][i, pos + 2:])
+    # templates vary the answer position
+    assert len(set(enc["ans_pos"].tolist())) > 1
+    # targets identical to the arith encoding (same underlying examples)
+    enc_a = encode(d["splits"]["train"], v, "arith", SEED)
+    assert np.array_equal(enc["y_lin"], enc_a["y_lin"])
+    assert np.array_equal(enc["y_fourier"], enc_a["y_fourier"])
 
 
 def test_word_form_fraction_near_quarter():

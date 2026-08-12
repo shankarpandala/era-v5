@@ -42,6 +42,11 @@ def test_value_round_trips_sampled_large():
         assert decode_value(numeric_features(v)) == v
 
 
+def test_negative_values_round_trip():
+    for v in [-1, -57, -999, -12345, -(2 ** 19)]:
+        assert decode_value(numeric_features(v)) == v
+
+
 def test_nonnumeric_decodes_to_none():
     assert decode_value(embed_token("plus")) is None
     assert decode_value(embed_token("<ans>")) is None

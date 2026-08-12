@@ -9,7 +9,8 @@ not that an undertrained model wins them.
 import os
 
 from kronembed.audit import run_audit
-from kronembed.embedding import VARIANTS, build_embedding_matrix
+from kronembed.embedding import (VARIANTS, build_embedding_matrix,
+                                 build_random_matrix)
 from kronembed.experiments import run_matrix
 from kronembed.data import build_splits
 from kronembed.properties import run_properties
@@ -19,8 +20,12 @@ from kronembed.vocab import Vocab
 
 TINY_CFG = {"steps": 30, "batch_size": 16, "loss_log_every": 15,
             "eval_chunk": 512}
-TINY_PLAN = {"arms": ["kron_v2", "learned"], "main_size": 300, "seeds": [0],
-             "curve_arms": [], "curve_sizes": [], "probe_arms": ["kron_v2", "learned"]}
+TINY_PLAN = {"arms": ["kron_v2", "learned"], "sizes": [300],
+             "primary_size": 300, "seeds": [0],
+             "curve_arms": [], "curve_sizes": [],
+             "probe_arms": ["kron_v2", "learned"],
+             "nl_arms": ["kron_v2", "learned"], "nl_sizes": [300],
+             "nl_seeds": [0]}
 
 STRUCTURAL = [
     "claimA_reproduced_at_fresh_coordinate",
@@ -35,19 +40,21 @@ STRUCTURAL = [
 
 def _build_bundle(root: str):
     vocab = Vocab()
+    emb_hashes = {v: sha256_array(build_embedding_matrix(vocab.tokens, variant=v))
+                  for v in VARIANTS}
+    emb_hashes["frozen_rand"] = sha256_array(build_random_matrix(vocab.tokens))
     write_json(os.path.join(root, "run_config.json"), {
         "base_seed": DEFAULT_CFG["base_seed"],
         "vocab_hash": vocab.hash,
-        "embedding_hashes": {
-            v: sha256_array(build_embedding_matrix(vocab.tokens, variant=v))
-            for v in VARIANTS},
+        "embedding_hashes": emb_hashes,
     })
     report = run_properties(DEFAULT_CFG["base_seed"], coord="properties",
                             n_pairs=300, n_words=50)
     write_json(os.path.join(root, "properties_report.json"), report)
-    m = build_splits(DEFAULT_CFG["base_seed"], TINY_PLAN["main_size"])["manifest"]
+    m = build_splits(DEFAULT_CFG["base_seed"],
+                     TINY_PLAN["primary_size"])["manifest"]
     write_json(os.path.join(root, "manifests",
-                            f"data_{TINY_PLAN['main_size']}.json"), m)
+                            f"data_{TINY_PLAN['primary_size']}.json"), m)
     run_matrix(TINY_PLAN, root, base_cfg=TINY_CFG)
 
 
