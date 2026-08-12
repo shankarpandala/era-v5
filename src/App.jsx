@@ -49,14 +49,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        crossLinks={[
-          { href: `${import.meta.env.BASE_URL}tokenizer/`, text: 'Assignment 2' },
-          { href: `${import.meta.env.BASE_URL}data-collection/`, text: 'Assignment 3' },
-        ]}
-      />
+      <Navbar theme={theme} onToggleTheme={toggleTheme} label="Assignment 1" />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4">
         <Hero />
         <div className="divide-y divide-zinc-200 dark:divide-zinc-800">

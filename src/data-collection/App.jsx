@@ -75,15 +75,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        label="Assignment 3"
-        crossLinks={[
-          { href: `${import.meta.env.BASE_URL}`, text: 'Assignment 1' },
-          { href: `${import.meta.env.BASE_URL}tokenizer/`, text: 'Assignment 2' },
-        ]}
-      />
+      <Navbar theme={theme} onToggleTheme={toggleTheme} label="Assignment 3" />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4">
         <header id="top" className="pt-12 pb-2">
           <p className="font-mono text-xs uppercase tracking-widest text-brand-500">ERA-V5 · The School of AI</p>

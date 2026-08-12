@@ -7,7 +7,7 @@
   "description": "ERA-V5 Assignment 1 — interactive, in-browser proofs of why activations, depth, embeddings, and data matter.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/publish_assignment7.mjs",
+    "build": "vite build",
     "preview": "vite preview",
     "parity": "node scripts/check_parity.mjs"
   },
