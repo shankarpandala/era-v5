@@ -28,21 +28,22 @@ construction does what:
 > in-range, by an order of magnitude on **number tokens never seen at any
 > training input position**, and the gap survives natural-language templates.
 > A frozen *random* table — same capacity, same frozen-ness, no structure —
-> scores ~zero on unseen tokens: **the structure is what generalizes.**
-> Within the structure, the ablations attribute the trained-model wins mostly
-> to the deterministic Fourier *readout* dims (the FoNE-style arm ties the
-> full scheme), while the homomorphic dims uniquely provide the algebra,
-> the invertibility, and the input-level linear structure the probes detect.
-> Magnitude extrapolation fails for every arm and is reported as a negative,
-> localized per-layer.
+> scores ~zero on unseen tokens: **the structure is what generalizes** (all
+> headline ratios at the pre-specified primary operating point of 2000
+> pairs; the saturation regime compresses them, §3.2). Within the structure,
+> the ablations attribute the trained-model wins to the deterministic
+> Fourier *readout* dims (the FoNE-style arm ties the full scheme), while
+> the homomorphic dims uniquely provide the algebra and the invertibility —
+> no readout dim can. Magnitude extrapolation fails for every arm and is
+> reported as a negative, localized per-layer.
 
 ```bash
 cd assignment-7
 pip install -r requirements.txt
-python run_demo.py --verify-only   # ~30 s fail-closed check: Claim A + audit, no training
+python run_demo.py --verify-only   # ~5 s fail-closed check: Claim A + audit, no training
 python run_demo.py --fast          # ~5 min reduced matrix, same pipeline
 python run_demo.py                 # ~60 min: the full 92-run matrix
-python -m pytest tests/ -q         # 52 invariant tests
+python -m pytest tests/ -q         # 53 invariant tests
 ```
 
 **Definition of done** (all three green): `pytest` passes, `--verify-only`
@@ -122,7 +123,8 @@ with zero training — the full list with worst-case errors lives in
   are V3 material (LIN generalizes; digit-Fourier does not).
 - **Dimension budget**: the numeric block spends 24 live dims (+8 reserved)
   of 128. The `hom_only` arm (4 numeric dims) and `readout_only` arm
-  (20 numeric dims) bracket the budget question empirically — see §3.1.
+  (21 numeric dims: 20 Fourier + NUMFLAG) bracket the budget question
+  empirically — see §3.1.
 
 ### The character codebook has no seed luck
 
@@ -178,20 +180,21 @@ arm's input embedding of a hole token. The manifest counts these
 (`train_answers_in_hole_band`).
 
 **Seven arms, one architecture.** Identical 2-layer, d_model-128, 4-head
-transformer (~548k trainable trunk+head parameters; `learned`/`xval`
-additionally train a 129k embedding table — ~24% *more* capacity than the
+transformer (~550k trainable trunk+head parameters; `learned`/`xval`
+additionally train a ~131k embedding table — ~24% *more* capacity than the
 frozen arms), identical optimizer, schedule, and **byte-identical batch
 stream** (the shuffle key excludes the arm name). Only the embedding
 provider differs — enforced by hashing non-embedding parameter shapes across
-all runs (an audit check):
+all runs (an audit check). Every frozen arm keeps the char block, so each
+measures the *marginal* value of its numeric dims on top of orthography:
 
 | arm | embedding | trainable? | role |
 |---|---|---|---|
 | `kron_v2` | char + full numeric block | frozen | **ours** |
-| `readout_only` | numeric block minus {LIN, SIGN, LOG} | frozen | FoNE-style ablation |
-| `hom_only` | only {LIN, SIGN, LOG, NUMFLAG} | frozen | homomorphic dims alone |
+| `readout_only` | char + numeric minus {LIN, SIGN, LOG} | frozen | FoNE-style ablation |
+| `hom_only` | char + {LIN, SIGN, LOG, NUMFLAG} | frozen | marginal value of the algebra dims |
 | `kron_char` | char block only | frozen | no numeric block |
-| `frozen_rand` | deterministic random rows, norm-matched | frozen | capacity / frozen-ness control |
+| `frozen_rand` | deterministic random rows, norm-matched (seed disclosed, hash-chained into the audit) | frozen | capacity / frozen-ness control |
 | `learned` | `nn.Embedding` | learned | conventional baseline |
 | `xval` | value-scaled shared direction | learned | xVal-style baseline |
 
@@ -234,16 +237,22 @@ What the table shows:
 1. **The structure is what generalizes.** The frozen-random control
    (0.001 ± 0.002 hole-add) has kron_v2's capacity and frozen-ness but no
    structure — and scores at the learned table's floor. The generalization
-   ladder tracks structure: learned/frozen_rand → xVal (one direction) →
-   structured frozen arms. Kron-vs-learned hole gap: **36×**
-   (threshold pre-specified in `audit.py`: 2×).
+   ladder tracks *usable* structure: learned/frozen_rand → xVal (one value
+   direction) → the readout-bearing frozen arms (kron_v2, readout_only).
+   The structured arms *without* Fourier readout (hom_only, kron_char) sit
+   at or below the xVal rung — structure the trunk cannot read does not
+   generalize. Kron-vs-learned hole gap: **36×** (threshold pre-specified
+   in `audit.py`: 2×).
 2. **Attribution, honestly.** readout_only (0.477) ties kron_v2 (0.454) in
-   the trained model, and hom_only (0.011) shows the homomorphic dims
-   *alone* are not trainable-readable — a 2-layer trunk cannot recover
-   digit-exact answers from two scalars at this scale. The trained-model
-   wins come from deterministic Fourier readout; the homomorphic dims'
-   unique contributions are Claim A (algebra + invertibility — no readout
-   dim can do that) and the input-level linear structure in §3.3.
+   the trained model, and hom_only (0.011) shows the algebra dims add no
+   *marginal* trained-task value over the char block. Two caveats keep that
+   negative honest: hom_only still carries the 96-dim char block (it
+   measures marginal value, not "4 dims alone"), and the LIN amplitude
+   in-range is ≤ 0.006 against unit-scale features — an amplitude confound
+   a rescaled variant could probe. The trained-model wins come from
+   deterministic Fourier readout; the homomorphic dims' unique
+   contributions are Claim A: the exact algebra and the invertibility,
+   which no readout dim can provide.
 3. **Subtraction works** — the SIGN dim is live, negatives decode exactly,
    and the hole gap holds for sub as it does for add.
 
@@ -267,10 +276,13 @@ continuity and digit structure trade differently with training volume.
 
 ### 3.3 Magnitude extrapolation: a negative result, localized per-layer
 
-Operands 100–999 (training saw 0–99): **every arm fails** (best bucket
-1.4% (kron_v2, operands 100–199), decaying to zero beyond; extrapolation MAE reported alongside
-so unreadable relative errors don't caricature any baseline). Where does it
-die? Ridge probes fit only on in-range training data, evaluated
+Operands 100–999 (training saw 0–99): **every arm fails** — matrix-wide the
+best bucket is 2.3% (xval@8000, operands 100–199); at the primary operating
+point it is 1.4%, an exact tie between kron_v2 and readout_only — decaying
+to zero beyond 199 everywhere (extrapolation MAE reported alongside so
+unreadable relative errors don't caricature any baseline). Where does it
+die? Ridge probes — standardized by training statistics, so no feature's
+raw amplitude biases the fit — trained only on in-range data, evaluated
 out-of-range, at every depth, on every probed arm and seed:
 
 ![structure through layers](submission_artifacts/plots/structure_through_layers.png)
@@ -278,17 +290,27 @@ out-of-range, at every depth, on every probed arm and seed:
 
 Reading the per-layer curve (5 probed seeds per arm): at depth "embedding"
 the `<ans>` position has not yet attended to the operands, so every arm
-necessarily sits at ~0.81. After block 1, attention has delivered the
-operand information — and the structured arms recover linear decodability
-(0.61–0.69) that the learned table and the random control never exhibit
-(0.80–0.83). But recovery never returns to the input-probe level (kron_v2
-0.428 median relerr vs 0.817 for learned, whose held-out rows are noise):
-the trunk transmits the structure *attenuated*, and what survives (0.686 at
-the final layer) is not enough for exact OOD answers. This is a statement
-about linear readability under distribution shift, not information
-destruction. **Structure in, structure out, but not structure through**:
-the bottleneck sits in the transformer body, which is where follow-up work
-should aim.
+necessarily sits near the no-signal level. After block 1, attention has
+delivered the operand information — and the readout-bearing arms recover
+linear decodability that the learned table and the random control never
+exhibit (input probes: kron_v2 0.202 / readout_only 0.014 median
+relerr vs learned 0.817, whose held-out rows are noise). Attribution
+honesty applies here too: the input-level linearity is NOT unique to the
+homomorphic dims — over this range the large-period Fourier dims
+(sin(2πv/T) ≈ 2πv/T for v ≪ T) are themselves near-linear, which is why
+readout_only probes as well as kron_v2. And the cleanest
+datapoint in the matrix: **hom_only's input probe scores 0.000** — with no
+competing features, the LIN dim alone extrapolates *perfectly*, the
+analytic promise of the algebra realized empirically. The homomorphic LIN
+dim's further distinct promise is *unbounded* linearity (a sine stops being
+linear beyond its period; LIN never does), which this operand range cannot
+exhibit. Recovery
+inside the trunk never returns to the input level (0.686 at the final
+layer): the trunk transmits structure *attenuated*, and what survives is
+not enough for exact OOD answers — a statement about linear readability
+under distribution shift, not information destruction. **Structure in,
+structure out, but not structure through**: the bottleneck sits in the
+transformer body, which is where follow-up work should aim.
 
 ### 3.4 NL transfer: the embedding is not tied to a template
 
@@ -360,7 +382,7 @@ assignment-7/
     metrics.py              signed digit-phase / linear / log / cls decoding
     plots.py                8 figures + interactive self-contained report.html
     audit.py                independent re-derivation of every claim from disk
-  tests/                    52 invariant tests (pytest)
+  tests/                    53 invariant tests (pytest)
   submission_artifacts/     run.log, properties_report.json, results.json,
                             evidence.json/md, manifests/, runs/, plots/, report.html
 ```

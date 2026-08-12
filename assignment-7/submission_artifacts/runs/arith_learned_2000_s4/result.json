@@ -1627,13 +1627,13 @@
       "add_lin": {
         "exact": 0.0,
         "n": 665,
-        "relerr_median": 0.813953488372093,
+        "relerr_median": 0.8125,
         "within_1pct": 0.0
       },
       "mul_log": {
         "exact": 0.004497751124437781,
         "n": 667,
-        "relerr_median": 0.9833925473023217,
+        "relerr_median": 0.9824996858112354,
         "within_1pct": 0.004497751124437781
       }
     },
@@ -1642,13 +1642,13 @@
         "add_lin": {
           "exact": 0.0,
           "n": 665,
-          "relerr_median": 0.8428835489833642,
+          "relerr_median": 0.8427787934186471,
           "within_1pct": 0.0
         },
         "mul_log": {
           "exact": 0.004497751124437781,
           "n": 667,
-          "relerr_median": 0.9697783584978706,
+          "relerr_median": 0.9698025551684089,
           "within_1pct": 0.004497751124437781
         }
       },
@@ -1686,5 +1686,5 @@
   "task": "arith",
   "torch_seed": 2041653168,
   "train_size": 2000,
-  "wall_time_s": 37.14
+  "wall_time_s": 37.79
 }

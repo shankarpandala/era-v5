@@ -85,8 +85,11 @@ def evaluate_split(reg: np.ndarray, cls_ids: np.ndarray, values: np.ndarray,
     c_lin = decode_lin(reg[:, 0])
     c_log = decode_log(reg[:, 1], sign)
     primary = decode_fourier_signed(reg[:, 3:15], sign)
+    # sentinel for "argmax is a non-numeric token" must be impossible as a
+    # truth value: -1 would collide with legitimate negative sub answers
+    NON_NUMERIC = -(10 ** 9)
     cls_vals = np.array(
-        [v if (v := vocab.value_of_id(int(i))) is not None else -1
+        [v if (v := vocab.value_of_id(int(i))) is not None else NON_NUMERIC
          for i in cls_ids], dtype=np.int64)
 
     out = {"overall": _rates(primary, values)}

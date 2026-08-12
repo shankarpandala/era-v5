@@ -202,14 +202,20 @@ def plot_structure_through_layers(path: str, results: dict):
     """Per-depth OOD linear decodability: input features, then the residual
     stream after the embedding and after each block."""
     per_arm: dict = {}
+    depths = ["input"]
     for key, p in sorted(results.get("probes", {}).items()):
         if "layers" not in p:
             continue
         arm = key.split("@")[0]
-        depths = ["input"] + list(p["layers"].keys())
+        # explicit semantic depth order — dict order is NOT trustworthy after
+        # a round-trip through sort_keys JSON ("block1" < "embedding")
+        layer_order = (["embedding"]
+                       + sorted((k for k in p["layers"] if k != "embedding"),
+                                key=lambda s: int(s.replace("block", ""))))
+        depths = ["input"] + layer_order
         vals = ([p["input"]["add_lin"]["relerr_median"]]
                 + [p["layers"][d]["add_lin"]["relerr_median"]
-                   for d in p["layers"]])
+                   for d in layer_order])
         per_arm.setdefault(arm, []).append(vals)
     if not per_arm:
         return
@@ -417,8 +423,8 @@ transfer slice control for capacity and template-rigidity. Magnitude
 extrapolation fails for every arm — reported as a negative, with per-layer
 probes locating where linear decodability dies. Audit:
 <b>independent, re-derives everything from disk</b>. Re-run:
-<code>python run_demo.py</code> (~40 min) or
-<code>python run_demo.py --verify-only</code> (~30 s, no training).
+<code>python run_demo.py</code> (~60 min) or
+<code>python run_demo.py --verify-only</code> (~5 s, no training).
 </div>
 
 <h1>Kronecker Embedding V2: embeddings that carry mathematical structure</h1>

@@ -1625,16 +1625,16 @@
     },
     "input": {
       "add_lin": {
-        "exact": 0.0,
+        "exact": 1.0,
         "n": 665,
-        "relerr_median": 0.5634057971014492,
-        "within_1pct": 0.0
+        "relerr_median": 0.0,
+        "within_1pct": 1.0
       },
       "mul_log": {
-        "exact": 0.0014992503748125937,
+        "exact": 0.0,
         "n": 667,
-        "relerr_median": 0.031424581005586594,
-        "within_1pct": 0.12143928035982009
+        "relerr_median": 0.2178889428525174,
+        "within_1pct": 0.050974512743628186
       }
     },
     "layers": {
@@ -1642,13 +1642,13 @@
         "add_lin": {
           "exact": 0.0,
           "n": 665,
-          "relerr_median": 0.4689655172413793,
+          "relerr_median": 0.4661016949152542,
           "within_1pct": 0.0
         },
         "mul_log": {
           "exact": 0.0014992503748125937,
           "n": 667,
-          "relerr_median": 0.6136623411551133,
+          "relerr_median": 0.6139360112507691,
           "within_1pct": 0.0074962518740629685
         }
       },
@@ -1686,5 +1686,5 @@
   "task": "arith",
   "torch_seed": 1951124496,
   "train_size": 2000,
-  "wall_time_s": 36.68
+  "wall_time_s": 36.15
 }

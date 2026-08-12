@@ -1612,5 +1612,5 @@
   "task": "arith",
   "torch_seed": 376320848,
   "train_size": 8000,
-  "wall_time_s": 35.35
+  "wall_time_s": 36.26
 }

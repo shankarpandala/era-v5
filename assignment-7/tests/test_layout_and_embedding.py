@@ -87,6 +87,21 @@ def test_embedding_matrix_deterministic_and_variant_shapes():
         assert build_embedding_matrix(vocab.tokens, variant=v).shape == m1.shape
 
 
+def test_random_matrix_is_deterministic_and_norm_matched():
+    from kronembed.embedding import build_random_matrix
+    vocab = Vocab()
+    m1 = build_random_matrix(vocab.tokens)
+    m2 = build_random_matrix(vocab.tokens)
+    assert np.array_equal(m1, m2)
+    ref = build_embedding_matrix(vocab.tokens)
+    assert np.isclose(np.linalg.norm(m1, axis=1).mean(),
+                      np.linalg.norm(ref, axis=1).mean(), rtol=1e-4)
+    # and it carries no numeric structure: LIN dim does not decode values
+    from kronembed.embedding import decode_value
+    row = m1[vocab.id("42")]
+    assert decode_value(row) != 42
+
+
 def test_token_value_parsing():
     assert token_value("0") == 0
     assert token_value("999") == 999

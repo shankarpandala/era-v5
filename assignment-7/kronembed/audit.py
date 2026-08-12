@@ -15,7 +15,7 @@ import os
 import numpy as np
 
 from .data import build_splits
-from .embedding import VARIANTS, build_embedding_matrix
+from .embedding import VARIANTS, build_embedding_matrix, build_random_matrix
 from .properties import run_properties
 from .util import read_json, sha256_array, write_json
 from .vocab import Vocab
@@ -56,10 +56,12 @@ def run_audit(artifacts_dir: str) -> dict:
                          producer_ok=stored["all_ok"], audit_ok=fresh["all_ok"]))
 
     # -- 2. Embedding matrices match their recorded hashes ------------------
+    # includes frozen_rand: the capacity control is in the same hash chain
     run_config = read_json(os.path.join(artifacts_dir, "run_config.json"))
     vocab = Vocab()
     recomputed = {v: sha256_array(build_embedding_matrix(vocab.tokens, variant=v))
                   for v in VARIANTS}
+    recomputed["frozen_rand"] = sha256_array(build_random_matrix(vocab.tokens))
     checks.append(_check("embedding_matrix_hashes_match",
                          recomputed == run_config["embedding_hashes"],
                          recomputed=recomputed))
@@ -116,7 +118,7 @@ def run_audit(artifacts_dir: str) -> dict:
     checks.append(_check("architecture_identical_across_arms",
                          len(arch_hashes) == 1, n_hashes=len(arch_hashes)))
     frozen_runs = [r for runs in run_files.values() for r in runs
-                   if r["arm"] in VARIANTS]
+                   if r["arm"] in recomputed]
     frozen_ok = bool(frozen_runs) and all(
         r["emb_hash"] == recomputed[r["arm"]] for r in frozen_runs)
     checks.append(_check("frozen_embeddings_match_recomputed_hashes",

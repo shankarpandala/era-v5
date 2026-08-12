@@ -1612,5 +1612,5 @@
   "task": "nl",
   "torch_seed": 1621472052,
   "train_size": 8000,
-  "wall_time_s": 43.59
+  "wall_time_s": 42.13
 }

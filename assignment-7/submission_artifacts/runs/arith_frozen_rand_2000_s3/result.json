@@ -1627,14 +1627,14 @@
       "add_lin": {
         "exact": 0.0,
         "n": 665,
-        "relerr_median": 0.8328445747800587,
-        "within_1pct": 0.0
+        "relerr_median": 0.8103626943005181,
+        "within_1pct": 0.0015037593984962407
       },
       "mul_log": {
         "exact": 0.004497751124437781,
         "n": 667,
-        "relerr_median": 0.9886164883052204,
-        "within_1pct": 0.005997001499250375
+        "relerr_median": 0.9797366387254027,
+        "within_1pct": 0.004497751124437781
       }
     },
     "layers": {
@@ -1648,7 +1648,7 @@
         "mul_log": {
           "exact": 0.004497751124437781,
           "n": 667,
-          "relerr_median": 0.9572200176366843,
+          "relerr_median": 0.9571318342151676,
           "within_1pct": 0.004497751124437781
         }
       },
@@ -1686,5 +1686,5 @@
   "task": "arith",
   "torch_seed": 467388558,
   "train_size": 2000,
-  "wall_time_s": 36.73
+  "wall_time_s": 36.29
 }

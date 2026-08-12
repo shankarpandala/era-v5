@@ -99,9 +99,10 @@ class Layout:
                           "MAX_EXACT_VALUE": MAX_EXACT_VALUE,
                           "TARGET_SCALE": TARGET_SCALE},
             "dim_taxonomy": {
-                "homomorphic_add": ["LIN", "SIGN"],
+                "homomorphic_add": ["LIN"],
                 "homomorphic_mul_via_add": ["LOG"],
-                "readout_only": ["NUMFLAG", "fourier_val", "fourier_log"],
+                "readout_only": ["SIGN", "NUMFLAG", "fourier_val",
+                                 "fourier_log"],
                 "orthographic": ["char_block"],
             },
         }

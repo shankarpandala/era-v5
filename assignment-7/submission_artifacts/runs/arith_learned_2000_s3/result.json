@@ -1627,13 +1627,13 @@
       "add_lin": {
         "exact": 0.0,
         "n": 665,
-        "relerr_median": 0.8176229508196722,
+        "relerr_median": 0.8178506375227687,
         "within_1pct": 0.0
       },
       "mul_log": {
         "exact": 0.004497751124437781,
         "n": 667,
-        "relerr_median": 0.9886691086691086,
+        "relerr_median": 0.9888746899195671,
         "within_1pct": 0.004497751124437781
       }
     },
@@ -1686,5 +1686,5 @@
   "task": "arith",
   "torch_seed": 1522003874,
   "train_size": 2000,
-  "wall_time_s": 37.36
+  "wall_time_s": 37.87
 }

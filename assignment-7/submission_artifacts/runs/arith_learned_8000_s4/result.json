@@ -68,7 +68,7 @@
       "add": {
         "cls_decode": {
           "exact": 0.0,
-          "mae": 550.1518796992481,
+          "mae": 1504309.5488721805,
           "n": 665,
           "relerr_median": 0.8527777777777777,
           "within_01pct": 0.0,
@@ -1612,5 +1612,5 @@
   "task": "arith",
   "torch_seed": 649922950,
   "train_size": 8000,
-  "wall_time_s": 38.02
+  "wall_time_s": 37.92
 }

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """One command that runs the complete Assignment-7 demonstration.
 
-    python run_demo.py            # full matrix (~15-20 min on a laptop CPU)
-    python run_demo.py --fast     # reduced matrix (~3 min), same pipeline
+    python run_demo.py                # full 92-run matrix (~60 min laptop CPU)
+    python run_demo.py --fast         # reduced matrix (~5 min), same pipeline
+    python run_demo.py --verify-only  # Claim A + audit only (~5 s, no training)
 
 Pipeline, writing ``submission_artifacts/``:
 
@@ -30,7 +31,8 @@ sys.path.insert(0, HERE)
 from kronembed.audit import THRESHOLDS, run_audit  # noqa: E402
 from kronembed.data import build_splits  # noqa: E402
 from kronembed.embedding import (VARIANTS, build_embedding_matrix,  # noqa: E402
-                                 decode_value, embed_token)
+                                 build_random_matrix, decode_value,
+                                 embed_token)
 from kronembed.experiments import FAST_PLAN, FULL_PLAN, run_matrix  # noqa: E402
 from kronembed.layout import LAYOUT  # noqa: E402
 from kronembed.plots import make_all_plots, make_report  # noqa: E402
@@ -86,11 +88,13 @@ def _fmt(v):
 
 
 def verify_only() -> int:
-    """Fail-closed verification: re-run the Claim A properties and the full
-    independent audit against the committed artifacts — no training, ~30 s."""
+    """Fail-closed verification: re-run the Claim A properties (at the same
+    10,000-pair sample size as the committed report, fresh coordinate) and
+    the full independent audit against the committed artifacts — no training,
+    a few seconds."""
     print("verify-only: re-running Claim A properties ...", flush=True)
     report = run_properties(DEFAULT_CFG["base_seed"], coord="verify",
-                            n_pairs=5_000, n_words=1_000)
+                            n_pairs=10_000, n_words=2_000)
     for c in report["checks"]:
         print(f"  [{'PASS' if c['ok'] else 'FAIL'}] {c['name']}")
     print("verify-only: re-running the independent audit ...", flush=True)
@@ -119,9 +123,12 @@ def main() -> int:
     log.info(f"mode={'fast' if args.fast else 'full'} plan={_fmt(plan)}")
 
     # -- 0. identity: layout, vocab, embedding matrices ---------------------
+    # frozen_rand is hashed here too: the capacity control sits inside the
+    # same audit hash chain as every other frozen matrix
     vocab = Vocab()
     emb_hashes = {v: sha256_array(build_embedding_matrix(vocab.tokens, variant=v))
                   for v in VARIANTS}
+    emb_hashes["frozen_rand"] = sha256_array(build_random_matrix(vocab.tokens))
     run_config = {
         "base_seed": DEFAULT_CFG["base_seed"],
         "layout": LAYOUT.describe(),

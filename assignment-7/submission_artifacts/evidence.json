@@ -10,6 +10,7 @@
       "name": "embedding_matrix_hashes_match",
       "ok": true,
       "recomputed": {
+        "frozen_rand": "871c01c44c84a4568b505a497e19804861a31820fabca69619e306525b28075b",
         "hom_only": "6439b8edf8c3fae275f30df6f5d3f5cc4bcbedfcf9b036790fa28685368f3836",
         "kron_char": "19fcaf39bef07ac4668af48c0d9e3914db1d10e208d287b7e3b90fa788f03ed6",
         "kron_v2": "0e811091b421768bcce18eda7160c65fe649b89137d94f81953cf5bc0a2ad41a",
@@ -41,7 +42,7 @@
       "ok": true
     },
     {
-      "n_frozen_runs": 51,
+      "n_frozen_runs": 61,
       "name": "frozen_embeddings_match_recomputed_hashes",
       "ok": true
     },
@@ -110,8 +111,8 @@
     },
     {
       "kron_hidden": 0.6857032518467508,
-      "kron_input": 0.42778793418647165,
-      "learned_input": 0.8167052459438802,
+      "kron_input": 0.20156555772994128,
+      "learned_input": 0.8168554039358262,
       "n_probes": 10,
       "name": "claimB_probe_localizes_failure_to_trunk",
       "ok": true

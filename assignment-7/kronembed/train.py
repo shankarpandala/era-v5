@@ -154,11 +154,21 @@ def _input_features(model: KronGPT, enc: dict) -> np.ndarray:
 
 
 def _ridge_fit_eval(X_tr, y_tr, X_te, decode, truth, lam: float = 1e-3) -> dict:
-    Xb = np.concatenate([X_tr, np.ones((len(X_tr), 1))], axis=1).astype(np.float64)
+    """Ridge on features standardized by the TRAINING std (train statistics
+    only — no eval leakage). Standardization matters: the LIN dim's raw
+    amplitude in-range is ~0.006 against O(1) Fourier features, so an
+    unstandardized ridge penalizes the ~64x weight LIN needs and silently
+    ignores the one feature that extrapolates — a scale confound that made an
+    earlier version of this probe understate the deterministic embedding."""
+    mu = X_tr.mean(axis=0)
+    sd = np.maximum(X_tr.std(axis=0), 1e-8)
+    Z_tr = ((X_tr - mu) / sd).astype(np.float64)
+    Z_te = ((X_te - mu) / sd).astype(np.float64)
+    Xb = np.concatenate([Z_tr, np.ones((len(Z_tr), 1))], axis=1)
     w = np.linalg.solve(Xb.T @ Xb + lam * np.eye(Xb.shape[1]), Xb.T @ y_tr)
-    Xt = np.concatenate([X_te, np.ones((len(X_te), 1))], axis=1).astype(np.float64)
+    Xt = np.concatenate([Z_te, np.ones((len(Z_te), 1))], axis=1)
     pred = decode(Xt @ w)
-    rel = np.abs(pred - truth) / np.maximum(1.0, truth)
+    rel = np.abs(pred - truth) / np.maximum(1.0, np.abs(truth))
     return {"relerr_median": float(np.median(rel)),
             "within_1pct": float((rel <= 0.01).mean()),
             "exact": float((pred == truth).mean()), "n": int(truth.size)}
@@ -169,10 +179,11 @@ def probe_analysis(model: KronGPT, enc_train: dict, enc_extra: dict,
     """Where does magnitude extrapolation die? Ridge probes fit ONLY on
     in-range training data, evaluated on the extrapolation split:
 
-      * input probe  — raw operand embeddings. For the deterministic scheme
-        the LIN/LOG dims make the answer a linear function of these features,
-        so this probe succeeds analytically; for a learned table the held-out
-        rows are noise and it must fail.
+      * input probe  — raw operand embeddings (standardized by train stats).
+        For schemes carrying the LIN dim the answer is a linear function of
+        these features, so the probe CAN succeed out-of-range; for a learned
+        table the held-out rows are noise and it must fail. How close each
+        arm gets is the measurement, not an assumption.
       * layer probes — the residual stream at <ans> after the embedding and
         after each block. Tracking OOD relative error per depth shows WHERE
         linearly decodable structure is lost (a statement about linear

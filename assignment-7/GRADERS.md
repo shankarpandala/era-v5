@@ -32,7 +32,8 @@ embedding beats a learned embedding table:
 fails for *every* arm; per-layer ridge probes locate where linearly decodable
 structure is lost (the trunk, not the embedding). The FoNE-style readout
 ablation matches the full scheme in trained models — the homomorphic dims'
-unique value is the algebra, invertibility, and input-level structure.
+unique value is the exact algebra and the invertibility, which no readout
+dim can provide.
 
 **One figure:** `submission_artifacts/plots/hole_generalization.png`
 **Interactive report:** open `submission_artifacts/report.html` — includes a
@@ -43,10 +44,10 @@ bit-exactly.
 
 ```bash
 cd assignment-7 && pip install -r requirements.txt
-python run_demo.py --verify-only   # ~30 s: Claim A + full audit, no training
+python run_demo.py --verify-only   # ~5 s: Claim A + full audit, no training
 python run_demo.py --fast          # ~5 min: reduced matrix, same pipeline
 python run_demo.py                 # ~60 min: the full 92-run matrix
-python -m pytest tests/ -q         # 52 invariant tests
+python -m pytest tests/ -q         # 53 invariant tests
 ```
 
 Every `[PASS]` in `submission_artifacts/run.log` is a derived result;

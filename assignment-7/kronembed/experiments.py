@@ -6,8 +6,8 @@ post-hoc by the audit comparing arch hashes across every result file):
 
   kron_v2       char block + full numeric block, frozen        (ours)
   kron_char     char block only, frozen                        (ablation: no numeric block)
-  readout_only  numeric block minus {LIN, SIGN, LOG}, frozen   (FoNE-style ablation)
-  hom_only      only {LIN, SIGN, LOG, NUMFLAG}, frozen         (homomorphic dims alone)
+  readout_only  char + numeric minus {LIN, SIGN, LOG}, frozen  (FoNE-style ablation)
+  hom_only      char + {LIN, SIGN, LOG, NUMFLAG} only, frozen  (marginal value of the algebra dims)
   frozen_rand   deterministic random rows, frozen              (capacity / frozen-ness control)
   learned       nn.Embedding, trainable                        (the conventional baseline)
   xval          value-scaled shared direction, trainable       (xVal-style baseline)

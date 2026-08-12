@@ -30,13 +30,22 @@ from .layout import (ALPHABET, LAYOUT, LIN_SCALE, LOG_ZERO, MAX_EXACT_VALUE,
 _INT_RE = re.compile(r"^[0-9]+$")
 
 # Embedding-matrix variants: which dim groups get zeroed relative to kron_v2.
-# Together they give every dim family a unique arm:
-#   "readout_only" (FoNE-style) keeps every readout feature and drops exactly
-#       the homomorphic dims -> kron_v2 - readout_only isolates {LIN, SIGN, LOG}.
-#   "hom_only" keeps exactly the homomorphic dims (+ NUMFLAG) and drops every
-#       Fourier readout -> what can 4 numeric dims alone carry?
+# Every variant keeps the char block (embed_token always starts from
+# embed_word), so each arm measures the MARGINAL value of its numeric dims on
+# top of orthography:
+#   "readout_only" (FoNE-style) keeps every Fourier readout feature and drops
+#       exactly the scalar dims {LIN, SIGN, LOG} (LIN/LOG homomorphic, SIGN
+#       their sign readout) -> kron_v2 - readout_only isolates those three.
+#   "hom_only" keeps exactly those scalar dims (+ NUMFLAG) and drops every
+#       Fourier readout -> the marginal value of the algebra dims alone.
 #   "kron_char" drops the whole numeric block.
 VARIANTS = ("kron_v2", "kron_char", "readout_only", "hom_only")
+
+# Seed for the frozen-random control table (disclosed, hashed into
+# run_config.embedding_hashes, and re-derived by the audit like every other
+# frozen matrix). One table serves all seeds by design: the control varies
+# the trained model, not the (structureless) embedding content.
+RAND_EMB_SEED = 7
 
 
 def token_value(token: str) -> Optional[int]:
@@ -200,7 +209,7 @@ def build_embedding_matrix(vocab: list[str], layout: Layout = LAYOUT,
 
 
 def build_random_matrix(vocab: list[str], layout: Layout = LAYOUT,
-                        seed: int = 7) -> np.ndarray:
+                        seed: int = RAND_EMB_SEED) -> np.ndarray:
     """A frozen table of deterministic random rows — the capacity control.
 
     Same frozen-ness and identical trainable-parameter budget as kron_v2, but

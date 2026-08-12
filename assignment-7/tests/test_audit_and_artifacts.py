@@ -9,7 +9,8 @@ not that an undertrained model wins them.
 import os
 
 from kronembed.audit import run_audit
-from kronembed.embedding import VARIANTS, build_embedding_matrix
+from kronembed.embedding import (VARIANTS, build_embedding_matrix,
+                                 build_random_matrix)
 from kronembed.experiments import run_matrix
 from kronembed.data import build_splits
 from kronembed.properties import run_properties
@@ -39,12 +40,13 @@ STRUCTURAL = [
 
 def _build_bundle(root: str):
     vocab = Vocab()
+    emb_hashes = {v: sha256_array(build_embedding_matrix(vocab.tokens, variant=v))
+                  for v in VARIANTS}
+    emb_hashes["frozen_rand"] = sha256_array(build_random_matrix(vocab.tokens))
     write_json(os.path.join(root, "run_config.json"), {
         "base_seed": DEFAULT_CFG["base_seed"],
         "vocab_hash": vocab.hash,
-        "embedding_hashes": {
-            v: sha256_array(build_embedding_matrix(vocab.tokens, variant=v))
-            for v in VARIANTS},
+        "embedding_hashes": emb_hashes,
     })
     report = run_properties(DEFAULT_CFG["base_seed"], coord="properties",
                             n_pairs=300, n_words=50)
