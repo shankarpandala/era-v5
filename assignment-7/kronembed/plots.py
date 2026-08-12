@@ -408,6 +408,11 @@ def make_report(out_path: str, plots: list[str], results: dict,
 </style>
 <script>{demo_js}</script></head><body>
 
+<p style="font-size:13px;color:#666">ERA-V5 assignment 7 ·
+<a href="https://www.pandala.in/era-v5/">all assignments</a> ·
+<a href="https://github.com/shankarpandala/era-v5/tree/main/assignment-7">code
+&amp; README on GitHub</a> · regenerate with <code>python run_demo.py</code></p>
+
 <div class="card">
 <b>For graders — the one-paragraph card.</b> Problem #1 (math-structure
 embeddings). <b>Claim A</b>: a deterministic embedding where

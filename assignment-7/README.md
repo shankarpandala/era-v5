@@ -241,8 +241,8 @@ What the table shows:
    direction) → the readout-bearing frozen arms (kron_v2, readout_only).
    The structured arms *without* Fourier readout (hom_only, kron_char) sit
    at or below the xVal rung — structure the trunk cannot read does not
-   generalize. Kron-vs-learned hole gap: **36×** (threshold pre-specified
-   in `audit.py`: 2×).
+   generalize. Kron-vs-learned hole gap: **36×**; kron-vs-frozen-random:
+   **377×** (threshold pre-specified in `audit.py`: 2×).
 2. **Attribution, honestly.** readout_only (0.477) ties kron_v2 (0.454) in
    the trained model, and hom_only (0.011) shows the algebra dims add no
    *marginal* trained-task value over the char block. Two caveats keep that
