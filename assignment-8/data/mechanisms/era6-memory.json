@@ -1,0 +1,1202 @@
+[
+  {
+    "id": "kivi",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "KIVI — 2-bit KV cache quantisation",
+    "short": "KIVI",
+    "date": "2024-02-05",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "KIVI: A Tuning-Free Asymmetric 2bit Quantization for KV Cache",
+      "authors": "Liu et al.",
+      "arxiv": "2402.02750",
+      "url": "https://arxiv.org/abs/2402.02750",
+      "evidence": "[v1] Mon, 5 Feb 2024 06:06:47 UTC"
+    },
+    "family": "kv-eviction",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "Per-channel keys, per-token values, 2 bits — the 'quantise' branch of the KV bill (FP8/INT8 KV is now standard in vLLM / TensorRT-LLM).",
+    "whyFootnote": "Numerics rather than an attention mechanism."
+  },
+  {
+    "id": "longrope",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "LongRoPE — searched non-uniform interpolation to 2M",
+    "short": "LongRoPE",
+    "date": "2024-02-21",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "LongRoPE: Extending LLM Context Window Beyond 2 Million Tokens",
+      "authors": "Ding et al. (Microsoft)",
+      "arxiv": "2402.13753",
+      "url": "https://arxiv.org/abs/2402.13753",
+      "evidence": "[v1] Wed, 21 Feb 2024 12:30:33 UTC"
+    },
+    "firstShipped": {
+      "model": "phi-3-mini-128K",
+      "date": "2024-04-22",
+      "url": "https://arxiv.org/abs/2404.14219"
+    },
+    "family": "scaling",
+    "bill": [
+      "length"
+    ],
+    "problem": "Pretrained RoPE models were stuck at ~128K: long-length fine-tuning is expensive, long text is scarce, new positions produce catastrophic values.",
+    "idea": "Search (evolutionary, seeded with PI/NTK/YaRN) per-dimension rescale factors and a 'first n tokens interpolated less' rule; extend progressively 256K → 2,048K with ≤1K fine-tuning steps; readjust at 8K to recover short-context quality.",
+    "buys": [
+      "2,048K nominal window on LLaMA-2 / Mistral with ~1K steps; 8× with no fine-tuning; only the PE changes, so FlashAttention is reused",
+      "Phi-3's route to 128K"
+    ],
+    "costs": [
+      "Search cost and a three-stage recipe; perplexity degrades noticeably at 2M and passkey retrieval drops",
+      "Does nothing about the compute or KV memory of *running* 2M tokens"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "existing model, small budget (Phi-3 route)"
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "nominal window yes; recall at 1M no; KV cost untouched"
+      },
+      "verdict": "The most elaborate way to stretch RoPE. If you can pretrain, Llama 3.1's base+staged route is safer."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "yarn"
+    }
+  },
+  {
+    "id": "dual-chunk-attention",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Dual Chunk Attention (DCA)",
+    "short": "DCA",
+    "date": "2024-02-27",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Training-Free Long-Context Scaling of Large Language Models",
+      "authors": "An et al. (HKU / Alibaba)",
+      "arxiv": "2402.17463",
+      "url": "https://arxiv.org/abs/2402.17463",
+      "evidence": "[v1] Tue, 27 Feb 2024 12:39:23 UTC"
+    },
+    "firstShipped": {
+      "model": "Qwen2 Instruct (128K via YaRN + DCA; blog 2024-06-07, report 2407.10671 §3.2); Qwen2.5-1M later made DCA+YaRN the default",
+      "date": "2024-06-07",
+      "url": "https://qwenlm.github.io/blog/qwen2/"
+    },
+    "family": "scaling",
+    "bill": [
+      "extrapolation"
+    ],
+    "problem": "Extrapolate a strong RoPE model at inference with no training, past where NTK/YaRN hold.",
+    "idea": "Split the sequence into chunks and remap intra-, inter- and successive-chunk relative positions so none exceeds the trained range; FlashAttention-compatible.",
+    "buys": [
+      "Llama-2-70B to 100K+ zero-shot; shipped in Qwen2 (Jun 2024) and Qwen2.5-1M (to reach 1M from 256K training)"
+    ],
+    "costs": [
+      "Coarse positions across chunks; three attention passes → extra prefill compute",
+      "Below true long-context training on hard retrieval"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "the industrial way to get 4× more nominal context at inference only"
+      },
+      "verdict": "The industrial successor of ReRoPE / SelfExtend."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "rerope"
+    }
+  },
+  {
+    "id": "massive-activations",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 1,
+    "name": "Massive Activations in LLMs (why sinks exist)",
+    "short": "Massive Activations",
+    "date": "2024-02-27",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Massive Activations in Large Language Models",
+      "authors": "Sun, Chen, Kolter, Liu (CMU / Meta)",
+      "arxiv": "2402.17762",
+      "url": "https://arxiv.org/abs/2402.17762",
+      "evidence": "[v1] Tue, 27 Feb 2024 18:55:17 UTC"
+    },
+    "family": "attention",
+    "bill": [
+      "quality"
+    ],
+    "oneLiner": "1e4–1e5× outlier activations at fixed positions act as bias terms and pull attention onto them — the mechanism behind attention sinks; explicit learnable attention biases remove them.",
+    "whyFootnote": "Analysis, not a mechanism — but it explains why gpt-oss's learned sink works."
+  },
+  {
+    "id": "griffin",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Griffin / RecurrentGemma",
+    "short": "Griffin",
+    "date": "2024-02-29",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Griffin: Mixing Gated Linear Recurrences with Local Attention for Efficient Language Models",
+      "authors": "De et al. (DeepMind)",
+      "arxiv": "2402.19427",
+      "url": "https://arxiv.org/abs/2402.19427",
+      "evidence": "[v1] Thu, 29 Feb 2024 18:24:46 UTC"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "Gated linear recurrences interleaved with local attention; shipped as RecurrentGemma — an early local-attention + recurrence hybrid from a frontier lab.",
+    "whyFootnote": "Represented on the timeline by the GLA / Mamba / hybrid nodes."
+  },
+  {
+    "id": "jamba",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Jamba — first production Transformer–Mamba–MoE hybrid",
+    "short": "Jamba",
+    "date": "2024-03-28",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Jamba: A Hybrid Transformer-Mamba Language Model",
+      "authors": "Lieber et al. (AI21)",
+      "arxiv": "2403.19887",
+      "url": "https://arxiv.org/abs/2403.19887",
+      "evidence": "[v1] Thu, 28 Mar 2024 23:55:06 UTC (blog the same day)"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "52B total / 12B active, 256K context on one 80 GB GPU — the first production hybrid, and the proof that a few attention layers rescue Mamba's recall.",
+    "whyFootnote": "A model, not a mechanism; recorded as Mamba's first ship."
+  },
+  {
+    "id": "infini-attention",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Infini-attention — compressive memory beside local attention",
+    "short": "Infini-attention",
+    "date": "2024-04-10",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Leave No Context Behind: Efficient Infinite Context Transformers with Infini-attention",
+      "authors": "Munkhdalai, Faruqui, Gopal (Google)",
+      "arxiv": "2404.07143",
+      "url": "https://arxiv.org/abs/2404.07143",
+      "evidence": "[v1] Wed, 10 Apr 2024 16:18:42 UTC"
+    },
+    "family": "hybrid",
+    "bill": [
+      "length",
+      "kv-memory"
+    ],
+    "problem": "Unbounded context with bounded memory.",
+    "idea": "Local softmax attention within a segment plus a linear-attention-style associative memory (delta-rule update, σ(Q)·M retrieval), mixed by a gate; constant memory and compute per segment.",
+    "buys": [
+      "1M-token passkey after fine-tuning at 5K (claimed); 114× memory compression; streaming inference"
+    ],
+    "costs": [
+      "Compressive memory is lossy (linear-attention capacity); reproductions weak; no released model",
+      "Segment-recurrent training complexity"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "conceptually; nothing shipped"
+      },
+      "verdict": "Transformer-XL's recurrence reborn as a delta-rule memory — the bridge between softmax attention and the DeltaNet view."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "delta"
+    }
+  },
+  {
+    "id": "snapkv",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "SnapKV — prompt KV compression",
+    "short": "SnapKV",
+    "date": "2024-04-22",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "SnapKV: LLM Knows What You are Looking for Before Generation",
+      "authors": "Li et al.",
+      "arxiv": "2404.14469",
+      "url": "https://arxiv.org/abs/2404.14469",
+      "evidence": "[v1] Mon, 22 Apr 2024 17:42:58 UTC"
+    },
+    "family": "kv-eviction",
+    "bill": [
+      "kv-memory"
+    ],
+    "problem": "For long-document QA the prompt's KV dwarfs the generation; select what to keep *before* decoding.",
+    "idea": "Use the last-window ('observation') queries' attention per head, pooled, to keep clustered important positions.",
+    "buys": [
+      "~3.6× decode speedup, ~8.2× memory at 16K; no fine-tuning"
+    ],
+    "costs": [
+      "Selection depends on the end-of-prompt query — multi-turn or a new question may need evicted context",
+      "Per-head irregular retention complicates paged kernels; retrieval degrades at aggressive ratios"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": "single-turn long-context QA where prompt ≫ output"
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": "multi-turn agents re-ask"
+      },
+      "verdict": "The prefill-side eviction; pairs with H2O (decode) and DuoAttention (per head)."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "topk"
+    }
+  },
+  {
+    "id": "mla",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 6,
+    "order": 0,
+    "name": "MLA — Multi-head Latent Attention (DeepSeek-V2)",
+    "short": "MLA",
+    "aka": "low-rank joint KV compression with decoupled RoPE",
+    "date": "2024-05-06",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "paperDate": "2024-05-07",
+    "source": {
+      "title": "DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model",
+      "authors": "DeepSeek-AI",
+      "arxiv": "2405.04434",
+      "url": "https://github.com/deepseek-ai/DeepSeek-V2",
+      "evidence": "GitHub README news: '2024.05.06: We released the DeepSeek-V2.' — the model shipped one day before the report; arXiv [v1] Tue, 7 May 2024 15:56:43 UTC"
+    },
+    "secondary": [
+      {
+        "label": "Tech report, arXiv 2405.04434",
+        "url": "https://arxiv.org/abs/2405.04434",
+        "date": "2024-05-07"
+      },
+      {
+        "label": "DeepSeek-V3 reuses MLA ('thoroughly validated in DeepSeek-V2')",
+        "url": "https://api-docs.deepseek.com/news/news1226",
+        "date": "2024-12-26"
+      },
+      {
+        "label": "TransMLA — converting GQA checkpoints to MLA",
+        "url": "https://arxiv.org/abs/2502.07864",
+        "date": "2025-02-11"
+      }
+    ],
+    "firstShipped": {
+      "model": "DeepSeek-V2 (236B / 21B active, 128K); then V3, R1, V3.2",
+      "date": "2024-05-06",
+      "url": "https://github.com/deepseek-ai/DeepSeek-V2"
+    },
+    "family": "heads-kv",
+    "bill": [
+      "kv-memory"
+    ],
+    "problem": "At 128K the KV cache — even with GQA — decides batch size and throughput. Wanted MHA-or-better quality with a *smaller-than-GQA* cache.",
+    "idea": "Project each token's K and V jointly into a small latent c (d_c = 512) and cache only that; up-project on the fly — and because W^UK can be absorbed into W^Q (and W^UV into W^O), attention runs in latent space at decode. RoPE breaks the absorption, so a separate 'decoupled' rotary key (d_h^R = 64) is carried alongside.",
+    "buys": [
+      "Per-token cache (512 + 64) per layer ≈ 4.5 d_h — 'equal to GQA with only 2.25 groups'; DeepSeek claims 93.3% KV reduction and 5.76× generation throughput vs their 67B GQA model, at quality above MHA",
+      "The compress branch of the KV bill (vs share = GQA, evict = H2O, quantise = KIVI)",
+      "The base DeepSeek Sparse Attention (2025) is built on"
+    ],
+    "costs": [
+      "RoPE and low-rank absorption fight: the decoupled RoPE dimension is a workaround, not a feature",
+      "Extra up-projection FLOPs at prefill; needs bespoke decode kernels (FlashMLA); one latent shared across heads makes tensor-parallel KV sharding awkward",
+      "Not a retrofit (TransMLA later tries); co-tuned with DeepSeekMoE so gains are hard to isolate"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": "GQA already fits; MLA is more machinery than you need"
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "large batch, long context, you own pretraining and kernels"
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "the smallest exact-attention KV cache in production"
+      },
+      "verdict": "Right when you train from scratch at scale and decode is KV-bound; wrong for small models where GQA is enough — and note the price is a kernel team."
+    },
+    "viz": {
+      "kind": "kv",
+      "mode": "mla"
+    }
+  },
+  {
+    "id": "yoco",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "YOCO — You Only Cache Once",
+    "short": "YOCO",
+    "date": "2024-05-08",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "You Only Cache Once: Decoder-Decoder Architectures for Language Models",
+      "authors": "Sun et al. (Microsoft)",
+      "arxiv": "2405.05254",
+      "url": "https://arxiv.org/abs/2405.05254",
+      "evidence": "[v1] Wed, 8 May 2024 17:57:39 UTC"
+    },
+    "family": "heads-kv",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "A self-decoder produces one global KV read by all cross-decoder layers — KV ≈ 1/L, prefill can early-exit. Sibling of CLA.",
+    "whyFootnote": "Folded into the CLA node (the layer axis of KV compression)."
+  },
+  {
+    "id": "cla",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Cross-Layer Attention (CLA) — share KV across layers",
+    "short": "CLA",
+    "date": "2024-05-21",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Reducing Transformer Key-Value Cache Size with Cross-Layer Attention",
+      "authors": "Brandon, Mishra, Nrusimha, Panda, Ragan-Kelley (MIT)",
+      "arxiv": "2405.12981",
+      "url": "https://arxiv.org/abs/2405.12981",
+      "evidence": "[v1] Tue, 21 May 2024 17:59:29 UTC"
+    },
+    "firstShipped": {
+      "model": "Character.AI production models (KV tied between neighbouring layers, with MQA + local/global)",
+      "date": "2024-06-20",
+      "url": "https://blog.character.ai/optimizing-ai-inference-at-character-ai-2/"
+    },
+    "family": "heads-kv",
+    "bill": [
+      "kv-memory"
+    ],
+    "problem": "MQA/GQA shrink the *head* axis of the KV cache; the *layer* axis is untouched.",
+    "idea": "Share K/V between adjacent layers (CLA2 / CLA3), on top of MQA/GQA.",
+    "buys": [
+      "~2× smaller KV at near-identical perplexity on top of MQA; more batch per GPU"
+    ],
+    "costs": [
+      "Must be trained in; small quality hit; layers lose independent K/V",
+      "Benefit shrinks if you already use MLA / latent KV"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "own pretraining, memory-bound — the Character.AI recipe"
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "stacked with GQA + local/global"
+      },
+      "verdict": "The other axis of KV compression, the same month as MLA."
+    },
+    "viz": {
+      "kind": "kv",
+      "mode": "cla"
+    }
+  },
+  {
+    "id": "cope",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "CoPE — Contextual Position Encoding",
+    "short": "CoPE",
+    "date": "2024-05-29",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Contextual Position Encoding: Learning to Count What's Important",
+      "authors": "Golovneva, Wang, Weston, Sukhbaatar (Meta)",
+      "arxiv": "2405.18719",
+      "url": "https://arxiv.org/abs/2405.18719",
+      "evidence": "[v1] Wed, 29 May 2024 02:57:15 UTC"
+    },
+    "family": "position",
+    "bill": [
+      "quality"
+    ],
+    "oneLiner": "Positions counted by content-gated increments (count sentences, not tokens) — a quality/counting idea, not a bill item.",
+    "whyFootnote": "Not shipped; quality rather than cost."
+  },
+  {
+    "id": "mamba-2",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Mamba-2 / State Space Duality — SSMs *are* linear attention",
+    "short": "Mamba-2 (SSD)",
+    "date": "2024-05-31",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality",
+      "authors": "Dao, Gu (Princeton / CMU)",
+      "arxiv": "2405.21060",
+      "url": "https://arxiv.org/abs/2405.21060",
+      "evidence": "[v1] Fri, 31 May 2024 17:50:01 UTC (ICML 2024)"
+    },
+    "firstShipped": {
+      "model": "Codestral Mamba 7B (Mistral) — 'based on the Mamba2 architecture'",
+      "date": "2024-07-16",
+      "url": "https://mistral.ai/news/codestral-mamba"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "Mamba-1's selective scan is not tensor-core friendly and limits state size; and there was no theory linking SSMs to attention.",
+    "idea": "SSMs and masked linear attention are two views of structured semiseparable matrices. The SSD layer computes the recurrence with chunked matmuls — 2–8× faster than Mamba-1's scan, much larger state (N=64–256).",
+    "buys": [
+      "Unifies the two efficiency threads in one theorem; tensor-parallel and sequence-parallel friendly",
+      "Competitive with Transformers on LM at tested scales; the layer inside Nemotron-H / Falcon-H1 hybrids"
+    ],
+    "costs": [
+      "Scalar per-head decay is less expressive than Mamba-1's per-channel gate",
+      "Still trails softmax on exact recall (Gated DeltaNet later beats it); deployments use hybrids"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "the cheap layer of a hybrid"
+      },
+      "verdict": "After SSD there is one linear thread, not two — and Gated DeltaNet is its next step."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "mamba"
+    }
+  },
+  {
+    "id": "parallel-deltanet",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "DeltaNet made parallel — chunkwise WY training",
+    "short": "Parallel DeltaNet",
+    "date": "2024-06-10",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Parallelizing Linear Transformers with the Delta Rule over Sequence Length",
+      "authors": "Yang, Wang, Zhang, Shen, Kim (MIT / Soochow / IBM)",
+      "arxiv": "2406.06484",
+      "url": "https://arxiv.org/abs/2406.06484",
+      "evidence": "[v1] Mon, 10 Jun 2024 17:24:42 UTC (NeurIPS 2024)"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "The 2021 delta rule recalls better than additive linear attention but its update is sequential over the sequence, so it never scaled on GPUs.",
+    "idea": "Write the product of the (I − β k kᵀ) Householder-like updates in a memory-efficient WY representation and train chunkwise, tensor-core style — the FlashLinearAttention recipe applied to the delta rule.",
+    "buys": [
+      "DeltaNet at 1.3B / 100B tokens beats Mamba and GLA on perplexity and zero-shot; hybrids (DeltaNet + sliding window every other layer, or + two global layers) beat strong Transformer baselines",
+      "Constant per-token state; the training algorithm Gated DeltaNet and Kimi Delta Attention build on"
+    ],
+    "costs": [
+      "No forgetting gate — erase happens only through the delta update — so weaker length extrapolation than gated variants",
+      "Still below softmax on retrieval-heavy tasks; within-chunk sequential part; L2-normalised keys and β add constraints"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "in practice you pick Gated DeltaNet, six months later"
+      },
+      "verdict": "The paper that turned a 2021 idea into something trainable — the delta rule's second launch."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "delta"
+    }
+  },
+  {
+    "id": "quest",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Quest — query-aware KV-page selection",
+    "short": "Quest",
+    "date": "2024-06-16",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Quest: Query-Aware Sparsity for Efficient Long-Context LLM Inference",
+      "authors": "Tang, Zhao, Zhu, Xiao, Kasikci, Han (SJTU / MIT / UW / NVIDIA)",
+      "arxiv": "2406.10774",
+      "url": "https://arxiv.org/abs/2406.10774",
+      "evidence": "[v1] Sun, 16 Jun 2024 01:33:02 UTC (ICML 2024)"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "Decode at long context is bottlenecked by loading the whole KV cache per query; eviction (H2O, sinks) drops tokens permanently, but which tokens matter depends on the query.",
+    "idea": "Keep min/max key values per KV page, upper-bound each page's score for the current query, load only the top-K pages. Nothing is dropped.",
+    "buys": [
+      "Up to 7× self-attention speedup, 2.2× end-to-end at 32K with negligible loss; training-free"
+    ],
+    "costs": [
+      "Full KV still stored — bandwidth, not memory, is saved",
+      "Upper bound can pick wrong pages; budget per task; awkward with GQA / paged serving; no gain at short context"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": "latency-bound decode where HBM capacity is fine but bandwidth is not"
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "the trained-in version is DSA"
+      },
+      "verdict": "Top-k attention finally with a cheap index (page bounds) — the training-free step before NSA / DSA."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "block-select"
+    }
+  },
+  {
+    "id": "gemma2-local-global",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Gemma 2 — interleaved local (4K window) / global layers",
+    "short": "Gemma 2 local:global",
+    "date": "2024-06-27",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "paperDate": "2024-07-31",
+    "source": {
+      "title": "Gemma 2: Improving Open Language Models at a Practical Size",
+      "authors": "Gemma Team (Google DeepMind)",
+      "arxiv": "2408.00118",
+      "url": "https://blog.google/technology/developers/google-gemma-2/",
+      "evidence": "Google blog dated Jun 27, 2024; paper [v1] Wed, 31 Jul 2024 19:13:07 UTC — 'The sliding window size of local attention layers is set to 4096 tokens, while the span of the global attention layers is set to 8192 tokens'"
+    },
+    "secondary": [
+      {
+        "label": "Paper, arXiv 2408.00118",
+        "url": "https://arxiv.org/abs/2408.00118",
+        "date": "2024-07-31"
+      }
+    ],
+    "firstShipped": {
+      "model": "Gemma 2 9B / 27B",
+      "date": "2024-06-27",
+      "url": "https://blog.google/technology/developers/google-gemma-2/"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "KV memory and attention compute per token for a mid-size open model, without giving up a global receptive field.",
+    "idea": "Alternate sliding-window layers (w = 4,096) with global layers; only half the layers' KV grows with context. Plus GQA and logit soft-capping.",
+    "buys": [
+      "Halves the layers whose cache grows; the local:global pattern Gemma 3 pushes to 5:1 and gpt-oss adopts as banded:dense"
+    ],
+    "costs": [
+      "At an 8K context the saving is modest; local layers are blind beyond the window",
+      "Needs SWA-capable kernels; soft-capping was initially incompatible with FlashAttention"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "yes",
+        "why": "cheap and safe"
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "the design gets more valuable as context grows"
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "the global layers still pay n²; pair with sparse selection"
+      },
+      "verdict": "Not the first sliding-window model (Mistral) — the first mainstream one to *interleave* it, which is what survived."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "local-global"
+    }
+  },
+  {
+    "id": "minference",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "MInference — dynamic sparse prefill",
+    "short": "MInference",
+    "date": "2024-07-02",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "MInference 1.0: Accelerating Pre-filling for Long-Context LLMs via Dynamic Sparse Attention",
+      "authors": "Jiang et al. (Microsoft)",
+      "arxiv": "2407.02490",
+      "url": "https://arxiv.org/abs/2407.02490",
+      "evidence": "[v1] Tue, 2 Jul 2024 17:59:56 UTC (NeurIPS 2024)"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "compute"
+    ],
+    "problem": "Prefill at 100K–1M tokens takes minutes on dense attention; per-head attention is dynamically sparse.",
+    "idea": "Offline assign each head one of three patterns (A-shape, vertical-slash, block-sparse), build the sparse index online, run custom kernels.",
+    "buys": [
+      "Up to 10× prefill speedup at 1M with near-lossless accuracy, no retraining"
+    ],
+    "costs": [
+      "Prefill only; per-model pattern search; approximate index overhead",
+      "Superseded by trained sparsity (NSA / DSA)"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "serving an existing dense model at very long prompts"
+      },
+      "verdict": "The training-free precursor to NSA / MoBA / DSA."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "block-select"
+    }
+  },
+  {
+    "id": "llama31-rope-scaling",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Llama 3.1 — 128K by base 500K + 'llama3' scaling + staged long-context pretraining",
+    "short": "Llama 3.1 128K",
+    "date": "2024-07-23",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "paperDate": "2024-07-31",
+    "source": {
+      "title": "The Llama 3 Herd of Models",
+      "authors": "Llama Team (Meta)",
+      "arxiv": "2407.21783",
+      "url": "https://ai.meta.com/blog/meta-llama-3-1/",
+      "evidence": "Meta blog dated July 23, 2024; paper [v1] 31 Jul 2024; config.json rope_scaling {rope_type 'llama3', factor 8, low_freq_factor 1, high_freq_factor 4, original_max_position_embeddings 8192}, rope_theta 500000; 'increased context length gradually in six stages … ending in the final 128K'"
+    },
+    "firstShipped": {
+      "model": "Llama 3.1 8B / 70B / 405B",
+      "date": "2024-07-23",
+      "url": "https://ai.meta.com/blog/meta-llama-3-1/"
+    },
+    "family": "scaling",
+    "bill": [
+      "length"
+    ],
+    "problem": "Take dense 8K models to 128K with no architecture change.",
+    "idea": "Base 500K, a YaRN-style wavelength-dependent scaling (high-frequency dims untouched, low-frequency ÷ 8, ramp between), and ~800B tokens of continued pretraining in six length stages.",
+    "buys": [
+      "The safest, no-architecture-risk path to 128K; the numbers in every Llama-family config.json"
+    ],
+    "costs": [
+      "Not free: ~800B tokens",
+      "Attention compute and KV at 128K unchanged (only GQA helps); nothing beyond 128K"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "if you can spend ~10¹¹ tokens"
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "What 'RoPE scaling' means in production: not a trick, a training recipe."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "yarn"
+    }
+  },
+  {
+    "id": "sigmoid-attention",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Sigmoid attention (FlashSigmoid)",
+    "short": "Sigmoid attention",
+    "date": "2024-09-06",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Theory, Analysis, and Best Practices for Sigmoid Self-Attention",
+      "authors": "Ramapuram et al. (Apple)",
+      "arxiv": "2409.04431",
+      "url": "https://arxiv.org/abs/2409.04431",
+      "evidence": "[v1] Fri, 6 Sep 2024 17:53:26 UTC"
+    },
+    "family": "attention",
+    "bill": [
+      "compute",
+      "quality"
+    ],
+    "oneLiner": "softmax → sigmoid with a fused kernel 17% faster than FA2 on H100 and parity claims; not adopted.",
+    "whyFootnote": "Alternative normaliser, not adopted."
+  },
+  {
+    "id": "differential-transformer",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Differential Transformer — attention as a difference of two softmaxes",
+    "short": "Diff Transformer",
+    "date": "2024-10-07",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Differential Transformer",
+      "authors": "Ye, Dong, Xia, Sun, Zhu, Huang, Wei (Microsoft / Tsinghua)",
+      "arxiv": "2410.05258",
+      "url": "https://arxiv.org/abs/2410.05258",
+      "evidence": "[v1] Mon, 7 Oct 2024 17:57:38 UTC (ICLR 2025)"
+    },
+    "family": "attention",
+    "bill": [
+      "quality"
+    ],
+    "problem": "Softmax 'over-allocates attention to irrelevant context' — attention noise that hurts retrieval, in-context learning and hallucination, and creates activation outliers.",
+    "idea": "attention = softmax(Q₁K₁ᵀ) − λ·softmax(Q₂K₂ᵀ) with learnable λ and per-head GroupNorm — noise cancellation.",
+    "buys": [
+      "Claims ~65% of the parameters or tokens to match a Transformer's loss; better needle retrieval, ICL and order robustness; fewer outliers"
+    ],
+    "costs": [
+      "~10–12% lower throughput; needs a custom FlashAttention variant; evidence to ~13B",
+      "Zero saving on KV or context; not retrofittable; no frontier adoption found"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "maybe",
+        "why": "new pretraining run where retrieval / hallucination matter"
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": "does nothing for the bill"
+      },
+      "verdict": "A quality proposal in an efficiency decade; interesting, unshipped."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "causal"
+    }
+  },
+  {
+    "id": "duoattention",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "DuoAttention — retrieval heads vs streaming heads",
+    "short": "DuoAttention",
+    "date": "2024-10-14",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "DuoAttention: Efficient Long-Context LLM Inference with Retrieval and Streaming Heads",
+      "authors": "Xiao et al. (MIT / Tsinghua / SJTU / NVIDIA)",
+      "arxiv": "2410.10819",
+      "url": "https://arxiv.org/abs/2410.10819",
+      "evidence": "[v1] Mon, 14 Oct 2024 17:59:58 UTC (ICLR 2025)"
+    },
+    "family": "kv-eviction",
+    "bill": [
+      "kv-memory"
+    ],
+    "problem": "Only a minority of heads ('retrieval heads') need the full KV; the rest only need sink + recent window.",
+    "idea": "Learn a per-head gate on synthetic passkey data; give retrieval heads full KV and streaming heads a sink+window cache.",
+    "buys": [
+      "~2.5× memory / ~2.2× decode speedup on MHA (≈1.6× / 1.5× on GQA); 3.3M tokens on one A100 with quantisation"
+    ],
+    "costs": [
+      "Offline optimisation per model; fixed split, not query-adaptive; two cache layouts complicate paged serving"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "serving pretrained MHA/GQA models with long contexts on limited memory"
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": ""
+      },
+      "verdict": "The per-head version of what Gemma does per layer; bridges eviction and architecture."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "window-sinks"
+    }
+  },
+  {
+    "id": "star-attention",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Star Attention",
+    "short": "Star Attention",
+    "date": "2024-11-26",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Star Attention: Efficient LLM Inference over Long Sequences",
+      "authors": "Acharya, Jia, Ginsburg (NVIDIA)",
+      "arxiv": "2411.17116",
+      "url": "https://arxiv.org/abs/2411.17116",
+      "evidence": "[v1] Tue, 26 Nov 2024 05:10:04 UTC"
+    },
+    "family": "systems",
+    "bill": [
+      "compute"
+    ],
+    "oneLiner": "Two-phase block-local prefill + global query attention for distributed long-context inference.",
+    "whyFootnote": "Systems / inference-time approximation."
+  },
+  {
+    "id": "gated-deltanet",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 6,
+    "order": 0,
+    "name": "Gated DeltaNet — gating + the delta rule",
+    "short": "Gated DeltaNet",
+    "aka": "GDN; gated delta rule",
+    "date": "2024-12-09",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Gated Delta Networks: Improving Mamba2 with Delta Rule",
+      "authors": "Yang, Kautz, Hatamizadeh (MIT / NVIDIA)",
+      "arxiv": "2412.06464",
+      "url": "https://arxiv.org/abs/2412.06464",
+      "evidence": "[v1] Mon, 9 Dec 2024 13:09:04 UTC (ICLR 2025)"
+    },
+    "secondary": [
+      {
+        "label": "Qwen3-Next-80B-A3B: '12 × (3 × (Gated DeltaNet → MoE) → 1 × (Gated Attention → MoE))', 256K",
+        "url": "https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct",
+        "date": "2025-09-11"
+      },
+      {
+        "label": "Kimi Linear extends it (KDA)",
+        "url": "https://arxiv.org/abs/2510.26692",
+        "date": "2025-10-30"
+      }
+    ],
+    "firstShipped": {
+      "model": "Qwen3-Next-80B-A3B (3:1 GDN : gated attention)",
+      "date": "2025-09-11",
+      "url": "https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "Gating (Mamba-2) forgets fast but updates crudely; the delta rule (DeltaNet) updates precisely but cannot forget. Wanted both, with a hardware-parallel training algorithm.",
+    "idea": "S_t = α_t (I − β_t k_t k_tᵀ) S_{t−1} + β_t v_t k_tᵀ: a data-dependent decay α on top of the erase-then-write delta update, trained chunkwise.",
+    "buys": [
+      "'Consistently surpasses Mamba2 and DeltaNet' on LM, in-context retrieval, length extrapolation and long-context; hybrids with sliding-window or Mamba-2 layers improve further",
+      "Constant-size state → O(1) KV per token; Qwen claims ~10× decode throughput vs Qwen3-32B at long context",
+      "The linear layer frontier models actually ship (Qwen3-Next, Kimi Linear's KDA)"
+    ],
+    "costs": [
+      "Still short of full softmax on exact recall — production uses 3:1 hybrids with real attention layers",
+      "Custom chunkwise kernels; lower training MFU than FlashAttention at short sequences",
+      "Fixed state bounds very-long-document fidelity; serving and quantisation ecosystem is young"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": "softmax is simpler and stronger at 4–8K"
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "as the majority layer of a hybrid"
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "256K–1M agentic / long-generation workloads where decode throughput and KV dominate"
+      },
+      "verdict": "The 1960 delta rule + a 2023 gate + a 2024 kernel = the layer 2025's hybrids are made of. Right at long context in a hybrid; wrong as the only attention."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "gated-delta"
+    }
+  },
+  {
+    "id": "titans",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 6,
+    "order": 0,
+    "name": "Titans — neural long-term memory learned at test time",
+    "short": "Titans",
+    "date": "2024-12-31",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Titans: Learning to Memorize at Test Time",
+      "authors": "Behrouz, Zhong, Mirrokni (Google)",
+      "arxiv": "2501.00663",
+      "url": "https://arxiv.org/abs/2501.00663",
+      "evidence": "[v1] Tue, 31 Dec 2024 22:32:03 UTC"
+    },
+    "family": "hybrid",
+    "bill": [
+      "length",
+      "kv-memory"
+    ],
+    "problem": "Attention is short-term memory; what plays long-term memory beyond the window?",
+    "idea": "An MLP memory updated online by the gradient of a 'surprise' loss with momentum and decay (forgetting), combined with attention as context / gate / layer.",
+    "buys": [
+      ">2M-token needle claims; O(1) memory per token at inference; beats Mamba-2 / DeltaNet-class baselines at ≤760M"
+    ],
+    "costs": [
+      "Per-chunk gradient steps at inference; immature kernels; no public weights; small-scale evidence"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "research"
+      },
+      "verdict": "The endpoint of the DeltaNet / test-time-training line: memory as weights trained at inference."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "gated-delta"
+    }
+  }
+]

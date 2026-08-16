@@ -1,0 +1,21 @@
+# Assignment 8 — one-page grader card
+
+**Live:** https://www.pandala.in/era-v5/assignment-8/ · **Repo folder:** [`assignment-8/`](README.md) · **Data:** [`data/mechanisms/`](data/mechanisms/) (112 JSON records, one file per era) · **Check:** `node scripts/check_assignment8.mjs`
+
+**What it is.** Every attention mechanism from Bahdanau (1 Sep 2014) to DeepSeek-V4's Compressed Sparse Attention (24 Apr 2026) and Kimi K3 (Jul 2026), **in launch order**, each explained as an answer to the bill of the one before it, with honest pros / cons and "when you would actually pick it" for four scenarios (2K chatbot · 32K RAG · 128K coding · 1M agent). Live visuals on the standard mechanism (Session 2's softmax pipeline) and on every major card via five shared parameterised widgets; a cost calculator answers "2K chatbot vs 1M agent" in FLOPs and KV bytes.
+
+**Coverage.** All 17 items on the minimum list (standard, learned absolute, sinusoidal, RoPE, ALiBi, MQA, GQA, sliding window, sinks, NTK-aware, YaRN, linear attention, delta rule + Gated DeltaNet, MLA, sparse + top-k, DeepSeek's compressed + sparse (NSA *and* DSA), DroPE) → 21 tagged nodes; plus **59 extras** on the timeline (relative positions, Transformer-XL, FlashAttention, Position Interpolation, Dynamic NTK, RoPE base scaling, NoPE, PagedAttention, softmax-1, RetNet, GLA, Mamba, MLA's siblings CLA/YOCO, Gemma local:global, MoBA, Cohere RNoPE-SWA, Llama 4 iRoPE, gpt-oss learned sinks, Qwen3-Next, Kimi Linear, Titans, Qwen3.5, DeepSeek-V4 CSA/HCA, Kimi K3 …) and **32 dated footnotes**. The check script fails if any of the 17 is missing.
+
+**Dates.** Rule: first *public* appearance — arXiv **v1** for papers; the blog / Reddit / GitHub / model-release date when the idea appeared there first, with the paper's v1 shown alongside. Every record stores the literal evidence string read from the source (e.g. `[v1] Tue, 20 Apr 2021 09:54:06 UTC`; Reddit `created_utc 1688026889 = 2023-06-29`). **Two passes:** a verifier fetched each source and wrote the record; an independent adversarial pass re-fetched 105 → **0 date disagreements**, 5 attribution nits (folded in); the 7 records added afterwards for Feb–Jul 2026 were checked directly against the arXiv / HF APIs. Corrections the checking produced are listed in README §6 — e.g. NTK-aware is **29 Jun 2023** (a Reddit post), Dynamic NTK **30 Jun**, kaiokendev's interpolation blog **20 Jun** (a week before Meta's paper), MQA first shipped in **AlphaCode** not PaLM, learned positions are **ConvS2S May 2017**, RoPE first appeared on **kexue.fm 23 Mar 2021**, MLA shipped **6 May 2024** a day before its paper, first hybrid-NoPE ship is **Cohere Command R7B Dec 2024**, and **DSA ≠ NSA** (what DeepSeek shipped in V3.2 is a lightning-indexer top-k on MLA, not the three-branch NSA).
+
+**The story (era → what the field wanted).** 0 quality fix (2014–17) → 1 exactness (Jun 2017) → 2 compute back (2019–20: sparse/linear/low-rank; MQA finds the KV bill) → 3 positions (2021: RoPE, ALiBi; delta rule appears) → 4 exact got cheap (2022: FlashAttention) → 5 length (2023: GQA, PI/NTK/YaRN, sinks, SWA, Ring, linear revival) → 6 memory back (2024: MLA, Mamba-2, DeltaNet parallel + gated, local:global) → 7 hybrids: memory back again + sparsity that trains (2025: MiniMax, Qwen3-Next, Kimi Linear; NoPE global layers; NSA, MoBA, DSA; learned sinks) → 8 now: compress, then select (DroPE; Qwen3.5 and Kimi K3 make the 3:1 delta-rule hybrid a flagship default; DeepSeek-V4's CSA/HCA — 27% of V3.2's FLOPs and 10% of its KV at 1M). Prediction (labelled as a bet): hybrid default stack, positions out of the way, retrofit-ability as a design goal, next flip a systems trick.
+
+**Honesty.** Every node has costs (schema-enforced), a per-scenario verdict, and the source it came from; the README has a Limitations section (first-public ≠ invention; idealised cost model; visualizers use seeded random Q/K/V; verdicts are judgements; the Dec-2025 → Aug-2026 window was swept by hand and is the part most likely to be incomplete).
+
+**Re-run.**
+
+```bash
+npm install && npm run dev                    # /era-v5/assignment-8/
+node scripts/check_assignment8.mjs            # schema · 17/17 · README table in sync → verdict: PASS
+node scripts/check_assignment8.mjs --links    # HEAD/GET every source URL
+```

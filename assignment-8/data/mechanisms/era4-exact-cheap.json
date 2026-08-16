@@ -1,0 +1,347 @@
+[
+  {
+    "id": "memorizing-transformers",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 4,
+    "order": 0,
+    "name": "Memorizing Transformers",
+    "short": "Memorizing Tf",
+    "date": "2022-03-16",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Memorizing Transformers",
+      "authors": "Wu, Rabe, Hutchins, Szegedy (Google)",
+      "arxiv": "2203.08913",
+      "url": "https://arxiv.org/abs/2203.08913",
+      "evidence": "[v1] Wed, 16 Mar 2022"
+    },
+    "family": "hybrid",
+    "bill": [
+      "length"
+    ],
+    "oneLiner": "kNN lookup into a stored (k, v) memory of past tokens — an external-memory ancestor of Infini-attention and Titans.",
+    "whyFootnote": "Memory-augmented lineage; not adopted as an attention layer."
+  },
+  {
+    "id": "nope-precursor-haviv",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 4,
+    "order": 0,
+    "name": "No positional encoding at all — Haviv et al. (NoPE precursor)",
+    "short": "NoPE precursor",
+    "date": "2022-03-30",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Transformer Language Models without Positional Encodings Still Learn Positional Information",
+      "authors": "Haviv, Ram, Press, Izsak, Levy (Tel Aviv / AI2)",
+      "arxiv": "2203.16634",
+      "url": "https://arxiv.org/abs/2203.16634",
+      "evidence": "[v1] Wed, 30 Mar 2022 19:37:07 UTC"
+    },
+    "family": "position",
+    "bill": [
+      "extrapolation"
+    ],
+    "problem": "If every explicit positional encoding is the thing that breaks at unseen lengths, is it needed at all?",
+    "idea": "Train causal LMs up to 1.3B on the Pile with no positional encoding. Perplexity is competitive; probes recover absolute position from the hidden states. The causal mask itself leaks position (each token can count what it sees) — bidirectional models cannot do this.",
+    "buys": [
+      "Empirical licence for NoPE and for the 2025 NoPE-global / RoPE-local hybrids",
+      "Removes the component that breaks past training length"
+    ],
+    "costs": [
+      "Slightly worse than the best PE at every scale in the paper",
+      "Implicit position is fragile at scale; length generalisation is not automatic",
+      "Decoder-only; no locality prior to exploit"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": "no reason over RoPE"
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": "as global layers in a hybrid"
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "as the global layers (Command R7B, Llama 4 iRoPE), never alone"
+      },
+      "verdict": "The hint that matured into NoPE (2023), Command R7B / iRoPE (2024–25) and DroPE (Dec 2025). Note the co-author: Ofir Press, from ALiBi."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "nope"
+    }
+  },
+  {
+    "id": "kerple",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 4,
+    "order": 0,
+    "name": "KERPLE (and Sandwich) — kernelised relative bias for extrapolation",
+    "short": "KERPLE",
+    "date": "2022-05-20",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "KERPLE: Kernelized Relative Positional Embedding for Length Extrapolation",
+      "authors": "Chi, Fan, Ramadge, Rudnicky (CMU / Princeton)",
+      "arxiv": "2205.09921",
+      "url": "https://arxiv.org/abs/2205.09921",
+      "evidence": "[v1] Fri, 20 May 2022 01:25:57 UTC; Sandwich (2212.10356) [v1] Tue, 20 Dec 2022"
+    },
+    "family": "position",
+    "bill": [
+      "extrapolation"
+    ],
+    "problem": "ALiBi's fixed linear slope decays too aggressively; T5 buckets do not extrapolate.",
+    "idea": "Replace the linear penalty with conditionally-positive-definite kernels of |m−n| (log / power variants, two learned parameters per head); Sandwich later gives a parameter-free sinusoid-derived bias.",
+    "buys": [
+      "Better extrapolation perplexity than ALiBi/T5 with negligible parameters"
+    ],
+    "costs": [
+      "Additive bias → no fast-attention path until FlexAttention-style kernels",
+      "Locality prior limits retrieval; never adopted by frontier models"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "The ALiBi → KERPLE → FIRE lineage: the learned-bias branch that lost to RoPE + scaling."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "alibi"
+    }
+  },
+  {
+    "id": "flash-attention",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 4,
+    "order": 0,
+    "name": "FlashAttention — exact attention, IO-aware",
+    "short": "FlashAttention",
+    "aka": "FA1 / FA2 / FA3; fused tiled attention with online softmax",
+    "date": "2022-05-27",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+      "authors": "Dao, Fu, Ermon, Rudra, Ré (Stanford / Buffalo)",
+      "arxiv": "2205.14135",
+      "url": "https://arxiv.org/abs/2205.14135",
+      "evidence": "[v1] Fri, 27 May 2022 17:53:09 UTC; FA2 (2307.08691) [v1] Mon, 17 Jul 2023; FA3 (2407.08608) [v1] Thu, 11 Jul 2024"
+    },
+    "secondary": [
+      {
+        "label": "FlashAttention-2 (Dao)",
+        "url": "https://arxiv.org/abs/2307.08691",
+        "date": "2023-07-17"
+      },
+      {
+        "label": "FlashAttention-3 (Shah, Bikshandi, Zhang, Thakkar, Ramani, Dao) — Hopper, FP8",
+        "url": "https://arxiv.org/abs/2407.08608",
+        "date": "2024-07-11"
+      },
+      {
+        "label": "PyTorch 2.0 makes it a default SDPA backend",
+        "url": "https://pytorch.org/blog/pytorch-2.0-release/",
+        "date": "2023-03-15"
+      }
+    ],
+    "firstShipped": {
+      "model": "PyTorch 2.0 scaled_dot_product_attention backend (ecosystem-level); MPT-7B first named open model",
+      "date": "2023-03-15",
+      "url": "https://pytorch.org/blog/pytorch-2.0-release/"
+    },
+    "family": "systems",
+    "bill": [
+      "compute",
+      "systems"
+    ],
+    "problem": "Exact attention was slow not because of FLOPs but because the n×n score matrix is written to and read from HBM — memory-bandwidth-bound and O(n²) memory. Long sequences were impractical even where compute was affordable.",
+    "idea": "Change nothing about the maths. Tile Q, K, V into SRAM-sized blocks, compute softmax online (running max and sum), never materialise the n×n matrix, and recompute scores in the backward pass instead of storing them. FA2 fixed work partitioning (25–40% → 50–73% of A100 peak); FA3 added Hopper asynchrony and FP8.",
+    "buys": [
+      "Same outputs, O(n) memory, 2–4× wall-clock (3× on GPT-2 in the paper); first Transformer to beat chance on Path-X 16K",
+      "Made 32K–128K dense-attention training and serving economical — the reason the 2020 approximations stopped mattering at ordinary lengths",
+      "Ecosystem-level: a default backend in PyTorch 2.0, in every serving stack"
+    ],
+    "costs": [
+      "A systems change, not a math change: compute is still O(n²) and the KV cache is untouched — at 1M tokens you still need GQA/MLA, windows or linear layers",
+      "Hand-written hardware-specific kernels (Ampere → Hopper), slow to port to new accelerators and to new attention variants — biases (ALiBi) and sparse patterns lagged for a year",
+      "Backward pass trades extra FLOPs for bandwidth; numerics differ slightly (accumulation order, FP8 in FA3)"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "yes",
+        "why": "always, when a kernel exists — free quality-wise"
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "mandatory in practice"
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "necessary but not sufficient — the KV bill needs a math change on top"
+      },
+      "verdict": "The timeline's hinge: a kernel made exact cheap, the field un-learned approximation for a while, and every later sparse design (NSA, DSA) is written to be 'hardware-aligned' because of the lesson."
+    },
+    "viz": {
+      "kind": "kv",
+      "mode": "flash"
+    }
+  },
+  {
+    "id": "xpos",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 4,
+    "order": 0,
+    "name": "xPos — RoPE with exponential decay (LEX Transformer)",
+    "short": "xPos",
+    "date": "2022-12-20",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "A Length-Extrapolatable Transformer",
+      "authors": "Sun, Dong, Patra, Ma, Huang, Benhaim, Chaudhary, Song, Wei (Microsoft)",
+      "arxiv": "2212.10554",
+      "url": "https://arxiv.org/abs/2212.10554",
+      "evidence": "[v1] Tue, 20 Dec 2022 18:56:20 UTC (same day as Sandwich, 2212.10356)"
+    },
+    "family": "position",
+    "bill": [
+      "extrapolation"
+    ],
+    "problem": "RoPE's attention resolution becomes noisy at long relative distances; wanted RoPE-quality interpolation with ALiBi-like extrapolation.",
+    "idea": "Multiply RoPE by a per-dimension decay ξ^{m−n} so scores decay smoothly with distance; add blockwise causal attention at inference.",
+    "buys": [
+      "Better long-length perplexity than RoPE/ALiBi in the paper",
+      "The decay idea reappears as RetNet's γ (same group)"
+    ],
+    "costs": [
+      "Hard locality prior hurts long-range retrieval; ξ^n needs numerical offset tricks",
+      "No frontier adoption — RoPE + θ-scaling won"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "The bridge from RoPE to RetNet's decay; not a production pick."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "xpos"
+    }
+  },
+  {
+    "id": "h3-hyena",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 4,
+    "order": 0,
+    "name": "H3 → Hyena — attention-free long convolutions (SSM lineage)",
+    "short": "H3 / Hyena",
+    "date": "2022-12-28",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Hungry Hungry Hippos: Towards Language Modeling with State Space Models (H3); Hyena Hierarchy (2302.10866, 21 Feb 2023)",
+      "authors": "Fu, Dao, Saab, Thomas, Rudra, Ré (Stanford); Poli et al.",
+      "arxiv": "2212.14052",
+      "url": "https://arxiv.org/abs/2212.14052",
+      "evidence": "H3 [v1] Wed, 28 Dec 2022 17:56:03 UTC; Hyena [v1] Tue, 21 Feb 2023 18:29:25 UTC"
+    },
+    "secondary": [
+      {
+        "label": "Hyena Hierarchy",
+        "url": "https://arxiv.org/abs/2302.10866",
+        "date": "2023-02-21"
+      }
+    ],
+    "family": "linear-recurrent",
+    "bill": [
+      "compute"
+    ],
+    "problem": "Can O(n²) attention be replaced outright? SSMs were fast but bad at recall/comparison.",
+    "idea": "H3: a shift SSM plus a diagonal SSM with multiplicative gating gives SSMs recall; Hyena: long implicit convolutions via FFT (O(n log n)) with data-controlled gating; FlashConv is the FlashAttention move applied to convolutions.",
+    "buys": [
+      "Sub-quadratic; ~1B-scale parity claims; 100× faster than FlashAttention at 64K",
+      "Direct lineage to Mamba"
+    ],
+    "costs": [
+      "FFT convolutions use tensor cores poorly",
+      "Weak in-context recall/copying vs attention; needs hybrids",
+      "No frontier text LLM adopted it (used for DNA / long signals: StripedHyena, Evo)"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "ultra-long low-density sequences (genomics)"
+      },
+      "verdict": "The attention-free branch before Mamba; it lost on recall and on tensor-core utilisation."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "linear"
+    }
+  }
+]

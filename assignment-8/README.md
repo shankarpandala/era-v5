@@ -1,0 +1,286 @@
+# Assignment 8 — How attention works now
+
+**Live:** https://www.pandala.in/era-v5/assignment-8/ · **One-page grader card:** [GRADERS.md](GRADERS.md)
+
+Every attention mechanism the course covered — and 60-odd more found along the way, up to DeepSeek-V4 and Kimi K3 in 2026 — laid out
+**in the order each one was launched**, each explained as an answer to the bill of the one before it.
+
+> Vanilla attention was not wrong, it was expensive: O(n²) compute and a KV cache that grows with
+> every token. Everything after it is somebody looking at that bill and paying less of it — first the
+> field wants exactness, then compute back, then positions, then exact got cheap, then length, then
+> memory back, then memory back *again*. Laid out by date you can watch it change its mind, and once
+> you see that you can guess what comes next.
+
+Every date on the page is read from the primary source (arXiv v1 line, blog date, Reddit
+`created_utc`, model-card release date); 105 of the 112 records were **independently re-checked to the
+day** by an adversarial second pass (0 disagreements) and the 7 added afterwards for Feb–Jul 2026 were
+checked directly against the arXiv / Hugging Face APIs; every record carries the literal evidence string
+that was read. Pros and cons are written to be honest — the check
+script literally fails if a mechanism has no `costs`.
+
+```bash
+npm install
+npm run dev                          # http://localhost:5173/era-v5/assignment-8/
+node scripts/check_assignment8.mjs   # schema + instructor list + README table in sync
+node scripts/check_assignment8.mjs --links   # additionally HEAD/GET every source URL
+```
+
+---
+
+## 1. What is on the page
+
+| Section | What it does |
+|---|---|
+| **A8-1 The baseline** | Session 2's scaled dot-product attention, live: pick a query token, drag n and d_k, switch the 1/√d scaling off and watch the softmax saturate. The two bills are on the tiles: n(n+1)/2 scores per head per layer, 2·h·d_head KV values per token per layer. |
+| **A8-2 The bill** | Attention FLOPs and KV bytes vs context (128 → 1M) for real layouts — Llama-2 MHA, Llama-2-70B GQA, Mistral's window, DeepSeek-V2's MLA, Gemma 3's 5:1, gpt-oss's banded, Qwen3-Next's Gated DeltaNet hybrid — and a build-your-own model with every KV layout. Two fixed columns: **2K chatbot** and **1M agent**. |
+| **A8-3 The timeline** | 9 eras, **80 nodes** (32 major cards with a live visual, 48 minor cards) + **32 footnotes**, strictly by first public appearance. Each card: *the problem at that moment* → *the idea* → visual → **what it buys / what it costs** → **when you would actually pick it** (2K chatbot · 32K RAG · 128K coding · 1M agent) → *source of the date* with the evidence string. Filters: the instructor's 17 only, family, bill attacked, search. |
+| **A8-4 Watch the field change its mind** | The eras as a sequence of wants, why each change of mind happened, and my prediction of what comes next — labelled as a bet. |
+| **A8-5 When would you pick it** | The decision matrix: every mechanism × four scenarios, ✓ / △ / ✗ with a reason on hover. |
+| **A8-6 Sources, dating method, corrections** | The dating rule, what verification corrected, limitations, and the full table (same as §7 below). |
+
+Five shared, parameterised visualizers carry the whole timeline (a clear static page beats a broken clever one, so there are no bespoke animations):
+
+| Visualizer | Used by | What it shows |
+|---|---|---|
+| `AttentionMatrix` | causal, window, window+sinks, window+global, BigBird, strided/fixed, top-k, DSA, block-select (MoBA/Quest), NSA (compressed+selected+window), LSH, routing, segment recurrence, ring, low-rank | Which keys each query reads on a seeded 8–64-token sequence, softmax weight as colour, "% of the causal n² bill actually computed", KV-cache note, hover a row. |
+| `PositionExplorer` | sinusoidal, learned, relative, T5, RoPE, ALiBi, NoPE, PI, NTK, Dynamic NTK, YaRN, ABF, xPos, ReRoPE, DroPE | The RoPE frequency ladder (rotations per band over L_train — bands under one rotation are the ones that extrapolate into unseen angles, and how PI / NTK / YaRN / base-scaling move them) plus the positional term vs distance with the trained length marked. |
+| `KVCacheHeads` | MHA/MQA/GQA/MLA/CLA, FlashAttention, PagedAttention | Heads-and-KV layout with sliders → bytes per token, × vs MHA, cache at 32K; FlashAttention and PagedAttention as "same maths, different plumbing". |
+| `RecurrentState` | linear, RetNet, GLA, RWKV, Mamba, delta rule, Gated DeltaNet | Write T (k, v) pairs into a fixed d×d state, then ask for every key back: recall error per item, plus an overwrite test that shows why the sum rule fails and the delta rule does not. |
+| `CostCalculator` | A8-2 | The idealised cost model (`src/assignment-8/lib/costModel.js`). |
+
+## 2. Where everything lives (nothing on the page is retyped)
+
+```
+assignment-8/
+  README.md                       this file
+  GRADERS.md                      one-page card
+  index.html                      Vite MPA entry → /era-v5/assignment-8/
+  data/eras.json                  the 9 era bands: span, "what the field wanted", narrative
+  data/mechanisms/era*.json       112 records, one file per era — the single source of truth
+src/assignment-8/
+  App.jsx, data.js                page + data access (import.meta.glob over data/mechanisms)
+  components/                     Timeline, TimelineStrip, MechanismCard, EraStory, DecisionMatrix, Sources
+  viz/                            the five visualizers + Viz dispatcher
+  lib/costModel.js, attnMath.js   the formulas
+scripts/check_assignment8.mjs     validates the data, the instructor list, regenerates §7, checks links
+```
+
+Record shape (every field is rendered somewhere):
+`id · tier (major|minor|footnote) · instructorList · date · datePrecision · dateKind (arxiv-v1|blog|reddit-post|model-release|github-release) · paperDate (when first appearance ≠ paper) · source{title, authors, arxiv, url, evidence} · secondary[] · firstShipped{model, date, url} · family · bill[] · era · problem · idea · buys[] · costs[] · pickWhen{chatbot2k, rag32k, coding128k, agent1m, verdict} · viz{kind, mode}`.
+
+## 3. How to read the timeline
+
+- **Order.** Strictly by the date each mechanism first appeared in public. For papers that is the arXiv **v1** submission date; when the idea appeared earlier as a blog post, a Reddit post, a GitHub commit or a model release, *that* date sorts the timeline and the paper date is shown alongside as "paper …". Not the order the course taught them, not grouped by family.
+- **The clock starts at the Transformer** (12 Jun 2017). Three ideas are older and are shown in a "before the clock" prologue — additive attention (Bahdanau, 1 Sep 2014), dot-product and local attention (Luong, 17 Aug 2015) and learned absolute positions (ConvS2S, 8 May 2017 — 35 days *before* the Transformer, and the reference Vaswani §3.5 cites). Chronological honesty and "start with the standard one" are both satisfied.
+- **Tiers.** *Major* (32): the instructor's list plus the story-critical extras (relative positions, Transformer-XL, FlashAttention, Position Interpolation, NoPE, GLA, parallel DeltaNet, NSA, DeepSeek-V4…) — full card + live visual. *Minor* (48): compact card, expands to the same fields. *Footnote* (32): benchmarks, systems papers, pure-quality tweaks, first-shipping models, variants — dated and sourced the same way, with a column saying why they are not a node.
+- **The instructor's minimum list** (17 items) maps onto 21 nodes, tagged **on the list** on the page; everything else is tagged **extra**:
+
+| Item | Node(s) |
+|---|---|
+| standard attention | `standard-attention` |
+| absolute learned positions | `learned-absolute-positions` |
+| sinusoidal | `sinusoidal-positions` |
+| RoPE | `rope` |
+| ALiBi | `alibi` |
+| MQA | `mqa` |
+| GQA | `gqa` |
+| sliding window | `sliding-window` (Longformer, the mechanism) + `mistral-swa` (first mainstream decoder) |
+| attention sinks | `attention-sinks` |
+| NTK-aware scaling | `ntk-aware` (+ `dynamic-ntk`, `rope-abf` as its trained-in cousin) |
+| YaRN | `yarn` |
+| linear attention | `linear-attention` |
+| the delta rule and Gated DeltaNet | `delta-rule` (Schlag/Irie/Schmidhuber 2021) + `gated-deltanet` (+ `parallel-deltanet` in between) |
+| MLA | `mla` |
+| sparse and top-k attention | `sparse-transformer` (Child et al.) + `topk-attention` (Explicit Sparse Transformer) |
+| compressed and sparse attention as DeepSeek does it | `nsa` (compress + select + slide) + `dsa` (lightning indexer + top-k on MLA, V3.2) |
+| DroPE | `drope` |
+
+## 4. The story the dates tell
+
+| era | span | what the field wanted | the change of mind |
+|---|---|---|---|
+| 0 Before the clock | Sep 2014 – May 2017 | a *quality* fix for the RNN bottleneck | — |
+| 1 Wants exactness | Jun 2017 – 2018 | parallel training + quality; pay O(n²) gladly | the Transformer bets all-pairs attention is worth it |
+| 2 The bill arrives — wants compute back | 2019 – 2020 | escape n² (and, in one paper, decode memory) | contexts pass 1K; sparse/linear/low-rank all at once; almost none ship — MQA quietly finds the KV bill |
+| 3 Positions become the lever | 2021 | relative position for free; a promise of extrapolation | RoPE, ALiBi; the delta rule appears and is ignored |
+| 4 Exact got cheap | 2022 | the same maths, IO-aware | FlashAttention removes the reason to approximate |
+| 5 Wants length | 2023 | context as the product | GQA, PagedAttention; ten days of June: PI → NTK-aware → Dynamic NTK; YaRN, ABF; sinks; Mistral SWA; Ring; the linear thread wakes (RWKV, RetNet, GLA, Mamba) |
+| 6 Wants memory back | 2024 | the KV cache is the constraint at 128K+ | MLA; Mamba-2 unifies SSMs and linear attention; DeltaNet made parallel, then gated; local:global (Gemma 2); eviction/selection |
+| 7 Hybrids — memory back again, sparsity that trains | 2025 | few exact layers, cheap everything else | linear hybrids ship (MiniMax, Qwen3-Next, Kimi Linear); NoPE on the global layers (Cohere, Llama 4, SWAN); trainable sparsity (NSA, MoBA, DSA); learned sinks (gpt-oss) |
+| 8 Now — compress, then select | Dec 2025 – Aug 2026 | 1M as the default: compressed KV selected by an index; positions as a training aid | DroPE removes the 2021 lever; Qwen3.5 (Feb 2026) and Kimi K3 (Jul) make the 3:1 delta-rule hybrid a flagship default; DeepSeek-V4 (24 Apr 2026) ships Compressed Sparse Attention (compress every m tokens → one KV entry, indexer picks the top-k compressed entries, small raw window) interleaved with Heavily Compressed Attention — 27% of V3.2's FLOPs and 10% of its KV at 1M |
+
+**What comes next (my bet, from the pattern, on the page in A8-4):** the two efficiency threads — *attend to few* (Sparse Transformer → top-k → Quest → NSA/MoBA → DSA) and *remember cheaply* (linear attention → delta rule → RetNet/GLA/Mamba → Gated DeltaNet → KDA) — converged in 2025 on one shape: most layers cheap and recurrent, a few exact, and the exact layers reading ~2K tokens chosen by a learned index. Expect (1) that hybrid to become the default frontier stack, (2) positions to get out of the way (NoPE global layers, DroPE-style removal, sinks as a learned logit), (3) retrofit-ability to become a design goal, and (4) the next flip to be a systems trick again — if a kernel makes selected attention as tensor-core-friendly as dense, "attention" will mean "which 2K of the 1M do I read". Scorecard as of Aug 2026: (1) and (4) already happened once — DeepSeek-V4 compresses then selects, Qwen3.5 and Kimi K3 made the delta-rule hybrid a flagship default; (2) is half-done; (3) unproven. One step further: the compression ratio and the index become learned per layer and "exact" layers disappear as a category. Caveat: every previous oscillation was hardware-triggered, MiniMax walked back its linear hybrid in M2, DroPE is ≤7B evidence, and V4's long-context recall has only its own report behind it.
+
+## 5. How every date was determined (the sources)
+
+1. **Papers → arXiv v1.** The date on the literal `[v1] Submitted on …` line of the arXiv abstract page (`https://arxiv.org/abs/<id>`), never the conference date, a later revision, or the arXiv-id month (`2408.00118` was submitted on 31 Jul 2024).
+2. **Mechanisms that first appeared elsewhere → that page's own date**, with the paper's v1 shown alongside:
+   - Reddit posts (NTK-aware, Dynamic NTK): the post's `created_utc` from the Reddit archive API (reddit.com blocks bots), corroborated by the HF TGI issue that quotes the post title the next day and by the YaRN paper's citations.
+   - Blogs (kaiokendev's Position Interpolation section — dated by the page's own changelog; Evan Miller's "Attention Is Off By One"; RoPE on kexue.fm — the on-page date is not fetchable, so it is dated from the search index and the ZhuiyiTechnology/roformer repo creation date, with the arXiv v1 shown alongside).
+   - Model releases (Mistral 7B, DeepSeek-V2 for MLA, Gemma 2/3, Llama 3.1, Llama 4, gpt-oss, Qwen3-Next, DeepSeek-V3.2-Exp for DSA): the lab's announcement or model card; HF repo commit timestamps where a blog was unreachable.
+   - GitHub (GPT-1 code release, ReRoPE): commit timestamps via the GitHub API.
+3. **Two independent passes.** A verifier agent fetched each source and wrote the record with the evidence string it read; a second, adversarial pass then re-fetched every one of the first 105 records with instructions to distrust the claimed values. Result: **0 date disagreements**; five attribution nits (RWKV's first checkpoints are Aug 2022 not Sep; the first hybrid NoPE ship is Cohere Command R7B, Dec 2024, not Llama 4; DCA shipped in Qwen2 before Qwen2.5-1M; Quest's author list; DroPE's exact arXiv title and which checkpoints are actually published) — all folded in.
+4. **The post-December-2025 window (7 records) was swept by hand** — web search plus the arXiv API (`export.arxiv.org/api/query?id_list=…`, which returns the `published` timestamp of v1) and Hugging Face repo metadata (`createdAt`, `config.json`) — after the agent-based sweep was cut off. Found and verified: HySparse and NAtS-L (3 Feb 2026), MiniCPM-SALA (12 Feb), Qwen3.5-397B-A17B (HF repo created 16 Feb; 45 linear : 15 full layers in its config), DeepSeek-V4 (news page 24 Apr; report v1 26 Apr — note the arXiv id 2606.19348 carries a June prefix while the API records April; recorded as the sources state it), FlashMemory-DeepSeek-V4 (8 Jun), Kimi K3 (report v1 27 Jul; blog announcement mid-July, weights by 27 Jul). Searched but not found to add a *new mechanism*: Gemma 4, Llama 5, MiniMax M2.5, GLM-5, Nemotron 3 (adoptions of existing layouts, if anything). This window is the part of the timeline most likely to be incomplete.
+
+Everything above is machine-checked: `node scripts/check_assignment8.mjs` validates the schema (every record has a date, a kind, a primary URL and an evidence string; every node has costs), checks that all 17 instructor items are present, and regenerates §7 from the data so the README cannot drift from the page. `--links` fetches every URL.
+
+## 6. Things the checking corrected — including my own first guesses, and one on the course
+
+| What | Commonly stated / my first guess | What the primary source says |
+|---|---|---|
+| NTK-aware scaled RoPE | "~30 June 2023" | **29 Jun 2023** 08:21 UTC — Reddit post `14lz7j5` by u/bloc97 (`created_utc` 1688026889). A Reddit post, not a paper; the citable versions are the YaRN paper and EleutherAI's "Extending the RoPE" blog. |
+| Dynamic NTK | "July 2023" | **30 Jun 2023** 05:34 UTC — post `14mrgpr` by u/emozilla, ~21 hours after bloc97; still June in every US time zone. |
+| Position Interpolation | Meta's paper, 27 Jun 2023 | kaiokendev's blog section is dated **20 Jun 2023** in its own changelog; the paper is a week later. Both shown. |
+| MQA — first mainstream model | PaLM (Apr 2022) | **AlphaCode**, blog 2 Feb 2022 / arXiv 8 Feb 2022 ("we take advantage of multi-query attention (Shazeer 2019)"). |
+| RoPE | arXiv 20 Apr 2021 | first appeared on Su Jianlin's blog **23 Mar 2021** (repo created 22 Mar); the timeline sorts by first appearance and shows both. |
+| MLA | DeepSeek-V2 paper, 7 May 2024 | the model shipped **6 May 2024**, one day before the report's v1. |
+| Learned absolute positions | "GPT/BERT (2018)" | **ConvS2S v1, 8 May 2017** — 35 days before the Transformer, and the reference Vaswani §3.5 cites; MemN2N's "temporal encoding" (31 Mar 2015) is prehistory. |
+| Explicit Sparse Transformer (top-k) | arXiv 25 Dec 2019 | public as an ICLR 2020 OpenReview submission on 25 Sep 2019; arXiv v1 kept as the primary, both noted. |
+| Sliding window | "Mistral 7B (Sep 2023)" | the mechanism is **Longformer, 10 Apr 2020**; the idea is older (Image Transformer 2018, Luong local 2015); Mistral is the first mainstream decoder to ship it under that name — both are nodes. |
+| DroPE | assumed a 2026 paper | arXiv v1 **13 Dec 2025** (Sakana AI); public launch 12 Jan 2026. Not to be confused with **DRoPE** (Directional RoPE, 19 Mar 2025, driving-agent modelling). The arXiv title has no "DroPE:" prefix — the abstract names the method. |
+| RWKV | paper 22 May 2023 | the RWKV-4 checkpoints predate the paper: HF uploads **17 Aug 2022**. |
+| NoPE — first hybrid ship | Llama 4 iRoPE (5 Apr 2025) | **Cohere Command R7B, 13 Dec 2024** ("a fourth layer uses global attention without positional embeddings") — also six weeks *before* the RNoPE-SWA paper. |
+| Dual Chunk Attention — first ship | Qwen2.5-1M (Jan 2025) | Qwen2 Instruct already used YaRN + DCA for 128K (blog 7 Jun 2024). |
+| Gemma 2 / Gemma 3 | "arXiv, Jul 2024 / Mar 2025" | the models shipped 27 Jun 2024 and 12 Mar 2025; the reports' v1 are 31 Jul 2024 and 25 Mar 2025. |
+
+One for the course, in the spirit of "if you catch me in another one, tell me": **NSA is not what DeepSeek shipped.** NSA (16 Feb 2025) has three branches — compressed, selected, sliding window; the sparse attention in DeepSeek-V3.2-Exp (29 Sep 2025) is **DSA**, a different design: a lightning indexer plus token-level top-k (k = 2048) on top of MLA in MQA mode, no compressed or window branches, continued-pretrained onto V3.1-Terminus. Both are nodes; the DSA card says so.
+
+## 7. The full table (generated from `data/` — every entry, chronological; ★ = on the instructor's list)
+
+<!-- BEGIN TIMELINE TABLE (generated by scripts/check_assignment8.mjs — do not edit by hand) -->
+| # | first appeared | kind | mechanism | tier | source | evidence read from the source |
+|---|---|---|---|---|---|---|
+| 1 | 1 Sep 2014 | arXiv v1 | **Bahdanau**<br><sub>Additive (Bahdanau) attention</sub> | major | [arXiv 1409.0473](https://arxiv.org/abs/1409.0473) | <sub>[v1] Mon, 1 Sep 2014 16:33:02 UTC (ICLR 2015)</sub> |
+| 2 | 17 Aug 2015 | arXiv v1 | **Luong dot-product**<br><sub>Dot-product (Luong) attention, global and local</sub> | major | [arXiv 1508.04025](https://arxiv.org/abs/1508.04025) | <sub>[v1] Mon, 17 Aug 2015 13:43:19 UTC (EMNLP 2015)</sub> |
+| 3 | 9 Jun 2016 | arXiv v1 | **KV-MemNN**<br><sub>Key-Value Memory Networks</sub> | footnote | [arXiv 1606.03126](https://arxiv.org/abs/1606.03126) | <sub>[v1] Thu, 9 Jun 2016</sub> |
+| 4 | 8 May 2017 | arXiv v1 | **Learned absolute** ★<br><sub>Learned absolute position embeddings</sub> | major | [arXiv 1705.03122](https://arxiv.org/abs/1705.03122) | <sub>[v1] Mon, 8 May 2017 23:25:30 UTC — 35 days before the Transformer's v1</sub> |
+| 5 | 12 Jun 2017 | arXiv v1 | **Standard attention** ★<br><sub>Standard scaled dot-product attention (multi-head, softmax)</sub> | major | [arXiv 1706.03762](https://arxiv.org/abs/1706.03762) | <sub>[v1] Mon, 12 Jun 2017 17:57:34 UTC (NIPS 2017)</sub> |
+| 6 | 12 Jun 2017 | arXiv v1 | **Sinusoidal** ★<br><sub>Sinusoidal positional encoding</sub> | major | [arXiv 1706.03762](https://arxiv.org/abs/1706.03762) | <sub>[v1] Mon, 12 Jun 2017 — §3.5: learned vs sinusoidal 'produced nearly identical results (see Table 3 row (E))'; sinusoids chosen because they 'may allow the model to extrapolate'</sub> |
+| 7 | 15 Feb 2018 | arXiv v1 | **Local self-attention**<br><sub>Local (block) self-attention — Image Transformer</sub> | minor | [arXiv 1802.05751](https://arxiv.org/abs/1802.05751) | <sub>[v1] Thu, 15 Feb 2018 20:37:15 UTC</sub> |
+| 8 | 6 Mar 2018 | arXiv v1 | **Relative positions**<br><sub>Relative position representations (Shaw et al.)</sub> | major | [arXiv 1803.02155](https://arxiv.org/abs/1803.02155) | <sub>[v1] Tue, 6 Mar 2018 13:13:11 UTC (NAACL 2018)</sub> |
+| 9 | 12 Sep 2018 | arXiv v1 | **Music Transformer**<br><sub>Music Transformer (relative attention with 'skewing')</sub> | footnote | [arXiv 1809.04281](https://arxiv.org/abs/1809.04281) | <sub>[v1] 12 Sep 2018</sub> |
+| 10 | 4 Dec 2018 | arXiv v1 | **Efficient Attention**<br><sub>Efficient Attention: Attention with Linear Complexities</sub> | footnote | [arXiv 1812.01243](https://arxiv.org/abs/1812.01243) | <sub>[v1] Tue, 4 Dec 2018</sub> |
+| 11 | 9 Jan 2019 | arXiv v1 | **Transformer-XL**<br><sub>Transformer-XL — segment recurrence + relative positions</sub> | major | [arXiv 1901.02860](https://arxiv.org/abs/1901.02860) | <sub>[v1] Wed, 9 Jan 2019 18:28:19 UTC (ACL 2019)</sub> |
+| 12 | 23 Apr 2019 | arXiv v1 | **Sparse Transformer** ★<br><sub>Sparse Transformer — strided / fixed factorized patterns</sub> | major | [arXiv 1904.10509](https://arxiv.org/abs/1904.10509) | <sub>[v1] Tue, 23 Apr 2019 19:29:47 UTC</sub> |
+| 13 | 19 May 2019 | arXiv v1 | **Adaptive Span**<br><sub>Adaptive Attention Span</sub> | footnote | [arXiv 1905.07799](https://arxiv.org/abs/1905.07799) | <sub>[v1] Sun, 19 May 2019</sub> |
+| 14 | 23 Oct 2019 | arXiv v1 | **T5 bias**<br><sub>T5 relative position bias</sub> | minor | [arXiv 1910.10683](https://arxiv.org/abs/1910.10683) | <sub>[v1] Wed, 23 Oct 2019 17:37:36 UTC</sub> |
+| 15 | 6 Nov 2019 | arXiv v1 | **MQA** ★<br><sub>Multi-Query Attention (MQA)</sub> | major | [arXiv 1911.02150](https://arxiv.org/abs/1911.02150) | <sub>[v1] Wed, 6 Nov 2019 00:19:05 UTC</sub> |
+| 16 | 25 Dec 2019 | arXiv v1 | **Top-k attention** ★<br><sub>Explicit Sparse Transformer — top-k attention</sub> | major | [arXiv 1912.11637](https://arxiv.org/abs/1912.11637) | <sub>[v1] Wed, 25 Dec 2019 10:59:31 UTC; public earlier as an ICLR 2020 OpenReview submission (25 Sep 2019)</sub> |
+| 17 | 13 Jan 2020 | arXiv v1 | **Reformer**<br><sub>Reformer — LSH attention (+ reversible layers)</sub> | minor | [arXiv 2001.04451](https://arxiv.org/abs/2001.04451) | <sub>[v1] Mon, 13 Jan 2020 18:38:28 UTC (ICLR 2020; OpenReview submission Sep 2019)</sub> |
+| 18 | 26 Feb 2020 | arXiv v1 | **Sinkhorn**<br><sub>Sparse Sinkhorn Attention</sub> | footnote | [arXiv 2002.11296](https://arxiv.org/abs/2002.11296) | <sub>[v1] Wed, 26 Feb 2020</sub> |
+| 19 | 5 Mar 2020 | arXiv v1 | **Talking Heads**<br><sub>Talking-Heads Attention</sub> | footnote | [arXiv 2003.02436](https://arxiv.org/abs/2003.02436) | <sub>[v1] Thu, 5 Mar 2020 05:17:17 UTC</sub> |
+| 20 | 12 Mar 2020 | arXiv v1 | **Routing Transformer**<br><sub>Routing Transformer — content-based sparse attention via online k-means</sub> | minor | [arXiv 2003.05997](https://arxiv.org/abs/2003.05997) | <sub>[v1] Thu, 12 Mar 2020 19:50:14 UTC</sub> |
+| 21 | 10 Apr 2020 | arXiv v1 | **Sliding window** ★<br><sub>Sliding-window (+ dilated + global) attention — Longformer</sub> | major | [arXiv 2004.05150](https://arxiv.org/abs/2004.05150) | <sub>[v1] Fri, 10 Apr 2020 17:54:09 UTC</sub> |
+| 22 | 17 Apr 2020 | arXiv v1 | **ETC**<br><sub>ETC — Extended Transformer Construction</sub> | footnote | [arXiv 2004.08483](https://arxiv.org/abs/2004.08483) | <sub>[v1] Fri, 17 Apr 2020</sub> |
+| 23 | 8 Jun 2020 | arXiv v1 | **Linformer**<br><sub>Linformer — low-rank projected keys/values</sub> | minor | [arXiv 2006.04768](https://arxiv.org/abs/2006.04768) | <sub>[v1] Mon, 8 Jun 2020 17:37:52 UTC</sub> |
+| 24 | 29 Jun 2020 | arXiv v1 | **Linear attention** ★<br><sub>Linear attention — 'Transformers are RNNs'</sub> | major | [arXiv 2006.16236](https://arxiv.org/abs/2006.16236) | <sub>[v1] Mon, 29 Jun 2020 17:55:38 UTC (ICML 2020)</sub> |
+| 25 | 9 Jul 2020 | arXiv v1 | **Clustered Attention**<br><sub>Fast Transformers with Clustered Attention</sub> | footnote | [arXiv 2007.04825](https://arxiv.org/abs/2007.04825) | <sub>[v1] Thu, 9 Jul 2020</sub> |
+| 26 | 28 Jul 2020 | arXiv v1 | **BigBird**<br><sub>BigBird — window + global + random block-sparse attention</sub> | minor | [arXiv 2007.14062](https://arxiv.org/abs/2007.14062) | <sub>[v1] Tue, 28 Jul 2020 08:34:04 UTC (NeurIPS 2020)</sub> |
+| 27 | 30 Sep 2020 | arXiv v1 | **Performer**<br><sub>Performer — FAVOR+ random-feature softmax</sub> | minor | [arXiv 2009.14794](https://arxiv.org/abs/2009.14794) | <sub>[v1] Wed, 30 Sep 2020 17:09:09 UTC (ICLR 2021); FAVOR without '+' in 2006.03555, 5 Jun 2020</sub> |
+| 28 | 8 Oct 2020 | arXiv v1 | **QK-Norm**<br><sub>QK-Norm (query-key normalisation)</sub> | minor | [arXiv 2010.04245](https://arxiv.org/abs/2010.04245) | <sub>[v1] Thu, 8 Oct 2020 20:12:35 UTC</sub> |
+| 29 | 8 Nov 2020 | arXiv v1 | **LRA**<br><sub>Long Range Arena (benchmark)</sub> | footnote | [arXiv 2011.04006](https://arxiv.org/abs/2011.04006) | <sub>[v1] Sun, 8 Nov 2020</sub> |
+| 30 | 22 Feb 2021 | arXiv v1 | **Delta rule / DeltaNet** ★<br><sub>The delta rule for linear transformers (DeltaNet origin)</sub> | major | [arXiv 2102.11174](https://arxiv.org/abs/2102.11174) | <sub>[v1] Mon, 22 Feb 2021 16:51:38 UTC (ICML 2021)</sub> |
+| 31 | 23 Mar 2021 (paper 20 Apr 2021) | blog post | **RoPE** ★<br><sub>RoPE — Rotary Position Embedding</sub> | major | [arXiv 2104.09864](https://arxiv.org/abs/2104.09864) | <sub>First appeared on Su Jianlin's blog kexue.fm/archives/8265 (23 Mar 2021; GitHub ZhuiyiTechnology/roformer created 2021-03-22; EleutherAI cites the post 'accessed 18-April-2021'). arXiv: [v1] Tue, 20 Apr 2021 09:54:06 UTC</sub> |
+| 32 | 27 Aug 2021 | arXiv v1 | **ALiBi** ★<br><sub>ALiBi — Attention with Linear Biases</sub> | major | [arXiv 2108.12409](https://arxiv.org/abs/2108.12409) | <sub>[v1] Fri, 27 Aug 2021 17:35:06 UTC (ICLR 2022)</sub> |
+| 33 | 10 Dec 2021 | arXiv v1 | **Rabe & Staats**<br><sub>Self-attention Does Not Need O(n²) Memory</sub> | footnote | [arXiv 2112.05682](https://arxiv.org/abs/2112.05682) | <sub>[v1] Fri, 10 Dec 2021</sub> |
+| 34 | 16 Mar 2022 | arXiv v1 | **Memorizing Tf**<br><sub>Memorizing Transformers</sub> | footnote | [arXiv 2203.08913](https://arxiv.org/abs/2203.08913) | <sub>[v1] Wed, 16 Mar 2022</sub> |
+| 35 | 30 Mar 2022 | arXiv v1 | **NoPE precursor**<br><sub>No positional encoding at all — Haviv et al. (NoPE precursor)</sub> | minor | [arXiv 2203.16634](https://arxiv.org/abs/2203.16634) | <sub>[v1] Wed, 30 Mar 2022 19:37:07 UTC</sub> |
+| 36 | 20 May 2022 | arXiv v1 | **KERPLE**<br><sub>KERPLE (and Sandwich) — kernelised relative bias for extrapolation</sub> | minor | [arXiv 2205.09921](https://arxiv.org/abs/2205.09921) | <sub>[v1] Fri, 20 May 2022 01:25:57 UTC; Sandwich (2212.10356) [v1] Tue, 20 Dec 2022</sub> |
+| 37 | 27 May 2022 | arXiv v1 | **FlashAttention**<br><sub>FlashAttention — exact attention, IO-aware</sub> | major | [arXiv 2205.14135](https://arxiv.org/abs/2205.14135) | <sub>[v1] Fri, 27 May 2022 17:53:09 UTC; FA2 (2307.08691) [v1] Mon, 17 Jul 2023; FA3 (2407.08608) [v1] Thu, 11 Jul 2024</sub> |
+| 38 | 20 Dec 2022 | arXiv v1 | **xPos**<br><sub>xPos — RoPE with exponential decay (LEX Transformer)</sub> | minor | [arXiv 2212.10554](https://arxiv.org/abs/2212.10554) | <sub>[v1] Tue, 20 Dec 2022 18:56:20 UTC (same day as Sandwich, 2212.10356)</sub> |
+| 39 | 28 Dec 2022 | arXiv v1 | **H3 / Hyena**<br><sub>H3 → Hyena — attention-free long convolutions (SSM lineage)</sub> | minor | [arXiv 2212.14052](https://arxiv.org/abs/2212.14052) | <sub>H3 [v1] Wed, 28 Dec 2022 17:56:03 UTC; Hyena [v1] Tue, 21 Feb 2023 18:29:25 UTC</sub> |
+| 40 | 22 May 2023 | arXiv v1 | **GQA** ★<br><sub>GQA — Grouped-Query Attention</sub> | major | [arXiv 2305.13245](https://arxiv.org/abs/2305.13245) | <sub>[v1] Mon, 22 May 2023 17:16:38 UTC (EMNLP 2023)</sub> |
+| 41 | 22 May 2023 | arXiv v1 | **RWKV**<br><sub>RWKV — Receptance Weighted Key Value</sub> | minor | [arXiv 2305.13048](https://arxiv.org/abs/2305.13048) | <sub>[v1] Mon, 22 May 2023 13:57:41 UTC — the RWKV-4 Pile checkpoints predate the paper (HF uploads 'RWKV-4-Pile-169M-20220807' / '430M-20220808' on 2022-08-17; repo README lists 'RWKV-4-Pile-1B5-20220903')</sub> |
+| 42 | 26 May 2023 | arXiv v1 | **Randomized PE**<br><sub>Randomized Positional Encodings</sub> | footnote | [arXiv 2305.16843](https://arxiv.org/abs/2305.16843) | <sub>[v1] Fri, 26 May 2023 11:47:52 UTC</sub> |
+| 43 | 31 May 2023 | arXiv v1 | **NoPE**<br><sub>NoPE — no positional encoding, named and argued</sub> | major | [arXiv 2305.19466](https://arxiv.org/abs/2305.19466) | <sub>[v1] Wed, 31 May 2023 00:29:55 UTC (NeurIPS 2023)</sub> |
+| 44 | 20 Jun 2023 (paper 27 Jun 2023) | blog post | **Position Interpolation**<br><sub>Position Interpolation (linear RoPE scaling)</sub> | major | [arXiv 2306.15595](https://arxiv.org/abs/2306.15595) · [primary](https://kaiokendev.github.io/til#extending-context-to-8k) | <sub>Blog changelog: "Added 'Extending Context' (6/20/23)" — 'scaling down the frequency window in RoPE by a factor of 0.25 … these two lines are all we need to change'. Meta paper: [v1] Tue, 27 Jun 2023 16:26:26 UTC</sub> |
+| 45 | 20 Jun 2023 (paper 12 Sep 2023) | blog post | **PagedAttention**<br><sub>PagedAttention (vLLM) — the KV cache gets virtual memory</sub> | minor | [arXiv 2309.06180](https://arxiv.org/abs/2309.06180) · [primary](https://vllm.ai/blog/2023-06-20-vllm) | <sub>vLLM blog dated June 20, 2023 (vLLM v0.1); arXiv [v1] Tue, 12 Sep 2023 12:50:04 UTC</sub> |
+| 46 | 24 Jun 2023 | arXiv v1 | **H2O**<br><sub>H2O — heavy-hitter KV eviction</sub> | minor | [arXiv 2306.14048](https://arxiv.org/abs/2306.14048) | <sub>[v1] Sat, 24 Jun 2023 20:11:14 UTC (NeurIPS 2023)</sub> |
+| 47 | 29 Jun 2023 | Reddit post | **NTK-aware** ★<br><sub>NTK-aware scaled RoPE</sub> | major | [www.reddit.com/r/LocalLLaMA/comments/14l](https://www.reddit.com/r/LocalLLaMA/comments/14lz7j5/ntkaware_scaled_rope_allows_llama_models_to_have/) | <sub>Reddit post 14lz7j5, created_utc 1688026889 = 2023-06-29 08:21 UTC (archive record); HF TGI issue #512 with the same title opened 30 Jun 2023; cited by the YaRN paper and the EleutherAI 'Extending the RoPE' blog. Not a paper — a Reddit post.</sub> |
+| 48 | 30 Jun 2023 | Reddit post | **Dynamic NTK**<br><sub>Dynamic NTK (dynamically scaled RoPE)</sub> | major | [www.reddit.com/r/LocalLLaMA/comments/14m](https://www.reddit.com/r/LocalLLaMA/comments/14mrgpr/dynamically_scaled_rope_further_increases/) | <sub>Reddit post 14mrgpr, created_utc 1688103246 = 2023-06-30 05:34 UTC (evening of 29 June in US time zones), ~21 hours after bloc97's post; cited by the YaRN paper (§3.3 'Dynamic Scaling')</sub> |
+| 49 | 5 Jul 2023 | arXiv v1 | **LongNet**<br><sub>LongNet — dilated attention</sub> | footnote | [arXiv 2307.02486](https://arxiv.org/abs/2307.02486) | <sub>[v1] Wed, 5 Jul 2023 17:59:38 UTC</sub> |
+| 50 | 17 Jul 2023 | arXiv v1 | **RetNet**<br><sub>RetNet — retention with exponential decay</sub> | minor | [arXiv 2307.08621](https://arxiv.org/abs/2307.08621) | <sub>[v1] Mon, 17 Jul 2023 16:40:01 UTC — same day as FlashAttention-2</sub> |
+| 51 | 24 Jul 2023 | blog post | **Softmax-1**<br><sub>Softmax-1 — 'Attention Is Off By One'</sub> | minor | [www.evanmiller.org/attention-is-off-by-o](https://www.evanmiller.org/attention-is-off-by-one.html) | <sub>Blog page dated July 24, 2023 — two months before StreamingLLM; gpt-oss's model card cites it alongside Xiao et al.</sub> |
+| 52 | 7 Aug 2023 (paper 30 Aug 2023) | GitHub | **ReRoPE / SelfExtend**<br><sub>ReRoPE / LM-Infinite / SelfExtend — training-free RoPE remapping</sub> | minor | [arXiv 2308.16137](https://arxiv.org/abs/2308.16137) · [primary](https://github.com/bojone/rerope) | <sub>ReRoPE repo first commit 2023-08-07T01:54:42Z ('Create ntk_patch.py'); LM-Infinite [v1] Wed, 30 Aug 2023 16:47:51 UTC; SelfExtend [v1] Tue, 2 Jan 2024; llama.cpp merged Self-Extend 2024-01-08 (PR #4815)</sub> |
+| 53 | 24 Aug 2023 | arXiv v1 | **RoPE base scaling (ABF)**<br><sub>RoPE base-frequency scaling, trained in (Code Llama θ=1e6; 'ABF')</sub> | minor | [arXiv 2308.12950](https://arxiv.org/abs/2308.12950) | <sub>[v1] Thu, 24 Aug 2023 17:39:13 UTC (model released the same day); the name 'ABF' comes from Llama 2 Long (2309.16039, [v1] Wed, 27 Sep 2023)</sub> |
+| 54 | 31 Aug 2023 | arXiv v1 | **YaRN** ★<br><sub>YaRN — Yet another RoPE extensioN</sub> | major | [arXiv 2309.00071](https://arxiv.org/abs/2309.00071) | <sub>[v1] Thu, 31 Aug 2023 18:18:07 UTC (ICLR 2024)</sub> |
+| 55 | 19 Sep 2023 | arXiv v1 | **PoSE**<br><sub>PoSE — Positional Skip-wise training</sub> | footnote | [arXiv 2309.10400](https://arxiv.org/abs/2309.10400) | <sub>[v1] Tue, 19 Sep 2023</sub> |
+| 56 | 27 Sep 2023 (paper 10 Oct 2023) | model release | **Mistral SWA** ★<br><sub>Sliding window attention in a mainstream LLM — Mistral 7B</sub> | major | [arXiv 2310.06825](https://arxiv.org/abs/2310.06825) · [primary](https://mistral.ai/news/announcing-mistral-7b/) | <sub>Mistral blog dated September 27, 2023: 'each layer attends to the previous 4,096 hidden states', KV cache 'limited to a size of sliding_window tokens, using rotating buffers'; paper [v1] Tue, 10 Oct 2023 17:54:58 UTC</sub> |
+| 57 | 29 Sep 2023 | arXiv v1 | **Attention sinks** ★<br><sub>Attention sinks — StreamingLLM</sub> | major | [arXiv 2309.17453](https://arxiv.org/abs/2309.17453) | <sub>[v1] Fri, 29 Sep 2023 17:59:56 UTC (ICLR 2024)</sub> |
+| 58 | 3 Oct 2023 | arXiv v1 | **Ring Attention**<br><sub>Ring Attention — exact attention sharded across devices</sub> | minor | [arXiv 2310.01889](https://arxiv.org/abs/2310.01889) | <sub>[v1] Tue, 3 Oct 2023 08:44:50 UTC</sub> |
+| 59 | 6 Oct 2023 | arXiv v1 | **FIRE**<br><sub>FIRE — functional interpolation for relative positions</sub> | minor | [arXiv 2310.04418](https://arxiv.org/abs/2310.04418) | <sub>[v1] Fri, 6 Oct 2023 17:59:11 UTC</sub> |
+| 60 | 1 Dec 2023 | arXiv v1 | **Mamba**<br><sub>Mamba — selective state space model</sub> | minor | [arXiv 2312.00752](https://arxiv.org/abs/2312.00752) | <sub>[v1] Fri, 1 Dec 2023 18:01:34 UTC</sub> |
+| 61 | 11 Dec 2023 | arXiv v1 | **GLA**<br><sub>Gated Linear Attention (GLA) + FlashLinearAttention</sub> | major | [arXiv 2312.06635](https://arxiv.org/abs/2312.06635) | <sub>[v1] Mon, 11 Dec 2023 18:51:59 UTC (ICML 2024)</sub> |
+| 62 | 12 Dec 2023 | arXiv v1 | **RadixAttention**<br><sub>RadixAttention / prefix caching (SGLang)</sub> | footnote | [arXiv 2312.07104](https://arxiv.org/abs/2312.07104) | <sub>[v1] Tue, 12 Dec 2023 09:34:27 UTC</sub> |
+| 63 | 5 Feb 2024 | arXiv v1 | **KIVI**<br><sub>KIVI — 2-bit KV cache quantisation</sub> | footnote | [arXiv 2402.02750](https://arxiv.org/abs/2402.02750) | <sub>[v1] Mon, 5 Feb 2024 06:06:47 UTC</sub> |
+| 64 | 21 Feb 2024 | arXiv v1 | **LongRoPE**<br><sub>LongRoPE — searched non-uniform interpolation to 2M</sub> | minor | [arXiv 2402.13753](https://arxiv.org/abs/2402.13753) | <sub>[v1] Wed, 21 Feb 2024 12:30:33 UTC</sub> |
+| 65 | 27 Feb 2024 | arXiv v1 | **DCA**<br><sub>Dual Chunk Attention (DCA)</sub> | minor | [arXiv 2402.17463](https://arxiv.org/abs/2402.17463) | <sub>[v1] Tue, 27 Feb 2024 12:39:23 UTC</sub> |
+| 66 | 27 Feb 2024 | arXiv v1 | **Massive Activations**<br><sub>Massive Activations in LLMs (why sinks exist)</sub> | footnote | [arXiv 2402.17762](https://arxiv.org/abs/2402.17762) | <sub>[v1] Tue, 27 Feb 2024 18:55:17 UTC</sub> |
+| 67 | 29 Feb 2024 | arXiv v1 | **Griffin**<br><sub>Griffin / RecurrentGemma</sub> | footnote | [arXiv 2402.19427](https://arxiv.org/abs/2402.19427) | <sub>[v1] Thu, 29 Feb 2024 18:24:46 UTC</sub> |
+| 68 | 28 Mar 2024 | arXiv v1 | **Jamba**<br><sub>Jamba — first production Transformer–Mamba–MoE hybrid</sub> | footnote | [arXiv 2403.19887](https://arxiv.org/abs/2403.19887) | <sub>[v1] Thu, 28 Mar 2024 23:55:06 UTC (blog the same day)</sub> |
+| 69 | 10 Apr 2024 | arXiv v1 | **Infini-attention**<br><sub>Infini-attention — compressive memory beside local attention</sub> | minor | [arXiv 2404.07143](https://arxiv.org/abs/2404.07143) | <sub>[v1] Wed, 10 Apr 2024 16:18:42 UTC</sub> |
+| 70 | 22 Apr 2024 | arXiv v1 | **SnapKV**<br><sub>SnapKV — prompt KV compression</sub> | minor | [arXiv 2404.14469](https://arxiv.org/abs/2404.14469) | <sub>[v1] Mon, 22 Apr 2024 17:42:58 UTC</sub> |
+| 71 | 6 May 2024 (paper 7 May 2024) | model release | **MLA** ★<br><sub>MLA — Multi-head Latent Attention (DeepSeek-V2)</sub> | major | [arXiv 2405.04434](https://arxiv.org/abs/2405.04434) · [primary](https://github.com/deepseek-ai/DeepSeek-V2) | <sub>GitHub README news: '2024.05.06: We released the DeepSeek-V2.' — the model shipped one day before the report; arXiv [v1] Tue, 7 May 2024 15:56:43 UTC</sub> |
+| 72 | 8 May 2024 | arXiv v1 | **YOCO**<br><sub>YOCO — You Only Cache Once</sub> | footnote | [arXiv 2405.05254](https://arxiv.org/abs/2405.05254) | <sub>[v1] Wed, 8 May 2024 17:57:39 UTC</sub> |
+| 73 | 21 May 2024 | arXiv v1 | **CLA**<br><sub>Cross-Layer Attention (CLA) — share KV across layers</sub> | minor | [arXiv 2405.12981](https://arxiv.org/abs/2405.12981) | <sub>[v1] Tue, 21 May 2024 17:59:29 UTC</sub> |
+| 74 | 29 May 2024 | arXiv v1 | **CoPE**<br><sub>CoPE — Contextual Position Encoding</sub> | footnote | [arXiv 2405.18719](https://arxiv.org/abs/2405.18719) | <sub>[v1] Wed, 29 May 2024 02:57:15 UTC</sub> |
+| 75 | 31 May 2024 | arXiv v1 | **Mamba-2 (SSD)**<br><sub>Mamba-2 / State Space Duality — SSMs *are* linear attention</sub> | minor | [arXiv 2405.21060](https://arxiv.org/abs/2405.21060) | <sub>[v1] Fri, 31 May 2024 17:50:01 UTC (ICML 2024)</sub> |
+| 76 | 10 Jun 2024 | arXiv v1 | **Parallel DeltaNet**<br><sub>DeltaNet made parallel — chunkwise WY training</sub> | major | [arXiv 2406.06484](https://arxiv.org/abs/2406.06484) | <sub>[v1] Mon, 10 Jun 2024 17:24:42 UTC (NeurIPS 2024)</sub> |
+| 77 | 16 Jun 2024 | arXiv v1 | **Quest**<br><sub>Quest — query-aware KV-page selection</sub> | minor | [arXiv 2406.10774](https://arxiv.org/abs/2406.10774) | <sub>[v1] Sun, 16 Jun 2024 01:33:02 UTC (ICML 2024)</sub> |
+| 78 | 27 Jun 2024 (paper 31 Jul 2024) | model release | **Gemma 2 local:global**<br><sub>Gemma 2 — interleaved local (4K window) / global layers</sub> | minor | [arXiv 2408.00118](https://arxiv.org/abs/2408.00118) · [primary](https://blog.google/technology/developers/google-gemma-2/) | <sub>Google blog dated Jun 27, 2024; paper [v1] Wed, 31 Jul 2024 19:13:07 UTC — 'The sliding window size of local attention layers is set to 4096 tokens, while the span of the global attention layers is set to 8192 tokens'</sub> |
+| 79 | 2 Jul 2024 | arXiv v1 | **MInference**<br><sub>MInference — dynamic sparse prefill</sub> | minor | [arXiv 2407.02490](https://arxiv.org/abs/2407.02490) | <sub>[v1] Tue, 2 Jul 2024 17:59:56 UTC (NeurIPS 2024)</sub> |
+| 80 | 23 Jul 2024 (paper 31 Jul 2024) | model release | **Llama 3.1 128K**<br><sub>Llama 3.1 — 128K by base 500K + 'llama3' scaling + staged long-context pretraining</sub> | minor | [arXiv 2407.21783](https://arxiv.org/abs/2407.21783) · [primary](https://ai.meta.com/blog/meta-llama-3-1/) | <sub>Meta blog dated July 23, 2024; paper [v1] 31 Jul 2024; config.json rope_scaling {rope_type 'llama3', factor 8, low_freq_factor 1, high_freq_factor 4, original_max_position_embeddings 8192}, rope_theta 500000; 'increased context length gradually in six stages … ending in the final 128K'</sub> |
+| 81 | 6 Sep 2024 | arXiv v1 | **Sigmoid attention**<br><sub>Sigmoid attention (FlashSigmoid)</sub> | footnote | [arXiv 2409.04431](https://arxiv.org/abs/2409.04431) | <sub>[v1] Fri, 6 Sep 2024 17:53:26 UTC</sub> |
+| 82 | 7 Oct 2024 | arXiv v1 | **Diff Transformer**<br><sub>Differential Transformer — attention as a difference of two softmaxes</sub> | minor | [arXiv 2410.05258](https://arxiv.org/abs/2410.05258) | <sub>[v1] Mon, 7 Oct 2024 17:57:38 UTC (ICLR 2025)</sub> |
+| 83 | 14 Oct 2024 | arXiv v1 | **DuoAttention**<br><sub>DuoAttention — retrieval heads vs streaming heads</sub> | minor | [arXiv 2410.10819](https://arxiv.org/abs/2410.10819) | <sub>[v1] Mon, 14 Oct 2024 17:59:58 UTC (ICLR 2025)</sub> |
+| 84 | 26 Nov 2024 | arXiv v1 | **Star Attention**<br><sub>Star Attention</sub> | footnote | [arXiv 2411.17116](https://arxiv.org/abs/2411.17116) | <sub>[v1] Tue, 26 Nov 2024 05:10:04 UTC</sub> |
+| 85 | 9 Dec 2024 | arXiv v1 | **Gated DeltaNet** ★<br><sub>Gated DeltaNet — gating + the delta rule</sub> | major | [arXiv 2412.06464](https://arxiv.org/abs/2412.06464) | <sub>[v1] Mon, 9 Dec 2024 13:09:04 UTC (ICLR 2025)</sub> |
+| 86 | 31 Dec 2024 | arXiv v1 | **Titans**<br><sub>Titans — neural long-term memory learned at test time</sub> | minor | [arXiv 2501.00663](https://arxiv.org/abs/2501.00663) | <sub>[v1] Tue, 31 Dec 2024 22:32:03 UTC</sub> |
+| 87 | 11 Jan 2025 | arXiv v1 | **TPA**<br><sub>Tensor Product Attention (TPA)</sub> | footnote | [arXiv 2501.06425](https://arxiv.org/abs/2501.06425) | <sub>[v1] Sat, 11 Jan 2025 03:37:10 UTC</sub> |
+| 88 | 14 Jan 2025 | arXiv v1 | **MiniMax lightning**<br><sub>MiniMax-01 — lightning (linear) attention hybrid at 456B</sub> | minor | [arXiv 2501.08313](https://arxiv.org/abs/2501.08313) | <sub>[v1] Tue, 14 Jan 2025 18:50:05 UTC (open weights announced 2025-01-15)</sub> |
+| 89 | 30 Jan 2025 | arXiv v1 | **RNoPE-SWA (Cohere)**<br><sub>RoPE to NoPE and Back Again — RoPE-SWA + NoPE-global hybrid</sub> | minor | [arXiv 2501.18795](https://arxiv.org/abs/2501.18795) | <sub>[v1] Thu, 30 Jan 2025 23:05:57 UTC</sub> |
+| 90 | 11 Feb 2025 | arXiv v1 | **TransMLA**<br><sub>TransMLA — converting GQA checkpoints to MLA</sub> | footnote | [arXiv 2502.07864](https://arxiv.org/abs/2502.07864) | <sub>[v1] Tue, 11 Feb 2025</sub> |
+| 91 | 16 Feb 2025 | arXiv v1 | **NSA** ★<br><sub>NSA — Native Sparse Attention (DeepSeek): compress + select + slide</sub> | major | [arXiv 2502.11089](https://arxiv.org/abs/2502.11089) | <sub>[v1] Sun, 16 Feb 2025 11:53:44 UTC (ACL 2025 best paper)</sub> |
+| 92 | 18 Feb 2025 | arXiv v1 | **MoBA**<br><sub>MoBA — Mixture of Block Attention (Moonshot)</sub> | minor | [arXiv 2502.13189](https://arxiv.org/abs/2502.13189) | <sub>[v1] Tue, 18 Feb 2025 14:06:05 UTC — two days after NSA</sub> |
+| 93 | 12 Mar 2025 (paper 25 Mar 2025) | model release | **Gemma 3 5:1**<br><sub>Gemma 3 — 5:1 local:global, 1K window, 128K</sub> | minor | [arXiv 2503.19786](https://arxiv.org/abs/2503.19786) · [primary](https://blog.google/technology/developers/gemma-3/) | <sub>Google blog 'Introducing Gemma 3' dated March 12, 2025; report [v1] Tue, 25 Mar 2025 15:52:34 UTC — '5 local layers for every global layer', local span 1024, RoPE base 1M on global / 10K on local</sub> |
+| 94 | 1 Apr 2025 | arXiv v1 | **MTA**<br><sub>Multi-Token Attention</sub> | footnote | [arXiv 2504.00927](https://arxiv.org/abs/2504.00927) | <sub>[v1] Tue, 1 Apr 2025 15:59:32 UTC</sub> |
+| 95 | 5 Apr 2025 | blog post | **Llama 4 iRoPE**<br><sub>Llama 4 iRoPE — interleaved NoPE layers + attention temperature</sub> | minor | [ai.meta.com/blog/llama-4-multimodal-inte](https://ai.meta.com/blog/llama-4-multimodal-intelligence/) | <sub>Meta blog dated April 5, 2025: 'the use of interleaved attention layers without positional embeddings' and 'inference time temperature scaling of attention'; HF config: NoPE every 4th layer, chunked attention 8192 on RoPE layers, QK-norm</sub> |
+| 96 | 11 Apr 2025 | arXiv v1 | **SWAN-GPT**<br><sub>SWAN-GPT — NoPE + sliding-window RoPE, retrofit-able</sub> | minor | [arXiv 2504.08719](https://arxiv.org/abs/2504.08719) | <sub>[v1] Fri, 11 Apr 2025 17:33:32 UTC</sub> |
+| 97 | 29 Apr 2025 | arXiv v1 | **Softpick**<br><sub>Softpick — rectified, non-sum-to-one softmax</sub> | footnote | [arXiv 2504.20966](https://arxiv.org/abs/2504.20966) | <sub>[v1] Tue, 29 Apr 2025 17:36:18 UTC</sub> |
+| 98 | 10 May 2025 | arXiv v1 | **Gated Attention**<br><sub>Gated Attention — sink-free softmax attention (Qwen)</sub> | minor | [arXiv 2505.06708](https://arxiv.org/abs/2505.06708) | <sub>[v1] Sat, 10 May 2025 17:15:49 UTC (NeurIPS 2025)</sub> |
+| 99 | 27 May 2025 | arXiv v1 | **GTA / GLA (decode)**<br><sub>Grouped-Tied / Grouped Latent Attention (decode-efficient MLA)</sub> | footnote | [arXiv 2505.21487](https://arxiv.org/abs/2505.21487) | <sub>[v1] Tue, 27 May 2025 17:54:07 UTC</sub> |
+| 100 | 9 Jun 2025 | arXiv v1 | **InfLLM v2**<br><sub>MiniCPM4 / InfLLM v2 — trainable sparse attention on-device</sub> | footnote | [arXiv 2506.07900](https://arxiv.org/abs/2506.07900) | <sub>[v1] Mon, 9 Jun 2025</sub> |
+| 101 | 5 Aug 2025 (paper 8 Aug 2025) | model release | **gpt-oss sinks**<br><sub>gpt-oss — banded (128) : dense alternation + learned attention sinks</sub> | minor | [arXiv 2508.10925](https://arxiv.org/abs/2508.10925) | <sub>Model card: release date August 5, 2025; arXiv [v1] Fri, 8 Aug 2025 19:24:38 UTC — 'attention blocks alternate between banded window and fully dense patterns, where the bandwidth is 128 tokens … Each attention head has a learned bias in the denominator of the softmax, similar to off-by-one attention and attention sinks'</sub> |
+| 102 | 11 Sep 2025 | model release | **Qwen3-Next**<br><sub>Qwen3-Next — 3:1 Gated DeltaNet : Gated Attention</sub> | minor | [huggingface.co/Qwen/Qwen3-Next-80B-A3B-I](https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct) | <sub>HF repo initial commit 9 Sep 2025, public announcement 11 Sep 2025 (vLLM 'Now Supports Qwen3-Next' post dated Sep 11, 2025); model card: '12 * (3 * (Gated DeltaNet -> MoE) -> 1 * (Gated Attention -> MoE))', 262,144 native context</sub> |
+| 103 | 29 Sep 2025 (paper 2 Dec 2025) | model release | **DSA** ★<br><sub>DSA — DeepSeek Sparse Attention (V3.2): lightning indexer + top-k tokens on MLA</sub> | major | [arXiv 2512.02556](https://arxiv.org/abs/2512.02556) · [primary](https://api-docs.deepseek.com/news/news250929) | <sub>DeepSeek news post dated September 29, 2025 (tech report PDF in github.com/deepseek-ai/DeepSeek-V3.2-Exp); non-Exp V3.2 released 2025-12-01; paper arXiv 2512.02556 [v1] Tue, 2 Dec 2025 09:25:14 UTC</sub> |
+| 104 | 30 Oct 2025 | arXiv v1 | **Kimi Linear (KDA)**<br><sub>Kimi Linear / KDA — channel-wise gated delta rule + NoPE MLA, 3:1</sub> | minor | [arXiv 2510.26692](https://arxiv.org/abs/2510.26692) | <sub>[v1] 30 Oct 2025; HF moonshotai/Kimi-Linear-48B-A3B-Instruct initial commit October 30, 2025</sub> |
+| 105 | 13 Dec 2025 | arXiv v1 | **DroPE** ★<br><sub>DroPE — Dropping the Positional Embeddings after pretraining</sub> | major | [arXiv 2512.12167](https://arxiv.org/abs/2512.12167) | <sub>[v1] Sat, 13 Dec 2025 04:23:47 UTC (PDF footer 'arXiv:2512.12167v1 [cs.CL] 13 Dec 2025'); public launch (blog sakana.ai/drope, code, HF checkpoints) 12 Jan 2026</sub> |
+| 106 | 3 Feb 2026 | arXiv v1 | **HySparse**<br><sub>HySparse — hybrid sparse attention with oracle token selection and KV sharing</sub> | footnote | [arXiv 2602.03560](https://arxiv.org/abs/2602.03560) | <sub>arXiv API published 2026-02-03T14:05:57Z (v1)</sub> |
+| 107 | 3 Feb 2026 | arXiv v1 | **NAtS-L**<br><sub>Neural Attention Search Linear (NAtS-L) — token-level linear / softmax hybrid</sub> | footnote | [arXiv 2602.03681](https://arxiv.org/abs/2602.03681) | <sub>arXiv API published 2026-02-03T16:02:50Z (v1)</sub> |
+| 108 | 12 Feb 2026 | arXiv v1 | **MiniCPM-SALA**<br><sub>MiniCPM-SALA — sparse (InfLLM-V2) + linear (Lightning) attention in one 9B model</sub> | minor | [arXiv 2602.11761](https://arxiv.org/abs/2602.11761) | <sub>arXiv API published 2026-02-12T09:37:05Z (v1)</sub> |
+| 109 | 16 Feb 2026 | model release | **Qwen3.5**<br><sub>Qwen3.5-397B-A17B — Gated DeltaNet hybrid at flagship scale (45 linear : 15 full)</sub> | minor | [huggingface.co/Qwen/Qwen3.5-397B-A17B](https://huggingface.co/Qwen/Qwen3.5-397B-A17B) | <sub>HF repo createdAt 2026-02-16T04:55:12Z; config.json: 60 layers, layer_types 45 linear_attention : 15 full_attention, full_attention_interval 4, 32 Q / 2 KV heads (head 256), linear 64 V / 16 K heads × 128, max_position_embeddings 262144</sub> |
+| 110 | 24 Apr 2026 (paper 26 Apr 2026) | model release | **DeepSeek-V4 CSA/HCA**<br><sub>DeepSeek-V4 — Compressed Sparse Attention + Heavily Compressed Attention</sub> | major | [arXiv 2606.19348](https://arxiv.org/abs/2606.19348) · [primary](https://api-docs.deepseek.com/news/news260424/) | <sub>DeepSeek news: 'DeepSeek-V4 Preview Release 2026/04/24' — 'Novel Attention: Token-wise compression + DSA (DeepSeek Sparse Attention)', '1M context is now the default'; arXiv API for 2606.19348v1: published 2026-04-26T14:49:33Z (the identifier's YYMM prefix does not match the recorded April submission — recorded as the API returns it)</sub> |
+| 111 | 8 Jun 2026 | arXiv v1 | **FlashMemory**<br><sub>FlashMemory-DeepSeek-V4 — lookahead sparse attention on the lightning index</sub> | footnote | [arXiv 2606.09079](https://arxiv.org/abs/2606.09079) | <sub>arXiv API published 2026-06-08T06:25:54Z (v1)</sub> |
+| 112 | 27 Jul 2026 | arXiv v1 | **Kimi K3**<br><sub>Kimi K3 — Kimi Delta Attention 3:1 with gated MLA at 2.8T, plus Attention Residuals</sub> | minor | [arXiv 2607.24653](https://arxiv.org/abs/2607.24653) | <sub>arXiv API published 2026-07-27T16:49:54Z (v1); kimi.com/blog/kimi-k3: 'built on Kimi Delta Attention (KDA) and Attention Residuals (AttnRes)', 'The full model weights will be released by July 27, 2026' (blog page carries no explicit date; press coverage dates the announcement 16 Jul 2026)</sub> |
+<!-- END TIMELINE TABLE -->
+
+## 8. Limitations, honestly
+
+- **"First appeared" is first *public* appearance, not invention.** Several ideas were on OpenReview or in code before the date shown, and internal use at labs is invisible.
+- **The cost model is idealised** — attention core only, no projections / MoE / softmax cost; it is meant to show the shape of the curves, not to benchmark anything. Preset layouts were read from the public `config.json` files (URLs in `src/assignment-8/lib/costModel.js`) as of Aug 2026.
+- **The visualizers use seeded random Q/K/V on ≤64 tokens.** They show the pattern each mechanism computes and the bill it pays, not a trained model's attention. The RoPE curve is RoFormer's §3.4.3 decay bound, not a trained score.
+- **Pros / cons / verdicts are judgements** written from the papers' own numbers and later adoption; the "when you would pick it" cells are opinions and say so.
+- **Post-December-2025 coverage** was swept by hand (see §5.4) after the agent-based sweep was cut off; it found DeepSeek-V4's CSA/HCA, Qwen3.5, MiniCPM-SALA, Kimi K3 and three research hybrids, and it is the part of the timeline most likely to be incomplete.
+- **Where a page could not be fetched directly** (kexue.fm returns 403; reddit.com blocks bots; some model cards are gated) the date comes from an archive/API/repo timestamp and the record's evidence string says so.
+
+## 9. Develop / verify
+
+```bash
+npm run dev                                   # Vite dev server, /era-v5/assignment-8/
+npm run build && npm run preview              # production build served at :4173
+node scripts/check_assignment8.mjs            # verdict: PASS
+node scripts/check_assignment8.mjs --write    # regenerate §7 after editing data/
+node scripts/check_assignment8.mjs --links    # HEAD/GET every source URL
+```
+
+Publishing: this page is one entry of the repo's Vite multi-page build (`vite.config.js` → `assignment8`), deployed to GitHub Pages by `.github/workflows/deploy.yml` on push to `main`; it also appears in the shared header's Assignments dropdown.

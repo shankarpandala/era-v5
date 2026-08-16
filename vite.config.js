@@ -24,6 +24,7 @@ export default defineConfig({
         dataCollection: 'data-collection/index.html',
         dataCleaning: 'data-cleaning/index.html',
         assignment7: 'assignment-7/index.html',
+        assignment8: 'assignment-8/index.html',
       },
     },
   },

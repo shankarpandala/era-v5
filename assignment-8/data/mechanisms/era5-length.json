@@ -1,0 +1,1432 @@
+[
+  {
+    "id": "gqa",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 5,
+    "order": 0,
+    "name": "GQA — Grouped-Query Attention",
+    "short": "GQA",
+    "aka": "grouped-query; 'uptraining' MHA checkpoints",
+    "date": "2023-05-22",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints",
+      "authors": "Ainslie, Lee-Thorp, de Jong, Zemlyanskiy, Lebrón, Sanghai (Google)",
+      "arxiv": "2305.13245",
+      "url": "https://arxiv.org/abs/2305.13245",
+      "evidence": "[v1] Mon, 22 May 2023 17:16:38 UTC (EMNLP 2023)"
+    },
+    "secondary": [
+      {
+        "label": "Llama 2 34B/70B: 'use Grouped-Query Attention (GQA) for improved inference scalability'",
+        "url": "https://arxiv.org/abs/2307.09288",
+        "date": "2023-07-18"
+      }
+    ],
+    "firstShipped": {
+      "model": "Llama 2 70B",
+      "date": "2023-07-18",
+      "url": "https://arxiv.org/abs/2307.09288"
+    },
+    "family": "heads-kv",
+    "bill": [
+      "kv-memory"
+    ],
+    "problem": "MQA fixes the KV bill but costs quality and needs training from scratch. Every lab in 2023 owned MHA checkpoints and a KV cache that was suddenly the serving constraint. Wanted: most of MQA's saving, almost none of its quality loss, and a way to convert what you already have.",
+    "idea": "Share each K/V head across a *group* of query heads: 64 query heads → 8 KV heads is an 8× smaller cache. Convert an MHA checkpoint by mean-pooling its K/V heads into groups and 'uptraining' for ~5% of the original pretraining compute.",
+    "buys": [
+      "KV cache and read traffic ÷ (heads / groups) at near-MHA quality — between MQA and MHA in quality, near MQA in speed",
+      "Retrofit-able: cheap uptraining instead of a new pretraining run",
+      "The 2023–25 default: Llama 2/3, Mistral, Qwen, gpt-oss"
+    ],
+    "costs": [
+      "KV is still O(context) per token — GQA lowers the constant, not the scaling",
+      "A small quality drop vs MHA on some tasks; needs the uptraining pass",
+      "Fewer KV heads constrain tensor-parallel sharding: KV heads must divide evenly or be replicated"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "yes",
+        "why": "the baseline for any served decoder ≥7B"
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "unless you go further to MLA for an even smaller cache"
+      },
+      "verdict": "The compromise everyone shipped. Right almost always; skip only for tiny models where KV is not the bottleneck, or when MLA is on the table."
+    },
+    "viz": {
+      "kind": "kv",
+      "mode": "gqa"
+    }
+  },
+  {
+    "id": "rwkv",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 1,
+    "name": "RWKV — Receptance Weighted Key Value",
+    "short": "RWKV",
+    "date": "2023-05-22",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "RWKV: Reinventing RNNs for the Transformer Era",
+      "authors": "Peng et al. (RWKV / EleutherAI)",
+      "arxiv": "2305.13048",
+      "url": "https://arxiv.org/abs/2305.13048",
+      "evidence": "[v1] Mon, 22 May 2023 13:57:41 UTC — the RWKV-4 Pile checkpoints predate the paper (HF uploads 'RWKV-4-Pile-169M-20220807' / '430M-20220808' on 2022-08-17; repo README lists 'RWKV-4-Pile-1B5-20220903')"
+    },
+    "secondary": [
+      {
+        "label": "RWKV-4-Pile-169M / 430M uploaded to HF",
+        "url": "https://huggingface.co/BlinkDL/rwkv-4-pile-169m/commits/main",
+        "date": "2022-08-17"
+      },
+      {
+        "label": "RWKV-LM repo (RWKV-4-Pile-1B5-20220903)",
+        "url": "https://github.com/BlinkDL/RWKV-LM",
+        "date": "2022-09-03"
+      }
+    ],
+    "firstShipped": {
+      "model": "RWKV-4-Pile 169M/430M checkpoints on Hugging Face (the 1B5 checkpoint is dated 2022-09-03)",
+      "date": "2022-08-17",
+      "url": "https://huggingface.co/BlinkDL/rwkv-4-pile-169m/commits/main"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "Quadratic attention and a growing KV cache; wanted RNN-style O(1) per-token inference with transformer-style parallel training.",
+    "idea": "Replace attention with a linear time-mix (WKV) plus channel-mix; trainable in parallel, run as an RNN at inference.",
+    "buys": [
+      "Linear time, constant memory, no KV cache; competitive with same-size transformers up to 14B in the paper",
+      "Fully open weights and code; the community proof that the RNN was not dead"
+    ],
+    "costs": [
+      "Fixed state → weak exact recall / needle retrieval; prompt-order sensitivity",
+      "Kernel and serving ecosystem less mature; the paper is a post-hoc description of RWKV-4"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "maybe",
+        "why": "edge/CPU where memory dominates"
+      },
+      "rag32k": {
+        "v": "no",
+        "why": "recall"
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": "not for retrieval-heavy agents"
+      },
+      "verdict": "Same day as GQA — the two threads of 2023 side by side: shrink the cache, or abolish it."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "rwkv"
+    }
+  },
+  {
+    "id": "randomized-pe",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "Randomized Positional Encodings",
+    "short": "Randomized PE",
+    "date": "2023-05-26",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Randomized Positional Encodings Boost Length Generalization of Transformers",
+      "authors": "Ruoss et al. (DeepMind)",
+      "arxiv": "2305.16843",
+      "url": "https://arxiv.org/abs/2305.16843",
+      "evidence": "[v1] Fri, 26 May 2023 11:47:52 UTC"
+    },
+    "family": "position",
+    "bill": [
+      "extrapolation"
+    ],
+    "oneLiner": "Sample positions from a range longer than the training length so the model has seen large position values — a training-time answer to extrapolation; PoSE (Sep 2023) applies the same trick to RoPE fine-tuning.",
+    "whyFootnote": "Training recipe rather than an attention mechanism."
+  },
+  {
+    "id": "nope",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "NoPE — no positional encoding, named and argued",
+    "short": "NoPE",
+    "date": "2023-05-31",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "The Impact of Positional Encoding on Length Generalization in Transformers",
+      "authors": "Kazemnejad, Padhi, Ramamurthy, Das, Reddy (Mila / IBM)",
+      "arxiv": "2305.19466",
+      "url": "https://arxiv.org/abs/2305.19466",
+      "evidence": "[v1] Wed, 31 May 2023 00:29:55 UTC (NeurIPS 2023)"
+    },
+    "secondary": [
+      {
+        "label": "Cohere Command R7B model card: 'a fourth layer uses global attention without positional embeddings'",
+        "url": "https://huggingface.co/CohereLabs/c4ai-command-r7b-12-2024",
+        "date": "2024-12-13"
+      },
+      {
+        "label": "Cohere blog 'Introducing Command R7B'",
+        "url": "https://cohere.com/blog/command-r7b",
+        "date": "2024-12-13"
+      },
+      {
+        "label": "Llama 4 iRoPE: 'interleaved attention layers without positional embeddings'",
+        "url": "https://ai.meta.com/blog/llama-4-multimodal-intelligence/",
+        "date": "2025-04-05"
+      }
+    ],
+    "firstShipped": {
+      "model": "Cohere Command R7B (3 SWA-RoPE layers : 1 global layer without positional embeddings); then Command A (Mar 2025), Llama 4 iRoPE (Apr 2025)",
+      "date": "2024-12-13",
+      "url": "https://huggingface.co/CohereLabs/c4ai-command-r7b-12-2024"
+    },
+    "family": "position",
+    "bill": [
+      "extrapolation"
+    ],
+    "problem": "Which positional encoding extrapolates best — APE, T5 bias, ALiBi, RoPE, or none? Decoder-only transformers fail past training length and every PE was suspected.",
+    "idea": "None. With a causal mask a decoder can recover position implicitly; NoPE can represent both absolute and relative positions in theory, and on small synthetic reasoning tasks it extrapolated at least as well as ALiBi/RoPE/T5.",
+    "buys": [
+      "Nothing to break at unseen lengths; theory that NoPE can express both absolute and relative position",
+      "The licence for the NoPE-global layers of Cohere Command R7B (Dec 2024), Command A, Llama 4 iRoPE and SWAN (2025), and for DroPE",
+      "Attention learns relative-like patterns on its own"
+    ],
+    "costs": [
+      "Evidence is ~100M-parameter models on synthetic tasks; at LLM scale pure NoPE lags RoPE in-distribution and its length generalisation is also limited",
+      "No frequency knob: PI / NTK / YaRN cannot be applied to a NoPE layer",
+      "Decoder-only; no locality prior to exploit"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": "RoPE is at least as good and better understood"
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": "as global layers in a hybrid"
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "as the interleaved global layers, never as the sole PE"
+      },
+      "verdict": "Its 2023 impact was conceptual; the practical uptake came 18 months later as one half of a hybrid (Command R7B, Dec 2024)."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "nope"
+    }
+  },
+  {
+    "id": "position-interpolation",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "Position Interpolation (linear RoPE scaling)",
+    "short": "Position Interpolation",
+    "aka": "PI; SuperHOT 8K; 'condensing rotary embeddings'; rope_scaling 'linear'",
+    "date": "2023-06-20",
+    "datePrecision": "day",
+    "dateKind": "blog",
+    "paperDate": "2023-06-27",
+    "source": {
+      "title": "kaiokendev, 'Things I'm Learning While Training SuperHOT' — 'Extending Context to 8K'; formalised a week later by Chen et al. (Meta), 'Extending Context Window of Large Language Models via Positional Interpolation'",
+      "authors": "kaiokendev (blog); Chen, Wong, Chen, Tian (Meta)",
+      "arxiv": "2306.15595",
+      "url": "https://kaiokendev.github.io/til#extending-context-to-8k",
+      "evidence": "Blog changelog: \"Added 'Extending Context' (6/20/23)\" — 'scaling down the frequency window in RoPE by a factor of 0.25 … these two lines are all we need to change'. Meta paper: [v1] Tue, 27 Jun 2023 16:26:26 UTC"
+    },
+    "secondary": [
+      {
+        "label": "Chen et al. (Meta) — Position Interpolation, arXiv 2306.15595",
+        "url": "https://arxiv.org/abs/2306.15595",
+        "date": "2023-06-27"
+      },
+      {
+        "label": "LMSYS LongChat-16K, cites the blog",
+        "url": "https://lmsys.org/blog/2023-06-29-longchat/",
+        "date": "2023-06-29"
+      },
+      {
+        "label": "HF transformers 4.31.0 adds rope_scaling 'linear' and 'dynamic'",
+        "url": "https://github.com/huggingface/transformers/releases/tag/v4.31.0",
+        "date": "2023-07-18"
+      }
+    ],
+    "firstShipped": {
+      "model": "LongChat-7B/13B-16K (LMSYS)",
+      "date": "2023-06-29",
+      "url": "https://lmsys.org/blog/2023-06-29-longchat/"
+    },
+    "family": "scaling",
+    "bill": [
+      "length"
+    ],
+    "problem": "Everyone owned LLaMA at 2,048 tokens and RoPE explodes when extrapolated — attention scores at positions the model never saw are catastrophically large. Wanted 8–32K without a pretraining run.",
+    "idea": "Do not extrapolate — interpolate. Multiply positions by 1/s so 8K positions map into the trained 0–2K range, then fine-tune briefly (kaiokendev: a 0.25 factor and a LoRA; Meta: ~1,000 steps to 32K, with a bound showing interpolation error ≈600× smaller than extrapolation).",
+    "buys": [
+      "A two-line change; 7B–65B LLaMA to 32K with strong perplexity and retrieval after a short fine-tune",
+      "Short-context quality mostly preserved; became rope_scaling='linear' in every framework",
+      "Started the ten-day burst that produced NTK-aware, Dynamic NTK and, in August, YaRN"
+    ],
+    "costs": [
+      "Needs a fine-tune; the factor is fixed at train time",
+      "Compresses *every* frequency equally, so high-frequency (local-order) information is squeezed — a small perplexity rise at short lengths and loss of local resolution",
+      "Large factors (>8–16×) degrade — the gap NTK-by-parts / YaRN filled"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": "nothing to extend"
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": "2–8× with a small fine-tune; YaRN is better today"
+      },
+      "coding128k": {
+        "v": "no",
+        "why": "the factor is too large; use YaRN or a large base"
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "The community's fix arrived a week before the lab's paper. Historic now — YaRN subsumes it — but the idea 'squeeze, don't stretch' is the whole 2023 lineage."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "pi"
+    }
+  },
+  {
+    "id": "paged-attention",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 1,
+    "name": "PagedAttention (vLLM) — the KV cache gets virtual memory",
+    "short": "PagedAttention",
+    "date": "2023-06-20",
+    "datePrecision": "day",
+    "dateKind": "blog",
+    "paperDate": "2023-09-12",
+    "source": {
+      "title": "vLLM: Easy, Fast, and Cheap LLM Serving with PagedAttention (blog); 'Efficient Memory Management for Large Language Model Serving with PagedAttention'",
+      "authors": "Kwon, Li, Zhuang, Sheng, Zheng, Yu, Gonzalez, Zhang, Stoica (Berkeley)",
+      "arxiv": "2309.06180",
+      "url": "https://vllm.ai/blog/2023-06-20-vllm",
+      "evidence": "vLLM blog dated June 20, 2023 (vLLM v0.1); arXiv [v1] Tue, 12 Sep 2023 12:50:04 UTC"
+    },
+    "firstShipped": {
+      "model": "vLLM v0.1; then TGI, TensorRT-LLM",
+      "date": "2023-06-20",
+      "url": "https://vllm.ai/blog/2023-06-20-vllm"
+    },
+    "family": "systems",
+    "bill": [
+      "kv-memory",
+      "systems"
+    ],
+    "problem": "Contiguous per-request KV reservation wasted 60–80% of GPU memory to fragmentation and over-reservation, capping batch size and therefore throughput. Not a math problem — a memory-management one.",
+    "idea": "Store KV in fixed-size non-contiguous blocks with per-sequence block tables — an OS page table for attention — with copy-on-write for shared prefixes and parallel sampling.",
+    "buys": [
+      "<4% KV waste; 2–4× throughput vs FasterTransformer/Orca; up to 24× vs HF Transformers",
+      "Prefix sharing became the basis of 'prompt caching'"
+    ],
+    "costs": [
+      "Pure serving change: attention semantics, compute and context length untouched",
+      "Block indirection in kernels; later work (vAttention, FlashInfer) argues the paging itself has overhead"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "yes",
+        "why": "default in every serving stack"
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": ""
+      },
+      "verdict": "Not a modelling decision — but it is the moment 'KV memory' became the number everyone optimises against, and every 2024 mechanism is measured in its units."
+    },
+    "viz": {
+      "kind": "kv",
+      "mode": "paged"
+    }
+  },
+  {
+    "id": "h2o",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "H2O — heavy-hitter KV eviction",
+    "short": "H2O",
+    "date": "2023-06-24",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "H2O: Heavy-Hitter Oracle for Efficient Generative Inference of Large Language Models",
+      "authors": "Zhang et al.",
+      "arxiv": "2306.14048",
+      "url": "https://arxiv.org/abs/2306.14048",
+      "evidence": "[v1] Sat, 24 Jun 2023 20:11:14 UTC (NeurIPS 2023)"
+    },
+    "family": "kv-eviction",
+    "bill": [
+      "kv-memory"
+    ],
+    "problem": "The KV cache grows linearly during decode; a few 'heavy-hitter' tokens carry most cumulative attention.",
+    "idea": "Keep the heavy hitters plus a recent window and evict the rest — no training.",
+    "buys": [
+      "5–10× smaller KV at small accuracy loss; large throughput gains at the time"
+    ],
+    "costs": [
+      "Lossy and irreversible; cumulative-score bias toward early tokens",
+      "Needs materialised attention scores — fights FlashAttention-style kernels",
+      "Degrades on exact long-range retrieval; superseded by SnapKV / quantisation"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": "memory-bound generation that tolerates approximate recall"
+      },
+      "coding128k": {
+        "v": "no",
+        "why": "needle workloads"
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "The 'evict' branch of the KV bill (vs share = GQA/CLA, compress = MLA, quantise = KIVI). Same week as vLLM."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "window-sinks"
+    }
+  },
+  {
+    "id": "ntk-aware",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 5,
+    "order": 0,
+    "name": "NTK-aware scaled RoPE",
+    "short": "NTK-aware",
+    "aka": "NTK scaling; 'change the RoPE base' θ' = θ·α^{d/(d−2)}",
+    "date": "2023-06-29",
+    "datePrecision": "day",
+    "dateKind": "reddit-post",
+    "source": {
+      "title": "NTK-Aware Scaled RoPE allows LLaMA models to have extended (8k+) context size without any fine-tuning and minimal perplexity degradation (r/LocalLLaMA)",
+      "authors": "u/bloc97",
+      "arxiv": "",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/14lz7j5/ntkaware_scaled_rope_allows_llama_models_to_have/",
+      "evidence": "Reddit post 14lz7j5, created_utc 1688026889 = 2023-06-29 08:21 UTC (archive record); HF TGI issue #512 with the same title opened 30 Jun 2023; cited by the YaRN paper and the EleutherAI 'Extending the RoPE' blog. Not a paper — a Reddit post."
+    },
+    "secondary": [
+      {
+        "label": "Qwen-7B tech report §2.5: 'NTK-aware interpolation (bloc97 2023)'",
+        "url": "https://arxiv.org/abs/2309.16609",
+        "date": "2023-08-03"
+      },
+      {
+        "label": "EleutherAI, 'Extending the RoPE' (the narrative version)",
+        "url": "https://blog.eleuther.ai/yarn/",
+        "date": "2023-11-13"
+      }
+    ],
+    "firstShipped": {
+      "model": "Qwen-7B (NTK-aware + dynamic NTK + LogN scaling)",
+      "date": "2023-08-03",
+      "url": "https://github.com/QwenLM/Qwen"
+    },
+    "family": "scaling",
+    "bill": [
+      "length",
+      "extrapolation"
+    ],
+    "problem": "PI without a fine-tune wrecked perplexity: it compresses every RoPE frequency equally and destroys the high-frequency dimensions that encode local order. Wanted a zero-fine-tune stretch.",
+    "idea": "Do not scale positions; scale the *base*. Raising θ interpolates the low-frequency dimensions (which see the new far distances) while the high-frequency dimensions barely change — the NTK / Fourier-features intuition that high frequencies are what a network needs to resolve nearby tokens. A three-line change.",
+    "buys": [
+      "LLaMA-7B to 8K+ with minor perplexity loss and no fine-tuning",
+      "The intuition that trained-in base scaling (Code Llama 1e6, Llama 3 500K) then made standard",
+      "Direct lineage: NTK-aware → Dynamic NTK → NTK-by-parts → YaRN"
+    ],
+    "costs": [
+      "A static α must be picked for a target length and slightly hurts short-context perplexity",
+      "Some dimensions still extrapolate past their trained range, so it fine-tunes worse than 'by-parts'",
+      "It is a Reddit post with perplexity plots — the citable versions are YaRN and the EleutherAI blog; 'NTK' is a loose name"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": "quick zero-fine-tune 2–4× stretch of an existing model"
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": "bake a large base in if you can train; else YaRN"
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "The most influential Reddit post in the field: it found the right knob (θ) in a weekend, and the labs shipped it trained-in within two months."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "ntk"
+    }
+  },
+  {
+    "id": "dynamic-ntk",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "Dynamic NTK (dynamically scaled RoPE)",
+    "short": "Dynamic NTK",
+    "aka": "rope_scaling 'dynamic'",
+    "date": "2023-06-30",
+    "datePrecision": "day",
+    "dateKind": "reddit-post",
+    "source": {
+      "title": "Dynamically Scaled RoPE further increases performance of long context LLaMA with zero fine-tuning (r/LocalLLaMA)",
+      "authors": "u/emozilla (Jeffrey Quesnelle)",
+      "arxiv": "",
+      "url": "https://www.reddit.com/r/LocalLLaMA/comments/14mrgpr/dynamically_scaled_rope_further_increases/",
+      "evidence": "Reddit post 14mrgpr, created_utc 1688103246 = 2023-06-30 05:34 UTC (evening of 29 June in US time zones), ~21 hours after bloc97's post; cited by the YaRN paper (§3.3 'Dynamic Scaling')"
+    },
+    "secondary": [
+      {
+        "label": "HF transformers 4.31.0: rope_scaling 'dynamic' for Llama/GPT-NeoX",
+        "url": "https://github.com/huggingface/transformers/releases/tag/v4.31.0",
+        "date": "2023-07-18"
+      }
+    ],
+    "firstShipped": {
+      "model": "HF transformers 4.31.0; Qwen-7B use_dynamic_ntk",
+      "date": "2023-07-18",
+      "url": "https://github.com/huggingface/transformers/releases/tag/v4.31.0"
+    },
+    "family": "scaling",
+    "bill": [
+      "length"
+    ],
+    "problem": "A static factor degrades short sequences and targets one length. Wanted one deployed model that behaves normally at ≤2K and degrades gracefully as the input grows.",
+    "idea": "Compute the scale from the *current* sequence length: α = 1 below the trained length, then grows with L′/L. No change for short inputs, progressively scaled RoPE for long ones.",
+    "buys": [
+      "Better perplexity-vs-length curve than static NTK or PI; zero training; trivial at inference"
+    ],
+    "costs": [
+      "Changing the base mid-generation makes already-cached keys inconsistent with new ones — recompute or accept the mismatch",
+      "Still falls apart beyond a few-× extension; an inference hack that gives no training signal"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "maybe",
+        "why": "as insurance against occasional overflow"
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": "a 4K model seeing 6–8K without crashing quality"
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "The overflow valve. Right for serving a fixed-context model that occasionally sees more; not a way to build long context."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "dyn-ntk"
+    }
+  },
+  {
+    "id": "longnet",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "LongNet — dilated attention",
+    "short": "LongNet",
+    "date": "2023-07-05",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "LongNet: Scaling Transformers to 1,000,000,000 Tokens",
+      "authors": "Ding et al. (Microsoft)",
+      "arxiv": "2307.02486",
+      "url": "https://arxiv.org/abs/2307.02486",
+      "evidence": "[v1] Wed, 5 Jul 2023 17:59:38 UTC"
+    },
+    "family": "pattern-sparse",
+    "bill": [
+      "compute"
+    ],
+    "oneLiner": "Exponentially dilated sparse pattern with a '1B tokens' headline; little adoption.",
+    "whyFootnote": "Fixed-pattern sparsity, already represented by Sparse Transformer / Longformer."
+  },
+  {
+    "id": "retnet",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "RetNet — retention with exponential decay",
+    "short": "RetNet",
+    "date": "2023-07-17",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Retentive Network: A Successor to Transformer for Large Language Models",
+      "authors": "Sun, Dong, Huang, Ma, Xia, Xue, Wang, Wei (Microsoft)",
+      "arxiv": "2307.08621",
+      "url": "https://arxiv.org/abs/2307.08621",
+      "evidence": "[v1] Mon, 17 Jul 2023 16:40:01 UTC — same day as FlashAttention-2"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "The 'impossible triangle': training parallelism, O(1) per-token inference, transformer quality.",
+    "idea": "Retention = linear attention with a per-head exponential decay (xPos-style); the same weights run parallel (training), recurrent (decode) or chunkwise (long sequences).",
+    "buys": [
+      "~8× decode throughput and much lower memory vs a KV-cache transformer at 7B/8K; competitive perplexity to 6.7B",
+      "The parallel/recurrent/chunkwise triality every later linear layer uses"
+    ],
+    "costs": [
+      "Fixed, input-independent decay → limited long-range recall",
+      "No data-dependent gating (GLA / Mamba added it); no mainstream adoption; 'successor to Transformer' did not pan out"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "as a research baseline; pick GLA / Mamba-2 / GDN hybrids instead"
+      },
+      "verdict": "The linear thread's 2023 opening bid; overtaken within six months by gated versions."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "retention"
+    }
+  },
+  {
+    "id": "softmax-one",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "Softmax-1 — 'Attention Is Off By One'",
+    "short": "Softmax-1",
+    "aka": "quiet attention; ghost attention; +1 in the denominator",
+    "date": "2023-07-24",
+    "datePrecision": "day",
+    "dateKind": "blog",
+    "source": {
+      "title": "Attention Is Off By One",
+      "authors": "Evan Miller",
+      "arxiv": "",
+      "url": "https://www.evanmiller.org/attention-is-off-by-one.html",
+      "evidence": "Blog page dated July 24, 2023 — two months before StreamingLLM; gpt-oss's model card cites it alongside Xiao et al."
+    },
+    "firstShipped": {
+      "model": "gpt-oss (learned per-head bias in the softmax denominator, 'similar to off-by-one attention and attention sinks')",
+      "date": "2025-08-05",
+      "url": "https://arxiv.org/abs/2508.10925"
+    },
+    "family": "attention",
+    "bill": [
+      "quality",
+      "stability"
+    ],
+    "problem": "Softmax forces every head to put its weight *somewhere*, so heads with nothing to say dump attention on the first token, producing massive-activation outliers that wreck low-bit quantisation.",
+    "idea": "softmax₁(x)_i = exp(x_i) / (1 + Σ_j exp(x_j)): give the head a way to abstain. The 'sink' becomes an explicit escape hatch instead of the BOS token.",
+    "buys": [
+      "Heads can output ≈0; fewer outliers; cheaper quantisation; a principled place to put the sink"
+    ],
+    "costs": [
+      "A blog with no large-scale experiments; the constant 1 is arbitrary (gpt-oss made it a learned per-head logit)",
+      "Cannot be retrofitted; StreamingLLM found sinks form anyway and can simply be kept"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "maybe",
+        "why": "new pretraining runs that want quantisation- and window-friendly attention"
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": ""
+      },
+      "verdict": "The sink fix that predates the sink paper. It reached production, renamed, in gpt-oss."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "window-sinks"
+    }
+  },
+  {
+    "id": "rerope-lm-infinite-selfextend",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "ReRoPE / LM-Infinite / SelfExtend — training-free RoPE remapping",
+    "short": "ReRoPE / SelfExtend",
+    "date": "2023-08-07",
+    "datePrecision": "day",
+    "dateKind": "github-release",
+    "paperDate": "2023-08-30",
+    "source": {
+      "title": "ReRoPE (Su Jianlin, bojone/rerope); LM-Infinite (Han et al., 2308.16137); SelfExtend (Jin et al., 2401.01325)",
+      "authors": "Su Jianlin; Han et al.; Jin et al.",
+      "arxiv": "2308.16137",
+      "url": "https://github.com/bojone/rerope",
+      "evidence": "ReRoPE repo first commit 2023-08-07T01:54:42Z ('Create ntk_patch.py'); LM-Infinite [v1] Wed, 30 Aug 2023 16:47:51 UTC; SelfExtend [v1] Tue, 2 Jan 2024; llama.cpp merged Self-Extend 2024-01-08 (PR #4815)"
+    },
+    "secondary": [
+      {
+        "label": "LM-Infinite (Λ-shaped mask + distance ceiling)",
+        "url": "https://arxiv.org/abs/2308.16137",
+        "date": "2023-08-30"
+      },
+      {
+        "label": "SelfExtend (grouped far positions + exact neighbour positions)",
+        "url": "https://arxiv.org/abs/2401.01325",
+        "date": "2024-01-02"
+      },
+      {
+        "label": "llama.cpp --grp-attn merged",
+        "url": "https://github.com/ggml-org/llama.cpp/pull/4815",
+        "date": "2024-01-08"
+      }
+    ],
+    "family": "scaling",
+    "bill": [
+      "extrapolation"
+    ],
+    "problem": "Attention explodes at unseen relative distances and models 'forget' the start; wanted extrapolation with zero training on a pretrained RoPE model.",
+    "idea": "Keep exact positions inside a window and clamp / floor-divide relative positions beyond it, so no distance the model never saw is ever presented (three near-simultaneous variants of one trick).",
+    "buys": [
+      "Flat perplexity to very long inputs; SelfExtend passes needle tests at 4–8× the window; shipped in llama.cpp"
+    ],
+    "costs": [
+      "Far tokens get blurred, coarse positions; two attention passes (~2× prefill) unless fused",
+      "All obsolete once you can train long context"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": "hobbyist inference of a short-context checkpoint"
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "How RoPE fails, taught by fixing it for free; not frontier production."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "rerope"
+    }
+  },
+  {
+    "id": "rope-abf",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "RoPE base-frequency scaling, trained in (Code Llama θ=1e6; 'ABF')",
+    "short": "RoPE base scaling (ABF)",
+    "aka": "Adjusted Base Frequency; rope_theta = 500k / 1e6; 'static NTK'",
+    "date": "2023-08-24",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Code Llama: Open Foundation Models for Code — 'we increase the base period θ from 10,000 to 1,000,000 for fine-tuning'",
+      "authors": "Rozière et al. (Meta)",
+      "arxiv": "2308.12950",
+      "url": "https://arxiv.org/abs/2308.12950",
+      "evidence": "[v1] Thu, 24 Aug 2023 17:39:13 UTC (model released the same day); the name 'ABF' comes from Llama 2 Long (2309.16039, [v1] Wed, 27 Sep 2023)"
+    },
+    "secondary": [
+      {
+        "label": "Llama 2 Long — coins 'ABF', base 500K",
+        "url": "https://arxiv.org/abs/2309.16039",
+        "date": "2023-09-27"
+      },
+      {
+        "label": "Llama 3: 'We increase the RoPE base frequency hyperparameter to 500,000'",
+        "url": "https://arxiv.org/abs/2407.21783",
+        "date": "2024-04-18"
+      }
+    ],
+    "firstShipped": {
+      "model": "Code Llama (16K training, usable to ~100K)",
+      "date": "2023-08-24",
+      "url": "https://arxiv.org/abs/2308.12950"
+    },
+    "family": "scaling",
+    "bill": [
+      "length"
+    ],
+    "problem": "Repository-level code needs long inputs; PI squeezes positions and hurts local resolution. If you are fine-tuning anyway, is there a cleaner lever?",
+    "idea": "The trained-in cousin of NTK-aware: raise θ (10K → 1M) and fine-tune on 16K sequences. Low-frequency dims now rotate slowly enough to cover the new length; short-context quality is kept.",
+    "buys": [
+      "One config line; extrapolates beyond training length better than linear PI ('improvements on inputs with up to 100k tokens')",
+      "Became the default recipe: Llama 3 (500K), Qwen (1M+) — the number you see in every config.json"
+    ],
+    "costs": [
+      "Needs a long-sequence fine-tune stage; perplexity creeps up past the training length",
+      "θ is chosen heuristically; low-frequency dims are undertrained (later refined per-dim by YaRN / LongRoPE)"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "yes",
+        "why": "set a large base from the start"
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "the Llama 3 / Code Llama recipe"
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "necessary, rarely sufficient"
+      },
+      "verdict": "If you will train on long data anyway, this is what everyone does. Use NTK/YaRN/DCA only when you cannot."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "abf"
+    }
+  },
+  {
+    "id": "yarn",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 5,
+    "order": 0,
+    "name": "YaRN — Yet another RoPE extensioN",
+    "short": "YaRN",
+    "aka": "NTK-by-parts + attention temperature; Dynamic-YaRN",
+    "date": "2023-08-31",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "YaRN: Efficient Context Window Extension of Large Language Models",
+      "authors": "Peng, Quesnelle, Fan, Shippole (Nous / EleutherAI)",
+      "arxiv": "2309.00071",
+      "url": "https://arxiv.org/abs/2309.00071",
+      "evidence": "[v1] Thu, 31 Aug 2023 18:18:07 UTC (ICLR 2024)"
+    },
+    "secondary": [
+      {
+        "label": "NTK-by-parts (bloc97 PR in scaled-rope)",
+        "url": "https://github.com/jquesnelle/scaled-rope/pull/1",
+        "date": "2023-07"
+      },
+      {
+        "label": "DeepSeek-V2: 'we employ YaRN to extend the default context window length from 4K to 128K' (s=40, α=1, β=32)",
+        "url": "https://arxiv.org/abs/2405.04434",
+        "date": "2024-05-07"
+      }
+    ],
+    "firstShipped": {
+      "model": "DeepSeek-V2 (4K → 128K); Yarn-Llama-2 checkpoints from Nous at release",
+      "date": "2024-05-06",
+      "url": "https://arxiv.org/abs/2405.04434"
+    },
+    "family": "scaling",
+    "bill": [
+      "length"
+    ],
+    "problem": "PI needs many fine-tune tokens and hurts short context; NTK-aware still extrapolates some dimensions. Wanted a principled per-frequency scheme, and a fix for the softmax entropy shift that appears at long lengths.",
+    "idea": "NTK-by-parts: leave high-frequency dims untouched, interpolate low-frequency dims, ramp in between; plus scale attention logits by a temperature (folded into RoPE) to keep the softmax's entropy where it was trained. Works in a dynamic, no-fine-tune mode too.",
+    "buys": [
+      "~10× fewer tokens and ~2.5× fewer steps than PI; Llama 2 to 128K",
+      "Consolidates the whole Reddit lineage into one citable paper; rope_scaling='yarn' in every framework",
+      "What DeepSeek-V2 and Qwen2.5 actually use for >32K"
+    ],
+    "costs": [
+      "Still a fine-tune (small); extra hyperparameters (α, β, s, temperature)",
+      "Short-context perplexity still rises slightly; quality beyond the target length degrades",
+      "Needs framework support; a patch on RoPE, not a new position scheme"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": "4–32× extension of an existing model with a modest budget"
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "the DeepSeek-V2 / Qwen2.5 route"
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "works, but 1M-class models mostly train long or interleave NoPE"
+      },
+      "verdict": "The best way to stretch a RoPE model you already have. If you are pretraining, just use a big base and a long-context stage."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "yarn"
+    }
+  },
+  {
+    "id": "pose",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "PoSE — Positional Skip-wise training",
+    "short": "PoSE",
+    "date": "2023-09-19",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "PoSE: Efficient Context Window Extension of LLMs via Positional Skip-wise Training",
+      "authors": "Zhu et al.",
+      "arxiv": "2309.10400",
+      "url": "https://arxiv.org/abs/2309.10400",
+      "evidence": "[v1] Tue, 19 Sep 2023"
+    },
+    "family": "scaling",
+    "bill": [
+      "length"
+    ],
+    "oneLiner": "Simulate long positions in short training windows by skipping position ids — extend context without long training sequences.",
+    "whyFootnote": "Training recipe on top of RoPE scaling."
+  },
+  {
+    "id": "mistral-swa",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 5,
+    "order": 0,
+    "name": "Sliding window attention in a mainstream LLM — Mistral 7B",
+    "short": "Mistral SWA",
+    "aka": "SWA + rolling-buffer KV cache",
+    "date": "2023-09-27",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "paperDate": "2023-10-10",
+    "source": {
+      "title": "Mistral 7B (announcement); paper 'Mistral 7B'",
+      "authors": "Jiang et al. (Mistral AI)",
+      "arxiv": "2310.06825",
+      "url": "https://mistral.ai/news/announcing-mistral-7b/",
+      "evidence": "Mistral blog dated September 27, 2023: 'each layer attends to the previous 4,096 hidden states', KV cache 'limited to a size of sliding_window tokens, using rotating buffers'; paper [v1] Tue, 10 Oct 2023 17:54:58 UTC"
+    },
+    "secondary": [
+      {
+        "label": "Paper, arXiv 2310.06825",
+        "url": "https://arxiv.org/abs/2310.06825",
+        "date": "2023-10-10"
+      }
+    ],
+    "firstShipped": {
+      "model": "Mistral 7B (Apache 2.0)",
+      "date": "2023-09-27",
+      "url": "https://mistral.ai/news/announcing-mistral-7b/"
+    },
+    "family": "pattern-sparse",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "Serve a 7B model with a bounded KV cache and handle inputs longer than 4K on modest hardware.",
+    "idea": "Every layer attends to the previous W=4,096 tokens only; the KV cache is a rolling buffer of W entries. Information still propagates ~W × layers through depth. Combined with GQA.",
+    "buys": [
+      "Attention cost and KV cache bounded by W regardless of input length (rolling buffer halves the cache at 8K)",
+      "Longformer's idea finally in a mainstream decoder, with weights anyone could run",
+      "Second GQA model after Llama 2 70B"
+    ],
+    "costs": [
+      "Beyond the window, information flows only indirectly through stacked layers → poor exact recall far back",
+      "Window fixed at train time",
+      "Mistral itself moved later versions to full attention — evidence it hurt long-range tasks; the pattern survived only as the *local* half of interleaved designs"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "yes",
+        "why": "cheap serving where local context dominates"
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": "only interleaved with global layers"
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": "same"
+      },
+      "agent1m": {
+        "v": "no",
+        "why": "not on its own"
+      },
+      "verdict": "Right as one half of a local:global stack (Gemma 2/3, gpt-oss); wrong as the whole story — and Mistral's own retreat says so."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "window"
+    }
+  },
+  {
+    "id": "attention-sinks",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 5,
+    "order": 0,
+    "name": "Attention sinks — StreamingLLM",
+    "short": "Attention sinks",
+    "aka": "sink tokens; sink + sliding-window KV; learned attention sink",
+    "date": "2023-09-29",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Efficient Streaming Language Models with Attention Sinks",
+      "authors": "Xiao, Tian, Chen, Han, Lewis (MIT / Meta / CMU)",
+      "arxiv": "2309.17453",
+      "url": "https://arxiv.org/abs/2309.17453",
+      "evidence": "[v1] Fri, 29 Sep 2023 17:59:56 UTC (ICLR 2024)"
+    },
+    "secondary": [
+      {
+        "label": "Massive Activations in LLMs — the mechanism behind sinks",
+        "url": "https://arxiv.org/abs/2402.17762",
+        "date": "2024-02-27"
+      },
+      {
+        "label": "gpt-oss: learned per-head sink bias in the softmax denominator",
+        "url": "https://arxiv.org/abs/2508.10925",
+        "date": "2025-08-05"
+      }
+    ],
+    "firstShipped": {
+      "model": "gpt-oss-120b/20b (learned sink) — engineering uptake in HF/TensorRT-LLM from Oct 2023",
+      "date": "2025-08-05",
+      "url": "https://arxiv.org/abs/2508.10925"
+    },
+    "family": "kv-eviction",
+    "bill": [
+      "kv-memory",
+      "length"
+    ],
+    "problem": "Streaming decode with a finite KV cache: the moment plain sliding-window eviction drops the first tokens, perplexity collapses; recomputation is too slow.",
+    "idea": "The first ~4 tokens are where softmax dumps its excess attention (the 'sink'). Keep them forever plus a rolling window, re-index positions inside the cache, and generation stays stable — the paper also proposes a dedicated trainable sink token.",
+    "buys": [
+      "Stable perplexity over 4M tokens on Llama-2 / MPT / Falcon / Pythia; ~22× faster than sliding-window-with-recompute",
+      "Explains the phenomenon (Massive Activations, Feb 2024, gives the mechanism) and turns it into a design rule",
+      "gpt-oss (Aug 2025) bakes the sink in as a learned per-head logit"
+    ],
+    "costs": [
+      "No real long-range memory: evicted content is gone — it is not a context-length extension for retrieval",
+      "Positions must be re-indexed inside the cache",
+      "The benefit is stability and latency, not capability"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "yes",
+        "why": "long-running chat where recency suffices"
+      },
+      "rag32k": {
+        "v": "no",
+        "why": "not for QA over the whole document"
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "as the eviction rule inside a bounded-cache layer; never as the memory"
+      },
+      "verdict": "It buys infinite *streaming*, not infinite *context*. Right for a chat that never ends; wrong for an agent that must remember page one."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "window-sinks"
+    }
+  },
+  {
+    "id": "ring-attention",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "Ring Attention — exact attention sharded across devices",
+    "short": "Ring Attention",
+    "date": "2023-10-03",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Ring Attention with Blockwise Transformers for Near-Infinite Context",
+      "authors": "Liu, Zaharia, Abbeel (Berkeley)",
+      "arxiv": "2310.01889",
+      "url": "https://arxiv.org/abs/2310.01889",
+      "evidence": "[v1] Tue, 3 Oct 2023 08:44:50 UTC"
+    },
+    "firstShipped": {
+      "model": "Large World Model (1M-token text/video, same authors)",
+      "date": "2024-02-13",
+      "url": "https://arxiv.org/abs/2402.08268"
+    },
+    "family": "systems",
+    "bill": [
+      "length",
+      "systems"
+    ],
+    "problem": "Per-device memory caps sequence length even with FlashAttention; wanted *exact* attention over sequences that scale with device count.",
+    "idea": "Split the sequence across devices; each computes blockwise attention on its query block while K/V blocks rotate around a ring, overlapping communication with compute.",
+    "buys": [
+      "Exact attention over millions of tokens; memory per device independent of total length",
+      "The 'context parallelism' used to train 128K–1M models"
+    ],
+    "costs": [
+      "Does not reduce total FLOPs (still quadratic) — only distributes them",
+      "Needs many devices and fast interconnect; causal load imbalance (fixed by Striped Attention)"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": "training at 128K on a cluster"
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "training or serving 1M+ on multi-GPU — necessary, still pays n²"
+      },
+      "verdict": "The systems answer to length: pay the whole bill, but split it across the room."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "ring"
+    }
+  },
+  {
+    "id": "fire",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "FIRE — functional interpolation for relative positions",
+    "short": "FIRE",
+    "date": "2023-10-06",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Functional Interpolation for Relative Positions Improves Long Context Transformers",
+      "authors": "Li, You, Guruganesh, Ainslie, Ontanon, Zaheer, Sanghai, Yang, Kumar, Bhojanapalli (Google)",
+      "arxiv": "2310.04418",
+      "url": "https://arxiv.org/abs/2310.04418",
+      "evidence": "[v1] Fri, 6 Oct 2023 17:59:11 UTC"
+    },
+    "family": "position",
+    "bill": [
+      "extrapolation"
+    ],
+    "problem": "Learn the bias shape instead of hand-picking it (ALiBi, KERPLE), and keep its input in-range at any length.",
+    "idea": "An MLP of relative distance normalised by the query position (progressive interpolation), so the input stays in [0,1]; unifies T5 bias, ALiBi and KERPLE as special cases.",
+    "buys": [
+      "Strong zero-shot length generalisation on perplexity and long-context tasks"
+    ],
+    "costs": [
+      "Per-pair MLP adds compute; additive bias vs fused kernels",
+      "No frontier adoption — RoPE ecosystem inertia"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "no",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": ""
+      },
+      "verdict": "Endpoint of the learned-bias branch that lost to 'RoPE + scaling'."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "alibi"
+    }
+  },
+  {
+    "id": "mamba",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "Mamba — selective state space model",
+    "short": "Mamba",
+    "aka": "S6; selective scan",
+    "date": "2023-12-01",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Mamba: Linear-Time Sequence Modeling with Selective State Spaces",
+      "authors": "Gu, Dao (CMU / Princeton)",
+      "arxiv": "2312.00752",
+      "url": "https://arxiv.org/abs/2312.00752",
+      "evidence": "[v1] Fri, 1 Dec 2023 18:01:34 UTC"
+    },
+    "firstShipped": {
+      "model": "AI21 Jamba — 'first production-grade Mamba based model', SSM-Transformer hybrid, 256K",
+      "date": "2024-03-28",
+      "url": "https://www.ai21.com/blog/announcing-jamba"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "Transformers are quadratic with a growing KV cache; prior SSMs (S4/H3) were linear but could not select by content and lagged on language.",
+    "idea": "Make the SSM parameters (Δ, B, C) input-dependent so the state can selectively remember or forget, and run it with a hardware-aware parallel scan.",
+    "buys": [
+      "~5× decode throughput, constant state, linear in length; matched transformers ~2× its size at ≤2.8B",
+      "One homogeneous block; the SSM thread's breakout paper"
+    ],
+    "costs": [
+      "Weak in-context copying / exact retrieval — no KV cache to look things up in",
+      "Custom kernels; the scan is not tensor-core friendly (Mamba-2 fixes this)",
+      "In practice needs a few attention layers (hybrids) to be competitive"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": "hybrids for throughput (Jamba)"
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "hybrids; never alone for retrieval"
+      },
+      "verdict": "The recurrent thread's loudest 2023 paper. Mamba-2 later showed it and linear attention are the same object."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "mamba"
+    }
+  },
+  {
+    "id": "gla",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "Gated Linear Attention (GLA) + FlashLinearAttention",
+    "short": "GLA",
+    "date": "2023-12-11",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Gated Linear Attention Transformers with Hardware-Efficient Training",
+      "authors": "Yang, Wang, Shen, Panda, Kim (MIT / IBM)",
+      "arxiv": "2312.06635",
+      "url": "https://arxiv.org/abs/2312.06635",
+      "evidence": "[v1] Mon, 11 Dec 2023 18:51:59 UTC (ICML 2024)"
+    },
+    "firstShipped": {
+      "model": "Not directly; its descendant Gated DeltaNet (same lead author) ships in Qwen3-Next",
+      "date": "2025-09-11",
+      "url": "https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "Linear attention underperformed softmax and had no hardware-efficient training path; Mamba showed data-dependent gating matters but its scan is not tensor-core friendly.",
+    "idea": "Linear attention with data-dependent (matrix-valued) forget gates, trained with a chunkwise algorithm that trades memory movement for tensor-core matmuls (FlashLinearAttention).",
+    "buys": [
+      "At 340M–1.3B matches LLaMA-architecture and Mamba on LM benchmarks with better length generalisation and constant-memory decode",
+      "The chunkwise-parallel recipe (and the fla library) that every later linear layer — DeltaNet, GDN, KDA — is trained with"
+    ],
+    "costs": [
+      "Fixed-size state → weak on recall-intensive tasks vs softmax; paper scale ≤1.3B",
+      "Custom Triton kernels; pure-GLA models never shipped — hybrids with some full-attention layers did"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": "hybrid cheap layers"
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "as the linear layers of a hybrid"
+      },
+      "verdict": "The bridge from RetNet to Gated DeltaNet — gating plus a training algorithm the hardware likes."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "gla"
+    }
+  },
+  {
+    "id": "radix-attention",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 5,
+    "order": 0,
+    "name": "RadixAttention / prefix caching (SGLang)",
+    "short": "RadixAttention",
+    "date": "2023-12-12",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "SGLang: Efficient Execution of Structured Language Model Programs",
+      "authors": "Zheng et al.",
+      "arxiv": "2312.07104",
+      "url": "https://arxiv.org/abs/2312.07104",
+      "evidence": "[v1] Tue, 12 Dec 2023 09:34:27 UTC"
+    },
+    "family": "systems",
+    "bill": [
+      "kv-memory",
+      "systems"
+    ],
+    "oneLiner": "Cross-request KV reuse via a radix tree — the systems idea behind API 'prompt caching'. Pairs with PagedAttention.",
+    "whyFootnote": "Serving systems, not an attention mechanism."
+  }
+]

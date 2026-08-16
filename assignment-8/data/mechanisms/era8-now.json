@@ -1,0 +1,436 @@
+[
+  {
+    "id": "drope",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 8,
+    "order": 0,
+    "name": "DroPE — Dropping the Positional Embeddings after pretraining",
+    "short": "DroPE",
+    "aka": "'RoPE as a training scaffold'; post-hoc NoPE conversion. NOT DRoPE = Directional RoPE (2503.15029, driving-agent modelling, unrelated)",
+    "date": "2025-12-13",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Extending the Context of Pretrained LLMs by Dropping Their Positional Embeddings (the abstract names the method DroPE)",
+      "authors": "Gelberg, Eguchi, Akiba, Cetin (Sakana AI / Oxford)",
+      "arxiv": "2512.12167",
+      "url": "https://arxiv.org/abs/2512.12167",
+      "evidence": "[v1] Sat, 13 Dec 2025 04:23:47 UTC (PDF footer 'arXiv:2512.12167v1 [cs.CL] 13 Dec 2025'); public launch (blog sakana.ai/drope, code, HF checkpoints) 12 Jan 2026"
+    },
+    "secondary": [
+      {
+        "label": "Sakana AI blog + code + checkpoints (public launch)",
+        "url": "https://sakana.ai/drope/",
+        "date": "2026-01-12"
+      },
+      {
+        "label": "GitHub SakanaAI/DroPE",
+        "url": "https://github.com/SakanaAI/DroPE",
+        "date": "2026-01-12"
+      },
+      {
+        "label": "Homonym to avoid: DRoPE — Directional Rotary Position Embedding (unrelated)",
+        "url": "https://arxiv.org/abs/2503.15029",
+        "date": "2025-03-19"
+      }
+    ],
+    "firstShipped": {
+      "model": "Sakana's own recalibrated Llama-2-7b-hf-DroPE checkpoint (SmolLM recipes ship as configs only); no frontier model as of Aug 2026",
+      "date": "2026-01-12",
+      "url": "https://huggingface.co/collections/SakanaAI/drope"
+    },
+    "family": "position",
+    "bill": [
+      "extrapolation",
+      "length"
+    ],
+    "problem": "RoPE models collapse past their pretraining length. Zero-shot scaling (PI, NTK, YaRN, LongRoPE2) keeps perplexity by compressing low frequencies — but the paper shows this warps the semantic-attention heads so the model effectively *crops* far-away tokens. And the standard fix, long-context fine-tuning, is quadratic-cost and needs long data. NoPE from scratch is worse and unstable (vanishing positional-bias gradients at init).",
+    "idea": "Treat the positional encoding as a transient training aid. Pretrain with RoPE (it accelerates convergence), then delete it from every layer — the model becomes NoPE, position available only through the causal mask — and briefly continue pretraining at the *original* length so the network re-learns its induction heads without explicit PE. There is now no out-of-distribution positional signal at longer lengths, so it extrapolates zero-shot.",
+    "buys": [
+      "Zero-shot 2–8×+ context: 0.5B model NIAH at 2× 28.0 / 41.6 / 23.3 (multi-query/key/value) vs YaRN 17.8 / 0.5 / 14.6; SmolLM-360M NIAH at 8× 52.2% vs LongRoPE2 16.45%; LongBench Llama-2-7B 26.08 vs NTK 21.88 / YaRN 19.14",
+      ">95% of short-context performance recovered after <5B recalibration tokens (0.8% of a 600B budget); can be folded into a pretraining recipe at zero extra cost (drop RoPE for the last ~12% of tokens)",
+      "Closes the loop the timeline opened in 2021: positions were the lever, now they are the scaffold"
+    ],
+    "costs": [
+      "Not an inference-time knob: needs the weights and a training run on pretraining-distribution data (2B tokens for 0.5B; ~20B for 7B) — useless with API-only access",
+      "Absolute long-context scores remain low (multi-key NIAH 41.6% at 2×; Llama-2-7B LongBench avg 26) — 'far better than YaRN zero-shot' is not 'solved'; evidence is ≤7B",
+      "Timing matters (dropping too early hurts final perplexity); long recalibrations needed QK-Norm for stability; unproven at 1M-token agent scale"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": "zero benefit if you never leave training length"
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": "pretrained at 4K, want 32K NIAH/QA without long-context fine-tuning — if you own the pipeline"
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "no",
+        "why": "unproven; prefer long-context training + hybrid attention"
+      },
+      "verdict": "It buys zero-shot extension for ~1% of pretraining compute and sells nothing on the compute/KV bill. Right if you train; wrong if you only serve."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "drope"
+    }
+  },
+  {
+    "id": "hysparse",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "HySparse — hybrid sparse attention with oracle token selection and KV sharing",
+    "short": "HySparse",
+    "date": "2026-02-03",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "HySparse: A Hybrid Sparse Attention Architecture with Oracle Token Selection and KV Cache Sharing",
+      "authors": "Gao, Wei, Zhang et al.",
+      "arxiv": "2602.03560",
+      "url": "https://arxiv.org/abs/2602.03560",
+      "evidence": "arXiv API published 2026-02-03T14:05:57Z (v1)"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "oneLiner": "Interleave each full-attention layer with several sparse layers whose token selection and KV cache are derived from the preceding full layer — sparsity that borrows the exact layer's judgement.",
+    "whyFootnote": "Research-scale hybrid; represented on the timeline by NSA / DSA / DeepSeek-V4."
+  },
+  {
+    "id": "nats-linear",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 1,
+    "name": "Neural Attention Search Linear (NAtS-L) — token-level linear / softmax hybrid",
+    "short": "NAtS-L",
+    "date": "2026-02-03",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Neural Attention Search Linear: Towards Adaptive Token-Level Hybrid Attention Models",
+      "authors": "Deng, Winje, Fehring et al.",
+      "arxiv": "2602.03681",
+      "url": "https://arxiv.org/abs/2602.03681",
+      "evidence": "arXiv API published 2026-02-03T16:02:50Z (v1)"
+    },
+    "family": "hybrid",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "oneLiner": "Linear attention and softmax attention inside the same layer, on different tokens, chosen per token — the hybrid at token rather than layer granularity.",
+    "whyFootnote": "Research-scale; the layer-level hybrids are the nodes."
+  },
+  {
+    "id": "minicpm-sala",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "MiniCPM-SALA — sparse (InfLLM-V2) + linear (Lightning) attention in one 9B model",
+    "short": "MiniCPM-SALA",
+    "date": "2026-02-12",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "MiniCPM-SALA: Hybridizing Sparse and Linear Attention for Efficient Long-Context Modeling",
+      "authors": "MiniCPM Team (OpenBMB)",
+      "arxiv": "2602.11761",
+      "url": "https://arxiv.org/abs/2602.11761",
+      "evidence": "arXiv API published 2026-02-12T09:37:05Z (v1)"
+    },
+    "family": "hybrid",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "Sparse attention keeps long-context fidelity but still pays for the whole cache; linear attention is cheap but blurs. Can one small model take both?",
+    "idea": "A 9B hybrid: roughly a quarter of the layers trainable sparse attention (InfLLM-V2), three quarters Lightning (linear) attention — the 'attend to few' and 'remember cheaply' threads in one stack.",
+    "buys": [
+      "The two efficiency threads literally merged in one architecture, at a size you can run locally"
+    ],
+    "costs": [
+      "9B research release; the ratio and the linear/sparse split are tuned choices; long-context recall evidence is the team's own"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": "on-device long context"
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": ""
+      },
+      "verdict": "A footnote-sized model making the timeline's point: sparse for the exact layers, linear for the rest."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "local-global"
+    }
+  },
+  {
+    "id": "qwen35-gdn",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Qwen3.5-397B-A17B — Gated DeltaNet hybrid at flagship scale (45 linear : 15 full)",
+    "short": "Qwen3.5",
+    "date": "2026-02-16",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "source": {
+      "title": "Qwen3.5-397B-A17B (Hugging Face model repo)",
+      "authors": "Qwen Team (Alibaba)",
+      "arxiv": "",
+      "url": "https://huggingface.co/Qwen/Qwen3.5-397B-A17B",
+      "evidence": "HF repo createdAt 2026-02-16T04:55:12Z; config.json: 60 layers, layer_types 45 linear_attention : 15 full_attention, full_attention_interval 4, 32 Q / 2 KV heads (head 256), linear 64 V / 16 K heads × 128, max_position_embeddings 262144"
+    },
+    "firstShipped": {
+      "model": "Qwen3.5-397B-A17B",
+      "date": "2026-02-16",
+      "url": "https://huggingface.co/Qwen/Qwen3.5-397B-A17B"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "Take the Qwen3-Next recipe from an 80B experiment to the flagship: 262K context served cheaply at 397B total / 17B active.",
+    "idea": "15 × (3 × (Gated DeltaNet → MoE) → 1 × (Gated Attention → MoE)) — the same 3:1 layout, now the family's main model.",
+    "buys": [
+      "The delta rule is no longer an experiment: a frontier family's flagship runs 75% of its layers on a fixed-size state",
+      "Gated (sink-free) attention on the exact layers"
+    ],
+    "costs": [
+      "Still 1/4 layers full-attention KV; recall on the linear layers is bounded; hybrid KV managers and FLA kernels are required to serve it"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": "gains nothing at 2K"
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "the recipe was built for this"
+      },
+      "verdict": "The 2025 hybrid became a 2026 default. Nothing new in the mechanism — the news is who is running it."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "gated-delta"
+    }
+  },
+  {
+    "id": "deepseek-v4-csa-hca",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "DeepSeek-V4 — Compressed Sparse Attention + Heavily Compressed Attention",
+    "short": "DeepSeek-V4 CSA/HCA",
+    "aka": "CSA / HCA; 'token-wise compression + DSA'",
+    "date": "2026-04-24",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "paperDate": "2026-04-26",
+    "source": {
+      "title": "DeepSeek-V4 Preview Release (news); tech report 'DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence'",
+      "authors": "DeepSeek-AI",
+      "arxiv": "2606.19348",
+      "url": "https://api-docs.deepseek.com/news/news260424/",
+      "evidence": "DeepSeek news: 'DeepSeek-V4 Preview Release 2026/04/24' — 'Novel Attention: Token-wise compression + DSA (DeepSeek Sparse Attention)', '1M context is now the default'; arXiv API for 2606.19348v1: published 2026-04-26T14:49:33Z (the identifier's YYMM prefix does not match the recorded April submission — recorded as the API returns it)"
+    },
+    "secondary": [
+      {
+        "label": "Tech report, arXiv 2606.19348 (abstract: 27% of single-token FLOPs and 10% of KV cache vs V3.2 at 1M)",
+        "url": "https://arxiv.org/abs/2606.19348",
+        "date": "2026-04-26"
+      },
+      {
+        "label": "DeepSeek-V4-Pro weights (MIT), 1.6T / 49B active",
+        "url": "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro",
+        "date": "2026-04-24"
+      },
+      {
+        "label": "FlashMemory-DeepSeek-V4: lookahead sparse attention on the lightning index (third-party)",
+        "url": "https://arxiv.org/abs/2606.09079",
+        "date": "2026-06-08"
+      }
+    ],
+    "firstShipped": {
+      "model": "DeepSeek-V4-Pro (1.6T/49B) and V4-Flash (284B/13B), open weights, 1M context default",
+      "date": "2026-04-24",
+      "url": "https://api-docs.deepseek.com/news/news260424/"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "DSA made attention O(L·k), but at 1M tokens the cache still holds a million latent entries per layer and the indexer still scans them all. Wanted 1M as the *default* for every service, at a fraction of V3.2's per-token FLOPs and KV.",
+    "idea": "Two layer types, interleaved. **CSA:** compress the KV of every m tokens into one entry with a learned token-level compressor (weighted average with learned weights and positional biases), then run DSA — the lightning indexer picks the top-k *compressed* entries per query — plus a sliding-window branch over recent uncompressed KV for local detail. **HCA:** a much larger compression rate m′ ≫ m and dense, MQA-style attention over *all* compressed entries, for layers that tolerate more approximation. RoPE only on the last 64 dims.",
+    "buys": [
+      "At 1M context, V4-Pro needs 27% of V3.2's single-token inference FLOPs and 10% of its KV cache (V4-Flash: 10% of the FLOPs); 1M context 'now the default across all official DeepSeek services'",
+      "The shape the timeline predicts, shipped at frontier scale: compress, then select, then attend — NSA's compress branch and DSA's select branch in one design",
+      "Open weights (MIT) at 1.6T / 49B active and 284B / 13B active"
+    ],
+    "costs": [
+      "Compression is lossy by construction: fine-grained recall beyond the sliding window depends on the compressor keeping what matters — the report's own evals, no independent long-context audit yet as of Aug 2026",
+      "The report deliberately omits m, m′, k, the window and the CSA:HCA layer ratio ('refer to our open-source implementation'), so the design is only fully specified in code",
+      "Two new layer types + a compressor + an indexer = more kernels and serving complexity; still an interleaved hybrid, so some layers pay more than others"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": "nothing to compress"
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "if you are training at this scale"
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "the design was built for 1M-token defaults"
+      },
+      "verdict": "The most literal 'pay less of the bill' entry on the timeline: the exact layers no longer read tokens, they read a few compressed entries chosen by an index."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "csa"
+    }
+  },
+  {
+    "id": "flashmemory-v4",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "FlashMemory-DeepSeek-V4 — lookahead sparse attention on the lightning index",
+    "short": "FlashMemory",
+    "date": "2026-06-08",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "FlashMemory-DeepSeek-V4: Lightning Index Ultra-Long Context via Lookahead Sparse Attention",
+      "authors": "Wang, Zhang, Yu et al.",
+      "arxiv": "2606.09079",
+      "url": "https://arxiv.org/abs/2606.09079",
+      "evidence": "arXiv API published 2026-06-08T06:25:54Z (v1)"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "oneLiner": "Third-party extension of DeepSeek-V4's index for ultra-long contexts via lookahead sparse selection.",
+    "whyFootnote": "Follow-on to a node; research-scale."
+  },
+  {
+    "id": "kimi-k3-kda",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Kimi K3 — Kimi Delta Attention 3:1 with gated MLA at 2.8T, plus Attention Residuals",
+    "short": "Kimi K3",
+    "date": "2026-07-27",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Kimi K3: Open Frontier Intelligence (technical report); blog announcement mid-July 2026, full weights by 27 Jul 2026",
+      "authors": "Kimi Team (Moonshot AI)",
+      "arxiv": "2607.24653",
+      "url": "https://arxiv.org/abs/2607.24653",
+      "evidence": "arXiv API published 2026-07-27T16:49:54Z (v1); kimi.com/blog/kimi-k3: 'built on Kimi Delta Attention (KDA) and Attention Residuals (AttnRes)', 'The full model weights will be released by July 27, 2026' (blog page carries no explicit date; press coverage dates the announcement 16 Jul 2026)"
+    },
+    "secondary": [
+      {
+        "label": "Kimi K3 blog",
+        "url": "https://www.kimi.com/blog/kimi-k3",
+        "date": "2026-07"
+      }
+    ],
+    "firstShipped": {
+      "model": "Kimi K3 (2.8T / 104B active, 1M context, open weights)",
+      "date": "2026-07-27",
+      "url": "https://www.kimi.com/blog/kimi-k3"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "problem": "Serve a 1M-token context at 2.8T parameters; the Kimi Linear recipe was proven at 48B.",
+    "idea": "Blocks of 3 KDA (channel-wise gated delta rule) layers then 1 gated MLA layer; Attention Residuals selectively retrieve representations across depth instead of accumulating them uniformly.",
+    "buys": [
+      "KDA at the largest open scale yet; the report claims ~2.5× scaling efficiency over K2 and ~75% less KV than full attention"
+    ],
+    "costs": [
+      "Prefix caching had to be re-engineered for KDA (Moonshot contributed a vLLM implementation); 1/4 layers still full MLA; the report's own evals"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "1M-token agentic serving at frontier scale"
+      },
+      "verdict": "The delta rule's biggest ship so far — 5½ years after Schlag, Irie and Schmidhuber."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "gated-delta"
+    }
+  }
+]

@@ -1,0 +1,169 @@
+[
+  {
+    "id": "delta-rule",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 3,
+    "order": 0,
+    "name": "The delta rule for linear transformers (DeltaNet origin)",
+    "short": "Delta rule / DeltaNet",
+    "aka": "Delta Net; delta-rule fast weight programmer; DPFP feature map",
+    "date": "2021-02-22",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Linear Transformers Are Secretly Fast Weight Programmers",
+      "authors": "Schlag, Irie, Schmidhuber (IDSIA)",
+      "arxiv": "2102.11174",
+      "url": "https://arxiv.org/abs/2102.11174",
+      "evidence": "[v1] Mon, 22 Feb 2021 16:51:38 UTC (ICML 2021)"
+    },
+    "secondary": [
+      { "label": "The delta rule itself: Widrow & Hoff, ADALINE / LMS (1960) — historical, not fetched", "url": "https://en.wikipedia.org/wiki/Delta_rule", "date": "1960" },
+      { "label": "Parallelised over sequence length (Yang et al.)", "url": "https://arxiv.org/abs/2406.06484", "date": "2024-06-10" },
+      { "label": "Gated DeltaNet", "url": "https://arxiv.org/abs/2412.06464", "date": "2024-12-09" }
+    ],
+    "firstShipped": { "model": "Qwen3-Next-80B-A3B (as Gated DeltaNet, 3:1 with gated attention)", "date": "2025-09-11", "url": "https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct" },
+    "family": "linear-recurrent",
+    "bill": ["kv-memory", "quality"],
+    "problem": "Linear attention (2020) has the right bill — O(1) state, O(n) time — but its memory is a sum: S += v·kᵀ. It cannot *overwrite* an old value for a key, so retrieval degrades once you store more associations than the state can hold, and elu+1 / random features were weak kernels anyway.",
+    "idea": "Treat the linear-attention state as fast weights and update it with the 1960 delta rule: S_t = S_{t−1} + β_t (v_t − S_{t−1}φ(k_t)) φ(k_t)ᵀ. Read what the memory currently returns for k, subtract it, write the corrected value with a learned strength β. Erase-then-write instead of pile-on. Plus DPFP, a deterministic feature map that raises the state's usable dimension.",
+    "buys": [
+      "Constant-size state at inference (no growing KV cache), linear time, and a memory that can correct stale bindings",
+      "Beats sum-rule linear attention and Performer on WikiText-103 and synthetic retrieval; can carry state across segments",
+      "The mechanism inside Gated DeltaNet, Qwen3-Next and Kimi Linear — the 'remember cheaply' thread's answer to recall"
+    ],
+    "costs": [
+      "Still a compressive fixed-size memory: worse than softmax at exact long-range recall; did not match Transformer-XL at large state sizes",
+      "The update is inherently sequential (S_t depends on S_{t−1}), so in 2021 it trained as an RNN with poor GPU utilisation — three years passed before a chunkwise-parallel form (Jun 2024) and a decay gate (Dec 2024) made it competitive",
+      "Sensitive to normalisation; not a drop-in for a pretrained softmax model"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "KV is cheap at 2K; softmax wins on quality per parameter" },
+      "rag32k": { "v": "maybe", "why": "as the cheap layers of a hybrid" },
+      "coding128k": { "v": "maybe", "why": "same" },
+      "agent1m": { "v": "yes", "why": "in a 3:1 hybrid — never as the only attention type if you need needle recall" },
+      "verdict": "Ignored for three years, then the centre of 2025. Right whenever the memory bill binds and a few exact layers can cover recall."
+    },
+    "viz": { "kind": "state", "mode": "delta" }
+  },
+  {
+    "id": "rope",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 3,
+    "order": 0,
+    "name": "RoPE — Rotary Position Embedding",
+    "short": "RoPE",
+    "aka": "rotary embeddings; RoFormer",
+    "date": "2021-03-23",
+    "datePrecision": "day",
+    "dateKind": "blog",
+    "paperDate": "2021-04-20",
+    "source": {
+      "title": "RoFormer: Enhanced Transformer with Rotary Position Embedding",
+      "authors": "Su, Lu, Pan, Murtadha, Wen, Liu (Zhuiyi)",
+      "arxiv": "2104.09864",
+      "url": "https://arxiv.org/abs/2104.09864",
+      "evidence": "First appeared on Su Jianlin's blog kexue.fm/archives/8265 (23 Mar 2021; GitHub ZhuiyiTechnology/roformer created 2021-03-22; EleutherAI cites the post 'accessed 18-April-2021'). arXiv: [v1] Tue, 20 Apr 2021 09:54:06 UTC"
+    },
+    "secondary": [
+      { "label": "Blog: 'Transformer升级之路：2、博采众长的旋转式位置编码' (kexue.fm/archives/8265)", "url": "https://kexue.fm/archives/8265", "date": "2021-03-23" },
+      { "label": "EleutherAI, 'Rotary Embeddings: A Relative Revolution' (same day as arXiv v1)", "url": "https://blog.eleuther.ai/rotary-embeddings/", "date": "2021-04-20" },
+      { "label": "GPT-J-6B ships it", "url": "https://arankomatsuzaki.wordpress.com/2021/06/04/gpt-j/", "date": "2021-06-04" },
+      { "label": "PaLM", "url": "https://arxiv.org/abs/2204.02311", "date": "2022-04-05" },
+      { "label": "LLaMA", "url": "https://arxiv.org/abs/2302.13971", "date": "2023-02-27" }
+    ],
+    "firstShipped": { "model": "GPT-J-6B (EleutherAI)", "date": "2021-06-04", "url": "https://arankomatsuzaki.wordpress.com/2021/06/04/gpt-j/" },
+    "family": "position",
+    "bill": ["quality", "extrapolation"],
+    "problem": "Relative position in the score helps (Shaw, T5) but costs an n×n bias tensor or per-layer tables. Wanted: relative-position dependence with the cheapness of absolute encoding — and something that survives *linearised* attention, which biases do not.",
+    "idea": "Rotate q_m and k_n by angle m·θ_i in each 2-D dimension pair (θ_i geometric, base 10,000 — the sinusoid frequency ladder). Then q_mᵀk_n depends only on m−n. Zero parameters, applied once to Q and K, nothing added to the residual stream.",
+    "buys": [
+      "Relative position for free: no bias tensor, no table, KV-cache friendly, decays with distance",
+      "Works with linear attention (the paper's selling point) — which is why every 2025 hybrid can still use it",
+      "Became the default: GPT-J → PaLM → LLaMA → everything; and gave the field a *knob* (θ) that made 2023's context extension possible"
+    ],
+    "costs": [
+      "Does not extrapolate on its own: perplexity blows up past training length — the failure ALiBi attacked and PI/NTK/YaRN patched",
+      "Base θ must be chosen for the target length; a 10K-base model needs surgery to reach 128K",
+      "Position is baked into cached keys, complicating cache reuse — MLA has to keep a separate 'decoupled RoPE' sub-dimension because of it"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "yes", "why": "the default" },
+      "rag32k": { "v": "yes", "why": "with a large enough θ (or trained at 32K)" },
+      "coding128k": { "v": "yes", "why": "θ = 500K–1M or YaRN; Llama 3.1 / Code Llama style" },
+      "agent1m": { "v": "maybe", "why": "RoPE for local layers, NoPE for global (Llama 4 iRoPE), or DroPE-style removal — pure RoPE at 1M is on thin ice" },
+      "verdict": "The most successful positional idea ever, and the reason 2023 was spent stretching it."
+    },
+    "viz": { "kind": "position", "mode": "rope" }
+  },
+  {
+    "id": "alibi",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 3,
+    "order": 0,
+    "name": "ALiBi — Attention with Linear Biases",
+    "short": "ALiBi",
+    "aka": "'Train Short, Test Long'",
+    "date": "2021-08-27",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation",
+      "authors": "Press, Smith, Lewis (UW / FAIR / Allen AI)",
+      "arxiv": "2108.12409",
+      "url": "https://arxiv.org/abs/2108.12409",
+      "evidence": "[v1] Fri, 27 Aug 2021 17:35:06 UTC (ICLR 2022)"
+    },
+    "secondary": [
+      { "label": "BLOOM-176B ('ALiBi positional encodings')", "url": "https://huggingface.co/bigscience/bloom", "date": "2022-07-11" },
+      { "label": "MPT-7B ('use ALiBi rather than positional embeddings'; StoryWriter 65K)", "url": "https://www.databricks.com/blog/mpt-7b", "date": "2023-05-05" }
+    ],
+    "firstShipped": { "model": "BLOOM-176B (BigScience)", "date": "2022-07-11", "url": "https://huggingface.co/bigscience/bloom" },
+    "family": "position",
+    "bill": ["extrapolation", "compute"],
+    "problem": "Sinusoidal, learned and RoPE models all fall apart past their training length. And training long is expensive — can you train at 1,024 and serve at 2,048+ for free?",
+    "idea": "No positional embeddings at all. Add a fixed, head-specific penalty −m·|i−j| to the pre-softmax scores, with m a geometric sequence per head (not learned). Distance is the only positional signal.",
+    "buys": [
+      "Train at 1,024, extrapolate to 2,048+ with equal-or-better perplexity than a sinusoidal model trained at 2,048; ~11% faster and 11% less memory",
+      "Zero parameters, trivial to implement, played well with stability (MosaicML)",
+      "Made cheap fine-tune-time context changes possible (MPT-7B-StoryWriter 65K)"
+    ],
+    "costs": [
+      "The linear penalty is a strong recency prior: it extrapolates in perplexity largely by making attention effectively local — far-away exact retrieval (needle, long copy) is weak",
+      "A bias on every score breaks the plain FlashAttention fast path until kernels grew ALiBi support",
+      "No relative-position signal usable by linear attention; the LLaMA/GPT-4-era mainstream went RoPE + θ scaling instead"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "yes", "why": "fine — simple and stable" },
+      "rag32k": { "v": "maybe", "why": "perplexity holds; retrieval over the whole 32K does not" },
+      "coding128k": { "v": "no", "why": "cross-file recall needs far tokens; ALiBi discounts them" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "It buys length in perplexity and sells long-range recall. Right for train-short-serve-longer small models; wrong for anything retrieval-heavy."
+    },
+    "viz": { "kind": "position", "mode": "alibi" }
+  },
+  {
+    "id": "rabe-staats",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 3,
+    "order": 0,
+    "name": "Self-attention Does Not Need O(n²) Memory",
+    "short": "Rabe & Staats",
+    "date": "2021-12-10",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": { "title": "Self-attention Does Not Need O(n²) Memory", "authors": "Rabe, Staats (Google)", "arxiv": "2112.05682", "url": "https://arxiv.org/abs/2112.05682", "evidence": "[v1] Fri, 10 Dec 2021" },
+    "family": "systems",
+    "bill": ["compute"],
+    "oneLiner": "Chunked attention with a running softmax in JAX — O(√n) memory for exact attention, five months before FlashAttention fused it into a fast kernel.",
+    "whyFootnote": "Direct precursor to a node already on the timeline (FlashAttention)."
+  }
+]
