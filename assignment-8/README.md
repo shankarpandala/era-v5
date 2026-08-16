@@ -38,6 +38,7 @@ npm run a8:test                      # unit tests for the cost model, masks and 
 | **A8-4 Watch the field change its mind** | The eras as a sequence of wants, why each change of mind happened, and my prediction of what comes next — labelled as a bet. |
 | **A8-5 When would you pick it** | The decision matrix: every mechanism × four scenarios, ✓ / △ / ✗ with a reason on hover. |
 | **A8-6 Sources, dating method, corrections** | The dating rule, what verification corrected, limitations, and the full table (same as §7 below). |
+| **A8-7 Question 2** | What the date order shows that a list cannot — burst/stall shape, simultaneity, dormancy, publication-vs-adoption lag, and the holes a date axis exposes in the taught list — every figure computed from `data/` at render time. Then the mechanism the taught list did not cover, with the line its date was read from. |
 
 Five shared, parameterised visualizers carry the whole timeline (a clear static page beats a broken clever one, so there are no bespoke animations):
 
@@ -289,6 +290,86 @@ One for the course, in the spirit of "if you catch me in another one, tell me": 
 | 134 | 16 Jul 2026 (paper 27 Jul 2026) | model release | **Kimi K3**<br><sub>Kimi K3 — Kimi Delta Attention 3:1 with gated MLA at 2.8T (69 KDA + 24 gated MLA layers), plus Attention Residuals</sub> | minor | [arXiv 2607.24653](https://arxiv.org/abs/2607.24653) · [primary](https://huggingface.co/moonshotai/Kimi-K3) | <sub>HF blog: 'publicly released Kimi K3 on July 16, 2026, with full open-source weights promised by July 27'; HF card: 'built on Kimi Delta Attention (KDA) and Attention Residuals (AttnRes)', 'Layers: 93 (69 KDA + 24 Gated MLA)', 1,048,576 context; kimi.com/blog/kimi-k3 (page undated on-page); report arXiv API published 2026-07-27T16:49:54Z (v1)</sub> |
 | 135 | 3 Aug 2026 | arXiv v1 | **LongCat LSA**<br><sub>LongCat Sparse Attention (LSA) — streaming-aware, cross-layer, hierarchical lightning indexing</sub> | footnote | [arXiv 2608.01662](https://arxiv.org/abs/2608.01662) | <sub>arXiv API published 2026-08-03T03:51:21Z (v1)</sub> |
 <!-- END TIMELINE TABLE -->
+
+## 10. Question 2 — what does the timeline actually show?
+
+> *"Write what you saw once the mechanisms were in date order that you could not see as a list.
+> If you found a mechanism I did not cover, name it with its date and the paper or release you got the date from."*
+
+Live section: **[A8-7](https://www.pandala.in/era-v5/assignment-8/#a8-7)**. Every number below is
+computed from `data/` by `src/assignment-8/components/Question2.jsx` at render time — none of it is
+retyped, so it stays true if a date changes.
+
+A list is a set. A timeline is a set **plus an axis**, and everything I could not see before is a
+property of that axis: density, silence, simultaneity, lag, and gap.
+
+**1. Effort arrives in bursts, and one whole thread stopped for four years.**
+13 mechanisms land in 2020 — sparse, linear and low-rank all swinging at n² — then **4 in 2021**.
+The approximation wave did not taper, it stopped; 2021's few records are a change of subject
+(RoPE, ALiBi, and one delta-rule paper nobody followed). Approximation did not properly return
+until **2025**, and when it did it had changed form: trainable sparsity (NSA, MoBA, DSA) instead of
+fixed patterns. A list tells you those mechanisms exist. Only the calendar tells you the field
+tried something, quit, and came back having changed its mind about how to do it.
+
+**2. The big moves are simultaneous, not sequential.**
+The densest 30 days on the page hold **5 mechanisms** from different labs attacking different
+bills: GQA (22 May 2023), Randomized Positional Encodings (26 May), NoPE (31 May), Position
+Interpolation and PagedAttention (both 20 Jun). As a list they read as a considered sequence —
+someone fixed KV heads, then positions, then serving. As dates they are a scramble. Context
+extension is the extreme case: *PI → NTK-aware → Dynamic NTK* inside about ten days, two of the
+three posted to Reddit before any paper existed.
+
+**3. Right ideas sit unused for years; a list makes them look adjacent.**
+The delta rule is published **22 Feb 2021** and then nothing for **3.3 years** until it is made
+trainable in parallel (Jun 2024), gated (Dec 2024), and finally shipped (Qwen3-Next, Sep 2025);
+by 2026 it is the recurrent half of flagship models. Grouped by family, "DeltaNet" and "Gated
+DeltaNet" are two adjacent lines and you would assume one naturally followed the other. What
+actually unblocked it was not a better idea but a chunkwise parallel training form.
+
+**4. Invention order is not adoption order — and only two dates per row can show it.**
+
+| mechanism | published | first shipped | lag |
+|---|---|---|---|
+| Explicit Sparse Transformer (top-k) | 2019-12-25 | 2025-09-29 (DSA) | **5.8y** |
+| The delta rule | 2021-02-22 | 2025-09-11 (Qwen3-Next) | **4.6y** |
+| Linear attention | 2020-06-29 | 2025-01-14 (MiniMax-01) | **4.5y** |
+| Sliding window (Longformer) | 2020-04-10 | 2023-09-27 (Mistral 7B) | **3.5y** |
+| MQA | 2019-11-06 | 2022-02-02 | **2.2y** |
+
+A list cannot express a lag; it has one date per row, if any. Two dates per row turn the timeline
+into a claim about the field: *the idea is rarely the bottleneck* — a kernel, a training form, or a
+bill becoming binding is.
+
+**5. A date axis exposes the holes in any curated list, including the taught one.**
+Sorting the 21 taught mechanisms by date leaves visible silences: 1.9 years between sinusoidal
+positions (Jun 2017) and Sparse Transformer (Apr 2019), and **1.7 years between ALiBi (27 Aug 2021)
+and GQA (22 May 2023)** — with 6 mechanisms from this page sitting inside that second one. A list
+has no gaps because a list has no axis; put the same items on a calendar and the missing years
+announce themselves.
+
+### The mechanism the taught list did not cover
+
+**FlashAttention — exact attention, IO-aware. 27 May 2022.**
+Date read from the arXiv v1 line of *"FlashAttention: Fast and Memory-Efficient Exact Attention with
+IO-Awareness"* (Dao, Fu, Ermon, Rudra, Ré), [arXiv:2205.14135](https://arxiv.org/abs/2205.14135) —
+evidence string `[v1] Fri, 27 May 2022 17:53:09 UTC`, re-checked against the arXiv API for this
+answer.
+
+I name this one rather than something more obscure because of **where it falls**: it sits inside the
+taught list's 1.7-year silence between ALiBi and GQA, and its absence is load-bearing. Without it
+the timeline has no explanation for why the 2020 approximation burst never resumed and why the next
+several years went to memory instead of compute. It changed nothing about the mathematics — same
+softmax, same output — and redirected the entire research agenda by making the exact version cheap
+enough that approximating it stopped paying. It is also one of the very few mechanisms that is ✓ in
+all four deployment scenarios in A8-5, and is now simply what "attention" means in a serving stack.
+
+Others of the same weight that the taught list does not include, dates from their own primary
+sources (all on their cards): **PagedAttention** (20 Jun 2023, vLLM), **Mamba** (1 Dec 2023,
+arXiv:2312.00752), **Position Interpolation** (20 Jun 2023 — the blog changelog that beat the
+paper, arXiv:2306.15595 on 27 Jun; the step *before* the NTK-aware scaling that is on the list), **RWKV** (17 Aug 2022 checkpoints), **Mamba-2 / SSD**
+(31 May 2024), **MoBA** (18 Feb 2025) and **FlashAttention-2/3** (17 Jul 2023 / 11 Jul 2024).
+In total the page carries 114 mechanisms beyond the taught 21, each dated from its own source.
+
 
 ## 8. Limitations, honestly
 

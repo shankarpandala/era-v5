@@ -16,6 +16,7 @@ import Timeline from './components/Timeline.jsx'
 import EraStory from './components/EraStory.jsx'
 import DecisionMatrix from './components/DecisionMatrix.jsx'
 import Sources from './components/Sources.jsx'
+import Question2 from './components/Question2.jsx'
 
 const SoftmaxPipeline = lazy(() => import('./viz/SoftmaxPipeline.jsx'))
 const CostCalculator = lazy(() => import('./viz/CostCalculator.jsx'))
@@ -32,6 +33,7 @@ const SECTIONS = [
   { id: 'a8-4', code: 'A8-4', title: 'Watch the field change its mind — and what comes next', color: 'var(--claim-4)' },
   { id: 'a8-5', code: 'A8-5', title: 'When would you actually pick it', color: 'var(--color-brand-500)' },
   { id: 'a8-6', code: 'A8-6', title: 'Sources, dating method, corrections', color: '#71717a' },
+  { id: 'a8-7', code: 'A8-7', title: 'Question 2 — what the timeline shows that a list cannot', color: 'var(--claim-2)' },
 ]
 
 function Tile({ label, value }) {
@@ -206,6 +208,17 @@ export default function App() {
               </a>
               .
             </p>
+          </ClaimCard>
+
+          <ClaimCard
+            id="a8-7"
+            code="A8-7"
+            accent="var(--claim-2)"
+            title="Question 2 — what the timeline shows that a list cannot"
+            claim="The instructor's follow-up: once the mechanisms are in date order, what can you see that you could not see as a list? Five things, each computed from the committed data rather than asserted — the burst-and-stall shape of the effort, the simultaneity of the big moves, a right idea dormant for years, the gap between publication and adoption, and the holes a date axis exposes in any curated list. Then the mechanism the taught list did not cover, with the line I read its date from."
+            takeaway="A list is a set; a timeline is a set plus an axis, and every finding below is a property of the axis — density, silence, simultaneity, lag, and gap. The one mechanism I would add to the taught 21 is FlashAttention (27 May 2022, arXiv:2205.14135): it changed none of the mathematics and redirected the whole field, and it sits exactly inside the taught list's 1.7-year silence between ALiBi and GQA."
+          >
+            <Question2 />
           </ClaimCard>
         </div>
       </main>
