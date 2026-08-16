@@ -66,11 +66,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "no window to extend; extension even needs an 8K readjust to save short-context quality"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "32K sits well inside the ~128K pretrained RoPE models already reach; no search needed"
       },
       "coding128k": {
         "v": "yes",
@@ -127,15 +127,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "no extrapolation needed inside the trained range; three passes cost prefill for nothing"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "32K is inside where native training or NTK/YaRN hold; nothing to remap"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "zero-shot stretch works, but coarse cross-chunk positions hurt hard cross-file retrieval"
       },
       "agent1m": {
         "v": "yes",
@@ -262,15 +262,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "2K fits one local segment; the compressive memory never engages"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "lossy memory beyond the segment is where retrieval QA fails; nothing shipped"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "cross-file recall through a lossy linear-attention memory; reproductions weak, no model"
       },
       "agent1m": {
         "v": "maybe",
@@ -318,7 +318,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "at 2K the prompt KV is not the bottleneck; multi-turn re-asks need evicted context"
       },
       "rag32k": {
         "v": "yes",
@@ -326,7 +326,7 @@
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "pays when a long repo prompt precedes short edits; follow-ups may need evicted files"
       },
       "agent1m": {
         "v": "no",
@@ -405,7 +405,7 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "more batch at 32K, but GQA is often enough and it needs pretraining plus FlashMLA"
       },
       "coding128k": {
         "v": "yes",
@@ -488,11 +488,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "at 2K the KV cache is small; sharing layers costs quality for nothing"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "~2× smaller KV helps batch, but only if you train it in and lack MLA"
       },
       "coding128k": {
         "v": "yes",
@@ -577,15 +577,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "no KV problem at 2K to solve; softmax still wins on exact recall"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "cheap layers in a hybrid (Nemotron-H); retrieval leans on the softmax layers"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "hybrid only — cross-file exact recall trails softmax and needs the attention layers"
       },
       "agent1m": {
         "v": "yes",
@@ -635,15 +635,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "constant state buys nothing at 2K; still below softmax on retrieval"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "hybrid with sliding-window or global layers; recall-heavy QA still leans on softmax"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "hybrid only; no forgetting gate weakens the length extrapolation cross-file recall needs"
       },
       "agent1m": {
         "v": "yes",
@@ -692,7 +692,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "built on paged KV by design; at 2K there are barely pages to skip"
       },
       "rag32k": {
         "v": "yes",
@@ -700,7 +700,7 @@
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "128K decode is bandwidth-bound; query-aware pages keep cross-file tokens reachable, nothing dropped"
       },
       "agent1m": {
         "v": "maybe",
@@ -766,7 +766,7 @@
       },
       "rag32k": {
         "v": "yes",
-        "why": ""
+        "why": "half the layers' KV stops growing at 32K; global layers still see all retrieved chunks"
       },
       "coding128k": {
         "v": "yes",
@@ -818,15 +818,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "prefill at 2K is already fast; pattern search and index are pure overhead"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "prefill only, and 32K is far from the 100K–1M range where it pays"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "prefill speedup at 128K on an existing dense model; decode untouched, per-model pattern search"
       },
       "agent1m": {
         "v": "yes",
@@ -880,11 +880,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "no 128K to reach; ~800B tokens of continued pretraining for nothing"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "a 4× stretch from 8K does not need six length stages and ~800B tokens"
       },
       "coding128k": {
         "v": "yes",
@@ -892,7 +892,7 @@
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "nothing beyond 128K; attention compute and KV at length are untouched"
       },
       "verdict": "What 'RoPE scaling' means in production: not a trick, a training recipe."
     },
@@ -967,11 +967,11 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "better needle retrieval and less distractor noise, but only in a new pretraining run"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "less attention noise helps cross-file recall, but ~5–12% throughput cost and no KV saving"
       },
       "agent1m": {
         "v": "no",
@@ -1018,11 +1018,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "at 2K every head's KV is small; nothing to split into sink+window"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "~2.5× memory on MHA, less on GQA; fixed split is not query-adaptive"
       },
       "coding128k": {
         "v": "yes",
@@ -1030,7 +1030,7 @@
       },
       "agent1m": {
         "v": "maybe",
-        "why": ""
+        "why": "3.3M tokens on one A100 with quantisation, but retrieval heads still hold full O(L) KV"
       },
       "verdict": "The per-head version of what Gemma does per layer; bridges eviction and architecture."
     },
@@ -1126,7 +1126,7 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "hybrid throughput helps, but 32K retrieval QA is exact-recall work softmax still does better"
       },
       "coding128k": {
         "v": "yes",
@@ -1178,15 +1178,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "2K fits inside attention's window; test-time gradient steps for nothing"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "retrieval QA needs exact recall; a surprise-trained MLP memory with no public weights"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "cross-file recall through a learned memory; small-scale evidence, immature kernels, no weights"
       },
       "agent1m": {
         "v": "maybe",

@@ -56,7 +56,7 @@
     "to": "2022-12-31",
     "wanted": "the same math, but IO-aware",
     "color": "#f59e0b",
-    "narrative": "FlashAttention (May 2022) changes nothing about the maths and everything about the bill: tile the computation so the n×n matrix never touches HBM, and exact attention becomes 2–4× faster and linear in memory. Overnight the 2020 approximations lose their reason to exist at ordinary lengths — why accept a quality hit for a speedup a kernel gives you for free? The field re-learns that a systems change can beat an algorithmic one. Meanwhile Haviv et al. show a decoder learns position with no positional encoding at all, a hint that will matter in 2025.",
+    "narrative": "FlashAttention (May 2022) changes nothing about the maths and everything about the bill: tile the computation so the n×n matrix never touches HBM, and exact attention becomes 2–4× faster and linear in memory. Overnight the 2020 approximations lose their reason to exist at ordinary lengths — why accept a quality hit for a speedup a kernel gives you for free? The field re-learns that a systems change can beat an algorithmic one. Meanwhile Haviv et al. show a decoder learns position with no positional encoding at all, a hint that will matter in 2025 — and RWKV-4's checkpoints (Aug 2022) quietly ship the RNN revival nine months before its paper.",
     "short": "exact→cheap"
   },
   {
@@ -80,7 +80,7 @@
     "to": "2024-12-31",
     "wanted": "the KV cache is the constraint at 128K+",
     "color": "#06b6d4",
-    "narrative": "At 128K tokens the KV cache, not the FLOPs, decides how many users a GPU can serve. DeepSeek-V2's MLA (May) compresses keys and values into a small latent and caches only that — a 57× reduction with no quality loss. The recurrent thread becomes competitive: Mamba-2 shows SSMs and linear attention are the same object, DeltaNet gets a parallel training algorithm, and Gated DeltaNet (Dec) combines gating with the delta rule. Gemma 2 interleaves local and global layers so most of the cache is bounded. Length recipes go mainstream (Llama 3.1's 128K, LongRoPE, Dual Chunk), and eviction/selection schemes (H2O, SnapKV, Quest, DuoAttention) trade recall for memory.",
+    "narrative": "At 128K tokens the KV cache, not the FLOPs, decides how many users a GPU can serve. DeepSeek-V2's MLA (May) compresses keys and values into a small latent and caches only that — 57× less than a naive 128-head MHA cache (93.3% less than DeepSeek's own 67B GQA model, in the paper's comparison) with no quality loss. The recurrent thread becomes competitive: Mamba-2 shows SSMs and linear attention are the same object, DeltaNet gets a parallel training algorithm, and Gated DeltaNet (Dec) combines gating with the delta rule. Gemma 2 interleaves local and global layers so most of the cache is bounded. Length recipes go mainstream (Llama 3.1's 128K, LongRoPE, Dual Chunk), and eviction/selection schemes (H2O, SnapKV, Quest, DuoAttention) trade recall for memory.",
     "short": "memory"
   },
   {

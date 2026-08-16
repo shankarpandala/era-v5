@@ -66,15 +66,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "at 2K softmax is cheap; custom kernels for no KV win"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "recall leans on the 1-in-8 softmax layers; 32K does not need the linear stack"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "7/8 constant-state layers cut KV, but cross-file recall rides on the softmax eighth; note M2"
       },
       "agent1m": {
         "v": "yes",
@@ -129,11 +129,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "at 2K every 4,096-window SWA layer is a full layer; NoPE fragility for nothing"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "3/4 of layers' KV bounded by the window, but the saving is small at 32K"
       },
       "coding128k": {
         "v": "yes",
@@ -236,7 +236,7 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "speedups are quoted at 64K; at 32K the three-branch machinery barely pays"
       },
       "coding128k": {
         "v": "yes",
@@ -244,7 +244,7 @@
       },
       "agent1m": {
         "v": "yes",
-        "why": ""
+        "why": "block selection cuts decode KV traffic; compress + select + window keeps whole-context reach"
       },
       "verdict": "Right when you pretrain long and own kernels; wrong for a 2K chatbot. Note the honest wrinkle: DeepSeek shipped DSA, not NSA."
     },
@@ -293,7 +293,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "at 2K there are only a handful of 512-blocks; top-3 plus own block is dense"
       },
       "rag32k": {
         "v": "maybe",
@@ -305,7 +305,7 @@
       },
       "agent1m": {
         "v": "yes",
-        "why": ""
+        "why": "the paper's 1M config (block 4096, top-12) cuts prefill compute; KV is still fully stored"
       },
       "verdict": "NSA's same-week sibling: less machinery, same bet — read only a few blocks of the million."
     },
@@ -370,7 +370,7 @@
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "128K is what the recipe was built for; the global layers carry cross-file recall"
       },
       "agent1m": {
         "v": "maybe",
@@ -424,15 +424,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "chunked 8K attention and NoPE reach layers buy nothing inside a 2K prompt"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "8K chunks have hard boundaries; cross-chunk retrieval rests on every fourth NoPE layer"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "128K sits well inside the 256K training length; most layers pay only 8K-chunk cost"
       },
       "agent1m": {
         "v": "maybe",
@@ -479,11 +479,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "a 2K prompt never leaves training length; extrapolation and the 512 window are moot"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "one NoPE layer in four does the retrieval, steered by an inference-time score-scaling heuristic"
       },
       "coding128k": {
         "v": "yes",
@@ -491,7 +491,7 @@
       },
       "agent1m": {
         "v": "maybe",
-        "why": ""
+        "why": "extrapolation is the pitch, but the NoPE layers still hold full KV at 1M"
       },
       "verdict": "Same design family as Cohere (Jan) and Llama 4 (Apr 5); the retrofit-friendly one."
     },
@@ -597,15 +597,15 @@
       },
       "rag32k": {
         "v": "yes",
-        "why": ""
+        "why": "one gate per head buys sink-free stability; nothing to lose at 32K"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "better extrapolation with no sink to pin; not on the 128K KV bill either way"
       },
       "agent1m": {
         "v": "yes",
-        "why": ""
+        "why": "sink-free extrapolation is what the few full-attention layers of a 1M hybrid need"
       },
       "verdict": "The 2025 answer to the 2023 sink question: fix the softmax instead of pinning a token."
     },
@@ -709,7 +709,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "yes",
-        "why": ""
+        "why": "the learned sink scalar is free stability at any length; nothing lost at 2K"
       },
       "rag32k": {
         "v": "yes",
@@ -717,11 +717,11 @@
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "half the layers hold 128-token KV; the dense half plus YaRN carries 128K cross-file recall"
       },
       "agent1m": {
         "v": "maybe",
-        "why": ""
+        "why": "YaRN-extended to 131,072, not trained beyond; the dense half still pays full KV at 1M"
       },
       "verdict": "Three timeline threads in one model card: Sparse Transformer's banded layers, StreamingLLM's sinks, and Evan Miller's off-by-one."
     },
@@ -775,11 +775,11 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "the ~10× throughput claim starts at 32K+; linear-state recall limits are the trade"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "256K native covers 128K; three of four layers hold no growing KV, so decode stays cheap"
       },
       "agent1m": {
         "v": "yes",
@@ -854,7 +854,7 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "k=2,048 of 32K keys is a thin cut; the indexer scan barely pays off"
       },
       "coding128k": {
         "v": "yes",
@@ -911,15 +911,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "built for KV and decode at 1M; nothing to save at 2K, DPLR kernels for nothing"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "at 32K KV is not the bill; linear-layer recall limits hurt retrieval for little gain"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "less KV helps at 128K, but cross-file recall leans on the one-in-four MLA layers"
       },
       "agent1m": {
         "v": "yes",

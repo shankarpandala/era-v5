@@ -86,8 +86,9 @@ and independently re-checked to the day; the sources and the dating method are i
 README, and the data is machine-checked:
 
 ```bash
-npm run a8:check              # schema · all 17 instructor items present · README table in sync
+npm run a8:check              # schema (incl. a reason in every scenario cell) · all 17 instructor items · README table in sync
 npm run a8:check -- --links   # additionally fetch every source URL
+npm run a8:test               # unit tests for the cost model, masks and RoPE scaling
 ```
 
 ## Develop

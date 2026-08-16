@@ -10,7 +10,7 @@
 
 **The story (era → what the field wanted).** 0 quality fix (2014–17) → 1 exactness (Jun 2017) → 2 compute back (2019–20: sparse/linear/low-rank; MQA finds the KV bill) → 3 positions (2021: RoPE, ALiBi; delta rule appears) → 4 exact got cheap (2022: FlashAttention) → 5 length (2023: GQA, PI/NTK/YaRN, sinks, SWA, Ring, linear revival) → 6 memory back (2024: MLA, Mamba-2, DeltaNet parallel + gated, local:global) → 7 hybrids: memory back again + sparsity that trains (2025: MiniMax, Qwen3-Next, Kimi Linear; NoPE global layers; NSA, MoBA, DSA; learned sinks) → 8 now: compress, then select (DroPE; Qwen3.5 and Kimi K3 make the 3:1 delta-rule hybrid a flagship default; GLM-5 adopts DSA and MiniMax M3 comes back to sparse attention; DeepSeek-V4's CSA/HCA — 27% of V3.2's FLOPs and 10% of its KV at 1M; Gemma 4 strips the global layers further). Prediction (labelled as a bet): hybrid default stack, positions out of the way, retrofit-ability as a design goal, next flip a systems trick.
 
-**Honesty.** Every node has costs (schema-enforced), a per-scenario verdict, and the source it came from; the README has a Limitations section (first-public ≠ invention; idealised cost model; visualizers use seeded random Q/K/V; verdicts are judgements; the Dec-2025 → Aug-2026 window was swept by hand and is the part most likely to be incomplete).
+**Honesty.** Every node has costs and a reason in every one of its four scenario cells (both schema-enforced), a verdict, and the source it came from; the page opens on the 32 major nodes that carry the story, with everything one click away; the README has a Limitations section (first-public ≠ invention; idealised cost model; visualizers use seeded random Q/K/V; verdicts are judgements; the Dec-2025 → Aug-2026 window was swept by hand and is the part most likely to be incomplete).
 
 **Re-run.**
 
@@ -18,4 +18,5 @@
 npm install && npm run dev                    # /era-v5/assignment-8/
 node scripts/check_assignment8.mjs            # schema · 17/17 · README table in sync → verdict: PASS
 node scripts/check_assignment8.mjs --links    # HEAD/GET every source URL
+npm run a8:test                               # 19 unit tests: cost-model closed forms, mask invariants, RoPE / PI / NTK / YaRN identities
 ```

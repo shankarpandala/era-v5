@@ -51,11 +51,11 @@
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "MLP scoring at 128K² pairs on a sequential RNN decoder buys no cross-file recall"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "MLP scoring at 1M² pairs, no parallelism, no KV story — nothing here scales"
       },
       "verdict": "Teaching value only. Its one surviving argument — additive beats *unscaled* dot product at large d_k — was answered by the 1/√d in 2017."
     },

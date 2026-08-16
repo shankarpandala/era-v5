@@ -52,7 +52,7 @@
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "cross-file recall needs random access to far tokens; the decaying cache cannot give it"
       },
       "agent1m": {
         "v": "maybe",
@@ -185,15 +185,15 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "runs at 32K, but offsets past 128 share one bucket and the bias slows kernels"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "everything beyond offset 128 is one bucket — no precise far position for cross-file recall"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "an additive n×n bias off the fast path at 1M; all far offsets one bucket"
       },
       "verdict": "The parameter-light relative scheme of the encoder-decoder world; decoders went RoPE. Note the co-author: Shazeer wrote MQA two weeks later."
     },
@@ -348,7 +348,7 @@
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "the dense 128K score matrix is still computed; a fixed k caps cross-file context"
       },
       "agent1m": {
         "v": "maybe",
@@ -399,15 +399,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "gains only past ~2K; hashing noise and shared Q/K for no saving"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "exact 32K is cheap on FlashAttention; LSH buckets can miss the chunk and decode awkwardly"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "per-step hash-and-sort decoding, shared Q/K, and bucket misses on cross-file recall"
       },
       "agent1m": {
         "v": "no",
@@ -457,15 +457,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "at 2K, sort/gather/scatter clustering costs more than the dense attention it replaces"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "the query and its retrieved chunk can land in different clusters; sort/gather is hardware-unfriendly"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "cross-file recall depends on landing in the right cluster; shared QK in causal mode"
       },
       "agent1m": {
         "v": "maybe",
@@ -602,15 +602,15 @@
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "bidirectional only, and low rank fails at the sharp pointer-like attention retrieval needs"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "never for decoding; length baked into the n×k projection; cross-file recall needs sharp attention"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "no decoding at all; a 1M×k projection baked into weights — MLA compresses features instead"
       },
       "verdict": "Fixed-length encoders only. The low-rank instinct returns, done differently, as MLA's latent KV in 2024 — MLA compresses each token along the feature axis (stays causal); Linformer compresses along the sequence axis, which is what breaks decoding."
     },
@@ -652,7 +652,7 @@
       }
     ],
     "firstShipped": {
-      "model": "MiniMax-01 (456B, 'lightning attention' hybrid, 1M-token training context)",
+      "model": "MiniMax-01 — the first frontier-scale hybrid (RWKV-4 in Aug 2022 and RetNet in 2023 shipped the family earlier at open/research scale)",
       "date": "2025-01-14",
       "url": "https://arxiv.org/abs/2501.08313"
     },
@@ -734,7 +734,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "dense at 2K beats random-block gathers the paper itself calls inefficient"
       },
       "rag32k": {
         "v": "maybe",
@@ -742,11 +742,11 @@
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "encoder-only; random blocks plus gathers give no reliable cross-file recall path in a decoder"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "never in a mainstream decoder; random-block gathers at 1M and no KV story"
       },
       "verdict": "The most complete 2020 pattern; too fiddly and too encoder-shaped to survive into decoders."
     },
@@ -792,19 +792,19 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "exact softmax at 2K is cheap; random features add approximation error for no gain"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "variance for peaked attention — the sharp pointer retrieval needs is what FAVOR+ approximates worst"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "error compounds through layers and peaked far-token attention has the highest variance — recall suffers"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "right bill, wrong kernel: 1M linear layers use delta-rule/GLA states, not random features"
       },
       "verdict": "Elegant theory, and the last serious attempt to be softmax without paying for softmax. FlashAttention made the question moot for a while."
     },
@@ -869,15 +869,15 @@
       },
       "rag32k": {
         "v": "yes",
-        "why": ""
+        "why": "bounded logits regardless of length, for one extra per-head norm"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "logits growing with context length is the ViT-22B failure it bounds"
       },
       "agent1m": {
         "v": "yes",
-        "why": ""
+        "why": "the longer the context, the more logits drift; bounded logits are non-negotiable at 1M"
       },
       "verdict": "Not a bill item — a stability item — but you cannot read a 2025 attention block without it."
     },
