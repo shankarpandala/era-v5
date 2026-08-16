@@ -931,5 +931,111 @@
       "kind": "state",
       "mode": "gated-delta"
     }
+  },
+  {
+    "id": "cca",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 7,
+    "order": 0,
+    "name": "Compressed Convolutional Attention (CCA) — attention inside a compressed latent",
+    "short": "CCA",
+    "date": "2025-10-06",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Compressed Convolutional Attention: Efficient Attention in a Compressed Latent Space",
+      "authors": "Figliolia, Alonso et al. (Zyphra)",
+      "arxiv": "2510.04476",
+      "url": "https://arxiv.org/abs/2510.04476",
+      "evidence": "arXiv API published 2025-10-06T04:24:23Z (v1); shipped in ZAYA1-base (HF initial commit 19 Nov 2025) and ZAYA1-8B (May 2026, '8× KV-cache compression')"
+    },
+    "family": "heads-kv",
+    "bill": [
+      "kv-memory",
+      "compute"
+    ],
+    "oneLiner": "Runs the whole attention computation in a shared compressed latent space (parameters, prefill compute and KV all shrink); shipped in Zyphra's ZAYA1 models.",
+    "whyFootnote": "MLA-family variant at small scale."
+  },
+  {
+    "id": "motif-gda",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 7,
+    "order": 0,
+    "name": "Grouped Differential Attention (Motif-2-12.7B)",
+    "short": "Grouped Diff Attention",
+    "date": "2025-11-07",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Motif 2 12.7B technical report",
+      "authors": "Lim, Lee et al. (Motif Technologies)",
+      "arxiv": "2511.07464",
+      "url": "https://arxiv.org/abs/2511.07464",
+      "evidence": "arXiv API published 2025-11-07T10:32:16Z (v1)"
+    },
+    "family": "attention",
+    "bill": [
+      "quality"
+    ],
+    "oneLiner": "Differential Transformer's first shipped descendant: asymmetric head groups for signal-preserving vs noise-suppressing attention, in a 12.7B open model.",
+    "whyFootnote": "Quality tweak; adoption of a node."
+  },
+  {
+    "id": "nested-learning-hope",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 7,
+    "order": 1,
+    "name": "Nested Learning / HOPE — attention and Titans as memory modules at different update rates",
+    "short": "Nested Learning",
+    "date": "2025-11-07",
+    "datePrecision": "day",
+    "dateKind": "blog",
+    "source": {
+      "title": "Introducing Nested Learning (Google Research blog); paper 'Nested Learning: The Illusion of Deep Learning Architectures'",
+      "authors": "Behrouz, Razaviyayn et al. (Google)",
+      "arxiv": "2512.24695",
+      "url": "https://arxiv.org/abs/2512.24695",
+      "evidence": "Google Research blog dated Nov 7, 2025; arXiv API published 2025-12-31T07:59:43Z (v1)"
+    },
+    "family": "hybrid",
+    "bill": [
+      "length"
+    ],
+    "oneLiner": "Frames attention, Titans and optimisers as associative-memory modules updated at different frequencies; HOPE = a self-modifying Titans plus a continuum of memory modules for continual learning.",
+    "whyFootnote": "Research framework; the Titans line already has a node.",
+    "paperDate": "2025-12-31"
+  },
+  {
+    "id": "olmo3-swa",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 7,
+    "order": 0,
+    "name": "OLMo 3 — 3:1 sliding-window : global, YaRN on global layers only (fully open)",
+    "short": "OLMo 3",
+    "date": "2025-11-20",
+    "datePrecision": "day",
+    "dateKind": "blog",
+    "source": {
+      "title": "Olmo 3 (Ai2 blog)",
+      "authors": "Ai2",
+      "arxiv": "",
+      "url": "https://allenai.org/blog/olmo3",
+      "evidence": "Ai2 blog dated November 20, 2025; Olmo3Config sliding_window 4096, 3 of every 4 layers windowed, final layer full"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "A fully open model adopting the local:global recipe (window 4096, 3:1) with QK-Norm and YaRN applied only to the global layers.",
+    "whyFootnote": "Adoption of an existing layout."
   }
 ]

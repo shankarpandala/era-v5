@@ -145,15 +145,15 @@
     "order": 0,
     "name": "MiniCPM-SALA — sparse (InfLLM-V2) + linear (Lightning) attention in one 9B model",
     "short": "MiniCPM-SALA",
-    "date": "2026-02-12",
+    "date": "2026-02-11",
     "datePrecision": "day",
-    "dateKind": "arxiv-v1",
+    "dateKind": "model-release",
     "source": {
       "title": "MiniCPM-SALA: Hybridizing Sparse and Linear Attention for Efficient Long-Context Modeling",
       "authors": "MiniCPM Team (OpenBMB)",
       "arxiv": "2602.11761",
-      "url": "https://arxiv.org/abs/2602.11761",
-      "evidence": "arXiv API published 2026-02-12T09:37:05Z (v1)"
+      "url": "https://huggingface.co/openbmb/MiniCPM-SALA",
+      "evidence": "HF README: '[2026.02.11] MiniCPM-SALA is released!' (repo created 2026-02-11); '25% of the layers adopt InfLLM-V2 and the remaining 75% utilize Lightning Attention', HyPE positional embedding, converted from dense weights at ~25% of a from-scratch budget; arXiv API published 2026-02-12T09:37:05Z (v1)"
     },
     "family": "hybrid",
     "bill": [
@@ -161,7 +161,7 @@
       "kv-memory"
     ],
     "problem": "Sparse attention keeps long-context fidelity but still pays for the whole cache; linear attention is cheap but blurs. Can one small model take both?",
-    "idea": "A 9B hybrid: roughly a quarter of the layers trainable sparse attention (InfLLM-V2), three quarters Lightning (linear) attention — the 'attend to few' and 'remember cheaply' threads in one stack.",
+    "idea": "A 9B hybrid converted from a dense model at ~25% of a from-scratch budget: a quarter of the layers trainable sparse attention (InfLLM-V2), three quarters Lightning (linear) attention, with HyPE (RoPE on the linear layers, NoPE on the attention layers) — the 'attend to few' and 'remember cheaply' threads in one stack.",
     "buys": [
       "The two efficiency threads literally merged in one architecture, at a size you can run locally"
     ],
@@ -190,7 +190,15 @@
     "viz": {
       "kind": "matrix",
       "mode": "local-global"
-    }
+    },
+    "paperDate": "2026-02-12",
+    "secondary": [
+      {
+        "label": "Paper, arXiv 2602.11761",
+        "url": "https://arxiv.org/abs/2602.11761",
+        "date": "2026-02-12"
+      }
+    ]
   },
   {
     "id": "qwen35-gdn",
@@ -290,6 +298,11 @@
         "label": "FlashMemory-DeepSeek-V4: lookahead sparse attention on the lightning index (third-party)",
         "url": "https://arxiv.org/abs/2606.09079",
         "date": "2026-06-08"
+      },
+      {
+        "label": "GLM-5.2 'IndexShare' — one lightning indexer reused across four sparse layers (Jun 2026)",
+        "url": "https://huggingface.co/zai-org/GLM-5.2",
+        "date": "2026-06-16"
       }
     ],
     "firstShipped": {
@@ -372,29 +385,39 @@
     "instructorList": false,
     "era": 8,
     "order": 0,
-    "name": "Kimi K3 — Kimi Delta Attention 3:1 with gated MLA at 2.8T, plus Attention Residuals",
+    "name": "Kimi K3 — Kimi Delta Attention 3:1 with gated MLA at 2.8T (69 KDA + 24 gated MLA layers), plus Attention Residuals",
     "short": "Kimi K3",
-    "date": "2026-07-27",
+    "date": "2026-07-16",
     "datePrecision": "day",
-    "dateKind": "arxiv-v1",
+    "dateKind": "model-release",
     "source": {
-      "title": "Kimi K3: Open Frontier Intelligence (technical report); blog announcement mid-July 2026, full weights by 27 Jul 2026",
+      "title": "Kimi K3 (blog + Hugging Face model card); technical report 'Kimi K3: Open Frontier Intelligence'",
       "authors": "Kimi Team (Moonshot AI)",
       "arxiv": "2607.24653",
-      "url": "https://arxiv.org/abs/2607.24653",
-      "evidence": "arXiv API published 2026-07-27T16:49:54Z (v1); kimi.com/blog/kimi-k3: 'built on Kimi Delta Attention (KDA) and Attention Residuals (AttnRes)', 'The full model weights will be released by July 27, 2026' (blog page carries no explicit date; press coverage dates the announcement 16 Jul 2026)"
+      "url": "https://huggingface.co/moonshotai/Kimi-K3",
+      "evidence": "HF blog: 'publicly released Kimi K3 on July 16, 2026, with full open-source weights promised by July 27'; HF card: 'built on Kimi Delta Attention (KDA) and Attention Residuals (AttnRes)', 'Layers: 93 (69 KDA + 24 Gated MLA)', 1,048,576 context; kimi.com/blog/kimi-k3 (page undated on-page); report arXiv API published 2026-07-27T16:49:54Z (v1)"
     },
     "secondary": [
       {
         "label": "Kimi K3 blog",
         "url": "https://www.kimi.com/blog/kimi-k3",
-        "date": "2026-07"
+        "date": "2026-07-16"
+      },
+      {
+        "label": "Technical report, arXiv 2607.24653",
+        "url": "https://arxiv.org/abs/2607.24653",
+        "date": "2026-07-27"
+      },
+      {
+        "label": "Attention Residuals (Kimi Team, Mar 2026)",
+        "url": "https://arxiv.org/abs/2603.15031",
+        "date": "2026-03-16"
       }
     ],
     "firstShipped": {
       "model": "Kimi K3 (2.8T / 104B active, 1M context, open weights)",
-      "date": "2026-07-27",
-      "url": "https://www.kimi.com/blog/kimi-k3"
+      "date": "2026-07-16",
+      "url": "https://huggingface.co/moonshotai/Kimi-K3"
     },
     "family": "hybrid",
     "bill": [
@@ -402,7 +425,7 @@
       "compute"
     ],
     "problem": "Serve a 1M-token context at 2.8T parameters; the Kimi Linear recipe was proven at 48B.",
-    "idea": "Blocks of 3 KDA (channel-wise gated delta rule) layers then 1 gated MLA layer; Attention Residuals selectively retrieve representations across depth instead of accumulating them uniformly.",
+    "idea": "93 layers: 69 KDA (channel-wise gated delta rule) and 24 gated MLA layers, roughly 3:1; Attention Residuals let each layer attend over the outputs of earlier layers instead of summing them uniformly.",
     "buys": [
       "KDA at the largest open scale yet; the report claims ~2.5× scaling efficiency over K2 and ~75% less KV than full attention"
     ],
@@ -431,6 +454,803 @@
     "viz": {
       "kind": "state",
       "mode": "gated-delta"
+    },
+    "paperDate": "2026-07-27"
+  },
+  {
+    "id": "qttt",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "qTTT — query-only test-time training for long context",
+    "short": "qTTT",
+    "date": "2025-12-15",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Let's (not) just put things in Context: Test-Time Training for Long-Context LLMs",
+      "authors": "Bansal, Zhang et al.",
+      "arxiv": "2512.13898",
+      "url": "https://arxiv.org/abs/2512.13898",
+      "evidence": "arXiv API published 2025-12-15T21:01:37Z (v1)"
+    },
+    "family": "hybrid",
+    "bill": [
+      "length",
+      "quality"
+    ],
+    "oneLiner": "Diagnoses 'score dilution' in static softmax at long context; caches K/V once, then takes a few gradient steps on the query projections only before answering.",
+    "whyFootnote": "Research-scale; the TTT line is represented by TTT-E2E."
+  },
+  {
+    "id": "ttt-e2e",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "TTT-E2E — end-to-end test-time training for long context",
+    "short": "TTT-E2E",
+    "date": "2025-12-29",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "End-to-End Test-Time Training for Long Context",
+      "authors": "Tandon, Dalal et al. (Stanford / NVIDIA)",
+      "arxiv": "2512.23675",
+      "url": "https://arxiv.org/abs/2512.23675",
+      "evidence": "arXiv API published 2025-12-29T18:30:14Z (v1)"
+    },
+    "family": "hybrid",
+    "bill": [
+      "length",
+      "kv-memory"
+    ],
+    "problem": "A fixed-size state forgets; a KV cache grows. Can the model's own weights be the long-term memory, updated while it reads?",
+    "idea": "A standard Transformer with sliding-window attention whose MLP layers keep learning at inference by next-token prediction on the context; the initialisation for that test-time learning is meta-learned during pretraining, and a static second MLP is kept as safe storage.",
+    "buys": [
+      "Context beyond the window lives in weights, not in a cache — memory per token is constant",
+      "The Titans / test-time-training thread with an end-to-end recipe"
+    ],
+    "costs": [
+      "Gradient steps at inference (compute, kernels, batching complexity); evidence at research scale; recall depends on what the fast weights keep"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "no",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "research; nothing shipped"
+      },
+      "verdict": "The 'memory as weights trained at test time' line, made end-to-end — watch it, do not ship it yet."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "gated-delta"
     }
+  },
+  {
+    "id": "halo-hype",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "HALO / HypeNet + HyPE — distil a Transformer into a 3:1 linear:softmax hybrid; RoPE on RNN layers, NoPE on attention layers",
+    "short": "HALO / HyPE",
+    "date": "2026-01-29",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Hybrid Linear Attention Done Right: Efficient Distillation and Effective Architectures for Extremely Long Contexts",
+      "authors": "Chen, Thai et al. (Tsinghua / OpenBMB)",
+      "arxiv": "2601.22156",
+      "url": "https://arxiv.org/abs/2601.22156",
+      "evidence": "arXiv API published 2026-01-29T18:59:53Z (v1)"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory",
+      "extrapolation"
+    ],
+    "problem": "Hybrids work but are trained from scratch; and which layer type should carry position?",
+    "idea": "HALO converts a pretrained Transformer (Qwen3 1.7B–8B) into a 3:1 Lightning-linear : softmax hybrid with ~2.3B tokens; HypeNet adds HyPE — RoPE inside the recurrent layers, NoPE on the attention layers — plus dynamic logit scaling and QK-Norm.",
+    "buys": [
+      "Retrofit-ability for hybrids: 2.3B tokens instead of a pretraining run",
+      "A clean answer to 'who carries position in a hybrid': the recurrent layers"
+    ],
+    "costs": [
+      "Research scale (≤8B); the linear layers keep the usual recall limits; the logit-scaling knob at long context"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "you have a dense model and want a cheap hybrid"
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": ""
+      },
+      "verdict": "The recipe MiniCPM-SALA used; the timeline's 'retrofit-ability' prediction in one paper."
+    },
+    "viz": {
+      "kind": "position",
+      "mode": "nope"
+    }
+  },
+  {
+    "id": "token-sparse-attention",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 2,
+    "name": "Token Sparse Attention — interleaved token selection with per-head Q/K/V compression",
+    "short": "Token Sparse Attention",
+    "date": "2026-02-03",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Token Sparse Attention: Efficient Long-Context Inference with Interleaved Token Selection",
+      "authors": "Jo, Kang et al.",
+      "arxiv": "2602.03216",
+      "url": "https://arxiv.org/abs/2602.03216",
+      "evidence": "arXiv API published 2026-02-03T07:31:14Z (v1)"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "compute"
+    ],
+    "oneLiner": "Compress per-head Q/K/V to a reduced token set inside attention and decompress the output, so dropped tokens can be reconsidered in later layers; drop-in with existing kernels.",
+    "whyFootnote": "Research-scale; represented by the sparse-selection nodes."
+  },
+  {
+    "id": "glm5-dsa",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 1,
+    "name": "GLM-5 adopts DeepSeek Sparse Attention; GLM-5.2 adds IndexShare (one indexer per four sparse layers)",
+    "short": "GLM-5 (DSA)",
+    "date": "2026-02-11",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "paperDate": "2026-02-17",
+    "source": {
+      "title": "GLM-5 (Hugging Face model card); report 'GLM-5: from Vibe Coding to Agentic Engineering'",
+      "authors": "GLM-5 Team (Z.ai / Zhipu)",
+      "arxiv": "2602.15763",
+      "url": "https://huggingface.co/zai-org/GLM-5",
+      "evidence": "HF repo created 2026-02-11T04:55:46Z; README: 'GLM-5 also integrates DeepSeek Sparse Attention (DSA)'; report arXiv API published 2026-02-17T17:50:56Z (v1); GLM-5.2 repo created 2026-06-16, README: 'We propose IndexShare, which reuses the [indexer] across every four sparse-attention layers'"
+    },
+    "secondary": [
+      {
+        "label": "GLM-5.2 — IndexShare",
+        "url": "https://huggingface.co/zai-org/GLM-5.2",
+        "date": "2026-06-16"
+      },
+      {
+        "label": "Report, arXiv 2602.15763",
+        "url": "https://arxiv.org/abs/2602.15763",
+        "date": "2026-02-17"
+      }
+    ],
+    "firstShipped": {
+      "model": "GLM-5 (744B / 40B active, 200K, MIT) — the first major external adoption of DSA",
+      "date": "2026-02-11",
+      "url": "https://huggingface.co/zai-org/GLM-5"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "DSA was DeepSeek's; would anyone else pay the kernel and training cost to adopt it?",
+    "idea": "Swap GLM-4.x's dense GQA for DSA's lightning indexer + top-k selection; four months later GLM-5.2 amortises the indexer — the term that dominates at 1M — by sharing one indexer across every four sparse layers.",
+    "buys": [
+      "Content-based sparse attention crosses lab boundaries; IndexShare attacks the indexer's O(L²) directly"
+    ],
+    "costs": [
+      "Inherits DSA's fixed k and indexer scan; the report's own numbers"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "1M with a shared indexer"
+      },
+      "verdict": "The moment DSA stopped being a DeepSeek trick and became a layer other labs pick."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "dsa"
+    }
+  },
+  {
+    "id": "memory-caching",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Memory Caching — RNNs with growing memory",
+    "short": "Memory Caching",
+    "date": "2026-02-27",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Memory Caching: RNNs with Growing Memory",
+      "authors": "Behrouz, Li et al. (Google)",
+      "arxiv": "2602.24281",
+      "url": "https://arxiv.org/abs/2602.24281",
+      "evidence": "arXiv API published 2026-02-27T18:53:41Z (v1)"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "Cache hidden-state checkpoints of a recurrent model so effective memory grows with length — a dial between fixed-state RNNs (O(1)) and Transformers (O(L) KV).",
+    "whyFootnote": "Research-scale."
+  },
+  {
+    "id": "mlra",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Multi-Head Low-Rank Attention (MLRA) — MLA with partitionable latents",
+    "short": "MLRA",
+    "date": "2026-03-02",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Multi-Head Low-Rank Attention",
+      "authors": "Liu, Peng et al.",
+      "arxiv": "2603.02188",
+      "url": "https://arxiv.org/abs/2603.02188",
+      "evidence": "arXiv API published 2026-03-02T18:52:38Z (v1); ICLR 2026"
+    },
+    "family": "heads-kv",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "Latent KV like MLA, but the latent can be partitioned across heads/devices — tensor-parallel decoding without replicating the cache (MLA's known awkwardness).",
+    "whyFootnote": "Refinement of the MLA node."
+  },
+  {
+    "id": "mamba-3",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Mamba-3 — exponential-trapezoidal discretisation, complex state, MIMO SSM",
+    "short": "Mamba-3",
+    "date": "2026-03-16",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Mamba-3: Improved Sequence Modeling using State Space Principles",
+      "authors": "Lahoti, Li et al. (CMU / Together / Cartesia)",
+      "arxiv": "2603.15569",
+      "url": "https://arxiv.org/abs/2603.15569",
+      "evidence": "arXiv API published 2026-03-16T17:30:08Z (v1); ICLR 2026; Together AI blog 17 Mar 2026"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "Mamba-2 traded expressivity for tensor-core friendliness (scalar decay); decode is memory-bound and the state cannot track order.",
+    "idea": "An inference-first redesign: exponential-trapezoidal discretisation for a more expressive gated recurrence, a complex-valued (RoPE-like, data-dependent rotation) state for state tracking, and a multi-input multi-output SSM to raise arithmetic intensity at decode.",
+    "buys": [
+      "Better quality per state size than Mamba-2 at matched compute; decode that uses the hardware"
+    ],
+    "costs": [
+      "Research scale; the SSM thread still trails softmax on exact recall; new kernels"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "as the cheap layer of a hybrid"
+      },
+      "verdict": "The SSM thread's 2026 step — three years after Mamba, still converging on the same hybrid shape."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "mamba"
+    }
+  },
+  {
+    "id": "attention-residuals",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 1,
+    "name": "Attention Residuals — softmax attention over depth replaces the fixed residual sum",
+    "short": "Attention Residuals",
+    "date": "2026-03-16",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Attention Residuals",
+      "authors": "Kimi Team (Moonshot AI)",
+      "arxiv": "2603.15031",
+      "url": "https://arxiv.org/abs/2603.15031",
+      "evidence": "arXiv API published 2026-03-16T09:32:21Z (v1); GitHub MoonshotAI/Attention-Residuals; used in Kimi K3 (Jul 2026)"
+    },
+    "firstShipped": {
+      "model": "Kimi K3 (2.8T)",
+      "date": "2026-07-16",
+      "url": "https://huggingface.co/moonshotai/Kimi-K3"
+    },
+    "family": "attention",
+    "bill": [
+      "quality"
+    ],
+    "problem": "Residual connections sum every earlier layer with unit weight; deep models accumulate rather than select.",
+    "idea": "Each layer attends — softmax with learned, input-dependent weights — over the outputs of preceding layers instead of summing them; a block variant attends over block-level representations to cap memory and communication.",
+    "buys": [
+      "Attention applied along depth, not just sequence; shipped at 2.8T in Kimi K3"
+    ],
+    "costs": [
+      "Extra depth-wise attention cost and memory for earlier layer outputs (the block variant exists to bound it); a quality mechanism, not a bill item"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": ""
+      },
+      "verdict": "Not on the compute/KV bill at all — attention as a general selection operator, turned sideways."
+    },
+    "viz": {
+      "kind": "none"
+    }
+  },
+  {
+    "id": "gemma4-prope",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Gemma 4 — 5:1 sliding window : global, p-RoPE on global layers, unified K/V and a cross-layer shared KV cache",
+    "short": "Gemma 4",
+    "date": "2026-04-02",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "paperDate": "2026-07-02",
+    "source": {
+      "title": "Gemma 4 model card; Gemma 4 Technical Report",
+      "authors": "Gemma Team (Google DeepMind)",
+      "arxiv": "2607.02770",
+      "url": "https://ai.google.dev/gemma/docs/core/model_card_4",
+      "evidence": "Google open-source blog 'Thursday, April 2, 2026'; model card: 'a hybrid attention mechanism that interleaves local sliding window attention with full global attention', 'global layers feature unified Keys and Values, and apply Proportional RoPE (p-RoPE)', windows 512 (E2B/E4B) / 1024, 4:1 (E2B) or 5:1 local:global; report arXiv API published 2026-07-02T21:08:53Z (v1)"
+    },
+    "secondary": [
+      {
+        "label": "Technical report, arXiv 2607.02770",
+        "url": "https://arxiv.org/abs/2607.02770",
+        "date": "2026-07-02"
+      },
+      {
+        "label": "HF release blog",
+        "url": "https://huggingface.co/blog/gemma4",
+        "date": "2026-04-02"
+      }
+    ],
+    "firstShipped": {
+      "model": "Gemma 4 E2B / E4B / 12B / 26B-A4B / 31B",
+      "date": "2026-04-02",
+      "url": "https://ai.google.dev/gemma/docs/core/model_card_4"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory",
+      "extrapolation"
+    ],
+    "problem": "Gemma 3's 5:1 local:global bounded most of the cache; the global layers still paid full KV and full-frequency RoPE.",
+    "idea": "Keep 5:1 (4:1 for E2B) with 512/1024 windows and a global final layer; on the global layers use unified Keys and Values (keys reused as values), share the KV cache across layers, and apply proportional RoPE — the lowest frequencies truncated (Barbero et al. 2024) — while local layers keep standard RoPE.",
+    "buys": [
+      "Three KV cuts stacked on the global layers (unified K/V, cross-layer sharing, windows elsewhere); p-RoPE at scale as the answer to 'which frequencies extrapolate'"
+    ],
+    "costs": [
+      "Global layers still O(L); unified K/V is a quality trade the report has to defend; the recipe is Google's — configs are the source of truth"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "yes",
+        "why": "harmless"
+      },
+      "rag32k": {
+        "v": "yes",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": "the 2026 open-weights default"
+      },
+      "agent1m": {
+        "v": "maybe",
+        "why": "not alone at 1M"
+      },
+      "verdict": "Gemma 2 → 3 → 4: the same interleave, with more of the global-layer bill removed each generation."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "local-global"
+    }
+  },
+  {
+    "id": "preconditioned-deltanet",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Preconditioned DeltaNet — curvature-aware delta rule (unifies DeltaNet / GDN / KDA)",
+    "short": "Preconditioned DeltaNet",
+    "date": "2026-04-22",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Preconditioned DeltaNet: Curvature-aware Sequence Modeling for Linear Recurrences",
+      "authors": "Tumma, Loo et al.",
+      "arxiv": "2604.21100",
+      "url": "https://arxiv.org/abs/2604.21100",
+      "evidence": "arXiv API published 2026-04-22T21:38:25Z (v1)"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "quality"
+    ],
+    "oneLiner": "Adds a diagonal preconditioner to the delta rule's online-gradient update and derives DeltaNet, Gated DeltaNet and KDA as special cases, with chunkwise kernels.",
+    "whyFootnote": "Refinement of the delta-rule nodes."
+  },
+  {
+    "id": "kwai-summary-attention",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Kwai Summary Attention (KSA) — learnable summary tokens compress history",
+    "short": "KSA",
+    "date": "2026-04-27",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Kwai Summary Attention Technical Report",
+      "authors": "Chu, Zhou et al. (Kuaishou)",
+      "arxiv": "2604.24432",
+      "url": "https://arxiv.org/abs/2604.24432",
+      "evidence": "arXiv API published 2026-04-27T12:59:53Z (v1)"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "Compress history into learnable summary tokens (O(n/k) retained entries) that later tokens attend to.",
+    "whyFootnote": "Compression variant; DeepSeek-V4's CSA is the node."
+  },
+  {
+    "id": "gated-deltanet-2",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Gated DeltaNet-2 — decoupled channel-wise erase and write gates",
+    "short": "Gated DeltaNet-2",
+    "date": "2026-05-21",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Gated DeltaNet-2: Decoupling Erase and Write in Linear Attention",
+      "authors": "Hatamizadeh, Choi et al. (NVIDIA)",
+      "arxiv": "2605.22791",
+      "url": "https://arxiv.org/abs/2605.22791",
+      "evidence": "arXiv API published 2026-05-21T17:44:57Z (v1); GitHub NVlabs/GatedDeltaNet-2"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "kv-memory",
+      "quality"
+    ],
+    "problem": "The delta rule ties erasing to writing through one scalar β; KDA made forgetting channel-wise but kept that coupling.",
+    "idea": "A channel-wise erase gate and a separate channel-wise write gate on top of the gated delta rule; collapses to KDA when both gates share one scalar and to Gated DeltaNet when the decay collapses too.",
+    "buys": [
+      "Finer control of what a fixed-size state forgets and keeps, with the same chunkwise-parallel training"
+    ],
+    "costs": [
+      "Still a bounded state; more gates, more kernel work; research scale so far"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": "the next step of the layer Qwen3.5 / Kimi K3 already ship"
+      },
+      "verdict": "The 1960 delta rule keeps getting one more knob — 2021 β, 2024 α, 2025 per-channel, 2026 erase ≠ write."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "gated-delta"
+    }
+  },
+  {
+    "id": "minimax-msa",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "MiniMax Sparse Attention (MSA) — MiniMax M3 returns to efficient attention, block-sparse over GQA",
+    "short": "MiniMax MSA (M3)",
+    "date": "2026-06-01",
+    "datePrecision": "day",
+    "dateKind": "blog",
+    "paperDate": "2026-06-11",
+    "source": {
+      "title": "MiniMax M3 (blog); paper 'MiniMax Sparse Attention'",
+      "authors": "Lai, Xu et al. (MiniMax)",
+      "arxiv": "2606.13392",
+      "url": "https://arxiv.org/abs/2606.13392",
+      "evidence": "minimax.io/blog/minimax-m3 dated June 1, 2026 ('MiniMax Sparse Attention (MSA)'); HF MiniMaxAI/MiniMax-M3 repo created 2026-06-02; arXiv API published 2026-06-11T14:23:41Z (v1)"
+    },
+    "secondary": [
+      {
+        "label": "MiniMax M3 weights (428B / 23B active, 1M)",
+        "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3",
+        "date": "2026-06-02"
+      },
+      {
+        "label": "Context: 'Why did M2 end up as a full attention model?' (Oct 2025) — the retreat this reverses",
+        "url": "https://huggingface.co/blog/MiniMax-AI/why-did-m2-end-up-as-a-full-attention-model",
+        "date": "2025-10-30"
+      }
+    ],
+    "firstShipped": {
+      "model": "MiniMax M3 (428B / 23B active, 1M context)",
+      "date": "2026-06-01",
+      "url": "https://huggingface.co/MiniMaxAI/MiniMax-M3"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "MiniMax had walked back its linear hybrid in M2 (Oct 2025) — infra maturity, eval blind spots. Eight months later the 1M-token bill was still there.",
+    "idea": "Block-sparse attention on a GQA backbone: a lightweight index branch scores KV blocks and picks the top-k independently per GQA group; the main branch runs exact block-sparse attention over the selected uncompressed blocks with a fixed budget of 2,048 KV tokens per query.",
+    "buys": [
+      "The lab that retreated from linear attention comes back via sparse selection — the 'attend to few' thread winning a convert from the 'remember cheaply' thread",
+      "GQA-friendly: selection per KV group, no MLA required"
+    ],
+    "costs": [
+      "Fixed 2K budget; block granularity; the indexer's cost at 1M; MiniMax's own evals"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "no",
+        "why": ""
+      },
+      "rag32k": {
+        "v": "maybe",
+        "why": ""
+      },
+      "coding128k": {
+        "v": "yes",
+        "why": ""
+      },
+      "agent1m": {
+        "v": "yes",
+        "why": ""
+      },
+      "verdict": "The most telling 2026 data point on the timeline: linear was abandoned, sparse was adopted — same bill, different lever."
+    },
+    "viz": {
+      "kind": "matrix",
+      "mode": "block-select"
+    }
+  },
+  {
+    "id": "dla",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "Dynamic Linear Attention (DLA) — adaptive multi-state merging",
+    "short": "DLA",
+    "date": "2026-06-09",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Dynamic Linear Attention",
+      "authors": "Wang, Shen et al.",
+      "arxiv": "2606.10650",
+      "url": "https://arxiv.org/abs/2606.10650",
+      "evidence": "arXiv API published 2026-06-09T09:57:48Z (v1)"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "Multi-state linear attention whose state boundaries move with information change, merging low-information states to keep a fixed-size chronological cache.",
+    "whyFootnote": "Research-scale."
+  },
+  {
+    "id": "rove",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 1,
+    "name": "RoVE — Rotary Value Embeddings",
+    "short": "RoVE",
+    "date": "2026-06-09",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "RoVE: Rotary Value Embeddings Attention for Relative Position-dependent Value Pathways",
+      "authors": "García-Castellanos, Weiler et al.",
+      "arxiv": "2606.11275",
+      "url": "https://arxiv.org/abs/2606.11275",
+      "evidence": "arXiv API published 2026-06-09T09:56:50Z (v1)"
+    },
+    "family": "position",
+    "bill": [
+      "quality"
+    ],
+    "oneLiner": "Rotate the values too, so the value pathway is relative-position-sensitive; RoPE attention becomes an 'attentive convolution'.",
+    "whyFootnote": "Quality variant of RoPE."
+  },
+  {
+    "id": "hils",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "HiLS — Hierarchical Landmark Sparse Attention",
+    "short": "HiLS",
+    "date": "2026-07-03",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Hierarchical Sparse Attention Done Right: Toward Infinite Context Modeling",
+      "authors": "Hu, Wei et al.",
+      "arxiv": "2607.02980",
+      "url": "https://arxiv.org/abs/2607.02980",
+      "evidence": "arXiv API published 2026-07-03T05:39:00Z (v1)"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "compute"
+    ],
+    "oneLiner": "Chunk selection learned end-to-end under the LM loss via landmark tokens; each query attends to each retrieved chunk separately and fuses by retrieval score.",
+    "whyFootnote": "Research-scale."
+  },
+  {
+    "id": "longcat-sparse-attention",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "LongCat Sparse Attention (LSA) — streaming-aware, cross-layer, hierarchical lightning indexing",
+    "short": "LongCat LSA",
+    "date": "2026-08-03",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "LongCat Sparse Attention: Taming the Lightning via Streaming-aware Hierarchical Indexing",
+      "authors": "Zan, Zhang et al. (Meituan)",
+      "arxiv": "2608.01662",
+      "url": "https://arxiv.org/abs/2608.01662",
+      "evidence": "arXiv API published 2026-08-03T03:51:21Z (v1)"
+    },
+    "family": "content-sparse",
+    "bill": [
+      "compute"
+    ],
+    "oneLiner": "Three fixes to lightning-indexer sparse attention: rewrite scattered selected KV into contiguous layouts, reuse selection across consecutive layers, coarse-to-fine scoring — the newest entry on the timeline (12 days before this page was written).",
+    "whyFootnote": "Engineering refinements of the DSA-family indexer."
+  },
+  {
+    "id": "mimo-v2-flash",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 8,
+    "order": 0,
+    "name": "MiMo-V2-Flash — 5:1 sliding window (128) : global with a learnable attention-sink bias",
+    "short": "MiMo-V2-Flash",
+    "date": "2025-12-16",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "source": {
+      "title": "MiMo-V2-Flash (Hugging Face); MiMo-V2-Flash Technical Report",
+      "authors": "Xiaomi LLM-Core Team",
+      "arxiv": "2601.02780",
+      "url": "https://huggingface.co/XiaomiMiMo/MiMo-V2-Flash",
+      "evidence": "HF repo created 2025-12-16T08:47:02Z; card: 'SWA layers use a window size of 128 tokens' at a '5:1 ratio', 'learnable attention sink bias'; report arXiv API published 2026-01-06T07:31:47Z (v1)"
+    },
+    "family": "hybrid",
+    "bill": [
+      "kv-memory"
+    ],
+    "oneLiner": "gpt-oss's 128-token banded layers and learned sink, plus Gemma's 5:1 ratio, in a 309B open MoE — the 2025 recipe restated by another lab.",
+    "whyFootnote": "Adoption of existing layouts.",
+    "paperDate": "2026-01-06"
   }
 ]

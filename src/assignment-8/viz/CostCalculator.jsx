@@ -14,9 +14,14 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'
 export default function CostCalculator() {
   const [nIdx, setNIdx] = useState(11) // 262144
   const [layers, setLayers] = useState(32)
-  const [heads, setHeads] = useState(32)
+  const [heads, setHeadsRaw] = useState(32)
   const [dHead, setDHead] = useState(128)
-  const [groups, setGroups] = useState(8)
+  const [groups, setGroupsRaw] = useState(8)
+  const setHeads = (h) => {
+    setHeadsRaw(h)
+    setGroupsRaw((g) => Math.min(g, h))
+  }
+  const setGroups = (g) => setGroupsRaw(Math.min(g, heads))
   const [latent, setLatent] = useState(512)
   const [window, setWindow] = useState(4096)
   const [bytes, setBytes] = useState(2)
@@ -55,11 +60,11 @@ export default function CostCalculator() {
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
             <div className="mb-1 font-mono text-[11px] text-zinc-500">log₁₀ KV bytes held for a context of n tokens</div>
-            <LineChart width={420} height={220} xLabel="context n: 128 → 1M (log scale)" yLabel="log10 bytes" logX xMin={128} xMax={1048576} yMin={5} yMax={13} series={series} />
+            <LineChart width={420} height={220} xLabel="context n: 128 → 1M (log scale)" yLabel="log10 bytes" logX xMin={128} xMax={1048576} yMin={5} yMax={13} series={series} showLegend={false} />
           </div>
           <div>
             <div className="mb-1 font-mono text-[11px] text-zinc-500">log₁₀ attention FLOPs to prefill n tokens</div>
-            <LineChart width={420} height={220} xLabel="context n: 128 → 1M (log scale)" yLabel="log10 FLOP" logX xMin={128} xMax={1048576} yMin={9} yMax={20} series={flopSeries} />
+            <LineChart width={420} height={220} xLabel="context n: 128 → 1M (log scale)" yLabel="log10 FLOP" logX xMin={128} xMax={1048576} yMin={9} yMax={20} series={flopSeries} showLegend={false} />
           </div>
         </div>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-zinc-500 dark:text-zinc-400">

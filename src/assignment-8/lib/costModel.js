@@ -21,7 +21,8 @@ export const DTYPE_BYTES = { fp32: 4, bf16: 2, fp8: 1 }
 //   Llama-2-7B / 70B   https://huggingface.co/NousResearch/Llama-2-7b-hf/blob/main/config.json (mirror of the gated meta-llama repos)
 //                      https://huggingface.co/NousResearch/Llama-2-70b-hf/blob/main/config.json
 //   Mistral-7B         https://huggingface.co/mistralai/Mistral-7B-v0.1/blob/main/config.json (32 L, 32 H, 8 KV, sliding_window 4096)
-//   DeepSeek-V2        https://huggingface.co/deepseek-ai/DeepSeek-V2/blob/main/config.json (60 L, 128 H, kv_lora_rank 512, qk_rope_head_dim 64)
+//   DeepSeek-V2        https://huggingface.co/deepseek-ai/DeepSeek-V2/blob/main/config.json (60 L, 128 H, kv_lora_rank 512, qk_rope_head_dim 64;
+//                      the FLOP bill uses dHead 128 — the true QK dim is 128 nope + 64 rope = 192, so its FLOPs are ~20% underestimated here)
 //   Gemma-3-27B        https://huggingface.co/unsloth/gemma-3-27b-it/blob/main/config.json (62 L, 32 H, 16 KV, head 128, sliding_window 1024, pattern 6)
 //   gpt-oss-120b       https://huggingface.co/openai/gpt-oss-120b/blob/main/config.json (36 L, 64 H, 8 KV, head 64, sliding_window 128, 18 sliding : 18 full)
 //   Qwen3-Next-80B     https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Instruct/blob/main/config.json (48 L, 16 H, 2 KV, head 256, linear 32 V / 16 K heads × 128, full_attention_interval 4)
@@ -115,9 +116,10 @@ export function denseFlops(n, d) {
 export function windowFlops(n, d, w) {
   return 4 * d * sumMin(n, w)
 }
-export function topkFlops(n, d, k, indexerDim = 128) {
-  // read k keys per query + an indexer that scores every key in a small dim
-  return 4 * d * sumMin(n, k) + 2 * indexerDim * ((n * (n + 1)) / 2)
+export function topkFlops(n, d, k, indexerDim = 128, indexerHeads = 64) {
+  // read k keys per query + an indexer that scores every key with a few small heads
+  // (DeepSeek-V3.2: index_n_heads 64 × index_head_dim 128, FP8)
+  return 4 * d * sumMin(n, k) + 2 * indexerHeads * indexerDim * ((n * (n + 1)) / 2)
 }
 export function nsaFlops(n, d, { stride = 16, selected = 16 * 64, window = 512 } = {}) {
   // compressed branch reads i/stride keys, selected branch a fixed block budget, window branch w
@@ -230,7 +232,8 @@ export function fmtFlops(f) {
 }
 
 export function fmtTokens(n) {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n % 1_000_000 ? 1 : 0)}M`
+  // binary units throughout: 1M = 1,048,576, 1K = 1,024
+  if (n >= 1048576) return `${(n / 1048576).toFixed(n % 1048576 ? 1 : 0)}M`
   if (n >= 1024) return `${Math.round(n / 1024)}K`
   return String(n)
 }

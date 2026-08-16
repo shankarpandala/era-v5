@@ -48,9 +48,9 @@ export default function Sources() {
             <li>
               Every record stores the evidence string that was read. Two independent passes: a verifier fetched each source and wrote the record;
               a second, adversarial pass re-fetched 105 of the {ALL.length} records and compared to the day (0 date disagreements; the five
-              attribution nits it found are folded in above). The {ALL.length - 105} records added afterwards for Feb–Jul 2026 (Qwen3.5,
-              MiniCPM-SALA, HySparse, NAtS-L, DeepSeek-V4, FlashMemory, Kimi K3) were checked directly against the arXiv API and Hugging Face
-              repo metadata; their evidence strings say so.
+              attribution nits it found are folded in above). The {ALL.length - 105} records added afterwards for Oct 2025 – Aug 2026 (from Qwen3.5,
+              GLM-5 and DeepSeek-V4 to Mamba-3, Gated DeltaNet-2, MiniMax M3, Gemma 4, Kimi K3 and LongCat) were checked directly against
+              the arXiv API and Hugging Face repo metadata; their evidence strings say so.
             </li>
             <li>
               A third pass tried to <i>refute</i> the trade-off text: six adversarial reviewers re-read every quoted number, first-ship
@@ -82,7 +82,7 @@ export default function Sources() {
           <li>The cost calculator is the attention core only (idealised FLOPs and bytes); it is meant to show the shape of the curves, not to benchmark anything.</li>
           <li>The visualizers use seeded random Q/K/V on ≤64 tokens; they show the pattern each mechanism computes, not a trained model’s attention.</li>
           <li>Pros / cons / “when you would pick it” are judgements written from the papers’ own numbers and later adoption; they are opinions, and the verdict lines say so.</li>
-          <li>Post-December-2025 coverage: the sweep for the DroPE → August 2026 window was done by hand (search + arXiv / HF APIs) after the agent-based sweep was cut off; it found DeepSeek-V4's CSA/HCA, Qwen3.5, MiniCPM-SALA, Kimi K3 and three research hybrids, and it is the part of the timeline most likely to be incomplete.</li>
+          <li>Post-October-2025 coverage was swept twice (by hand, then by two agents once the session limit lifted) and adds 30 records — DeepSeek-V4, GLM-5, MiniMax M3, Gemma 4, Mamba-3, Gated DeltaNet-2, Kimi K3 among them — but it is still the part of the timeline most likely to be incomplete.</li>
         </ul>
       </div>
 

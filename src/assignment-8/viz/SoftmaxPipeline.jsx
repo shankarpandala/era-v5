@@ -35,13 +35,12 @@ export default function SoftmaxPipeline() {
   const [causal, setCausal] = useState(true)
   const [scale, setScale] = useState(true)
   const [row, setRow] = useState(6)
-  const [hover, setHover] = useState(null)
 
   const tokens = SENTENCE.slice(0, n)
   const { Q, K } = useMemo(() => makeQKV(n, d, 11), [n, d])
   const S = useMemo(() => scores(Q, K), [Q, K])
   const q = Math.min(row, n - 1)
-  const allow = causal ? MASKS.causal() : MASKS.full()
+  const allow = useMemo(() => (causal ? MASKS.causal() : MASKS.full()), [causal])
 
   const raw = S[q]
   const scaled = raw.map((v) => (scale ? v / Math.sqrt(d) : v))
@@ -52,11 +51,14 @@ export default function SoftmaxPipeline() {
     () => S.map((r, i) => softmax(r.map((v, j) => (allow(i, j) ? (scale ? v / Math.sqrt(d) : v) : -Infinity)))),
     [S, allow, scale, d],
   )
-  const cell = (i, j) => {
-    if (!allow(i, j)) return null
-    const mx = Math.max(...weights[i])
-    return { w: mx > 0 ? weights[i][j] / mx : 0, cat: i === q ? 'selected' : 'default' }
-  }
+  const cell = useMemo(
+    () => (i, j) => {
+      if (!allow(i, j)) return null
+      const mx = Math.max(...weights[i])
+      return { w: mx > 0 ? weights[i][j] / mx : 0, cat: i === q ? 'selected' : 'default' }
+    },
+    [allow, weights, q],
+  )
 
   // entropy of the chosen row, to show what scaling does
   const H = -probs.reduce((a, p) => (p > 0 ? a + p * Math.log2(p) : a), 0)
@@ -69,7 +71,7 @@ export default function SoftmaxPipeline() {
       </div>
       <div className="grid gap-4 lg:grid-cols-[auto_1fr]">
         <div>
-          <MaskCanvas n={n} cell={cell} size={260} onHover={setHover} rowLabel="query" colLabel="key" ariaLabel="causal attention weights" />
+          <MaskCanvas n={n} cell={cell} size={260} rowLabel="query" colLabel="key" ariaLabel="causal attention weights" />
           <Legend items={[['default', 'softmax weight (darker = larger)'], ['selected', `query row ${q}: “${tokens[q]}”`]]} />
         </div>
         <div className="min-w-0 space-y-3">
@@ -90,9 +92,9 @@ export default function SoftmaxPipeline() {
             ))}
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Bars values={raw} labels={tokens} color="#71717a" title="1 · raw scores q·k" highlight={hover ?? undefined} />
-            <Bars values={scaled} labels={tokens} color="#3b82f6" title={scale ? `2 · ÷ √d = ÷ ${Math.sqrt(d).toFixed(1)}` : '2 · (scaling OFF)'} highlight={hover ?? undefined} />
-            <Bars values={probs} labels={tokens} color="#d946ef" title="3 · softmax → weights" max={1} highlight={hover ?? undefined} />
+            <Bars values={raw} labels={tokens} color="#71717a" title="1 · raw scores q·k" />
+            <Bars values={scaled} labels={tokens} color="#3b82f6" title={scale ? `2 · ÷ √d = ÷ ${Math.sqrt(d).toFixed(1)}` : '2 · (scaling OFF)'} />
+            <Bars values={probs} labels={tokens} color="#d946ef" title="3 · softmax → weights" max={1} />
           </div>
           <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
             <div className="rounded-lg border border-zinc-200 px-2 py-1.5 dark:border-zinc-800">

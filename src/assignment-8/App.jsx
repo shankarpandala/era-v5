@@ -11,7 +11,7 @@ import Navbar from '../components/layout/Navbar.jsx'
 import Footer from '../components/layout/Footer.jsx'
 import ClaimCard from '../components/ClaimCard.jsx'
 import useTheme from '../hooks/useTheme.js'
-import { ALL, NODES, FOOTNOTES, INSTRUCTOR_ITEMS, ERAS } from './data.js'
+import { ALL, NODES, FOOTNOTES, INSTRUCTOR_ITEMS, ERAS, byId } from './data.js'
 import Timeline from './components/Timeline.jsx'
 import EraStory from './components/EraStory.jsx'
 import DecisionMatrix from './components/DecisionMatrix.jsx'
@@ -22,7 +22,7 @@ const CostCalculator = lazy(() => import('./viz/CostCalculator.jsx'))
 
 const GITHUB = 'https://github.com/shankarpandala/era-v5/tree/main/assignment-8'
 // 105 records were re-fetched by an independent adversarial pass (0 date disagreements); the
-// 7 records added afterwards for Feb–Jul 2026 were verified directly against the arXiv / HF APIs.
+// records added afterwards for Oct 2025 – Aug 2026 were verified against the arXiv API / HF repo metadata.
 const RECHECKED = 105
 
 const SECTIONS = [
@@ -86,14 +86,24 @@ function Hero() {
         <span className="font-semibold text-zinc-800 dark:text-zinc-100">The assignment’s minimum list, all covered — </span>
         {INSTRUCTOR_ITEMS.map((it, i) => (
           <span key={it.label}>
-            {it.ids.map((id, j) => (
-              <span key={id}>
-                <a href={`#m-${id}`} className="text-brand-600 hover:underline dark:text-brand-400">
-                  {j === 0 ? it.label : ''}
-                </a>
-                {j === 0 && it.ids.length > 1 ? ` (${it.ids.length} nodes)` : ''}
-              </span>
-            ))}
+            {it.ids.length === 1 ? (
+              <a href={`#m-${it.ids[0]}`} className="text-brand-600 hover:underline dark:text-brand-400">
+                {it.label}
+              </a>
+            ) : (
+              <>
+                {it.label} (
+                {it.ids.map((id, j) => (
+                  <span key={id}>
+                    <a href={`#m-${id}`} className="text-brand-600 hover:underline dark:text-brand-400">
+                      {byId[id]?.short ?? id}
+                    </a>
+                    {j < it.ids.length - 1 ? ' / ' : ''}
+                  </span>
+                ))}
+                )
+              </>
+            )}
             {i < INSTRUCTOR_ITEMS.length - 1 ? ' · ' : ''}
           </span>
         ))}
@@ -180,7 +190,7 @@ export default function App() {
             accent="#71717a"
             title="Sources, dating method, corrections"
             claim="The part that is easiest to get wrong and easiest to check. The rule for every date, the evidence string read from each source, what two verification passes corrected, and the honest limitations."
-            takeaway={`${ALL.length} entries, every one read from its primary source; ${RECHECKED} of them re-fetched by an independent adversarial pass with 0 date disagreements, the ${ALL.length - RECHECKED} added afterwards (Feb–Jul 2026) checked directly against the arXiv / Hugging Face APIs. Where a mechanism appeared before its paper (RoPE, Position Interpolation, MLA, Mistral SWA, Gemma 2/3, gpt-oss, DSA, DeepSeek-V4) both dates are shown and the earlier one sorts the timeline.`}
+            takeaway={`${ALL.length} entries, every one read from its primary source; ${RECHECKED} of them re-fetched by an independent adversarial pass with 0 date disagreements, the ${ALL.length - RECHECKED} added afterwards (Oct 2025 – Aug 2026) checked directly against the arXiv API / Hugging Face repo metadata. Where a mechanism appeared before its paper (RoPE, Position Interpolation, MLA, Mistral SWA, Gemma 2/3, gpt-oss, DSA, DeepSeek-V4) both dates are shown and the earlier one sorts the timeline.`}
           >
             <Sources />
             <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-300">

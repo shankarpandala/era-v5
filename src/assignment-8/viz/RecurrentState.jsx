@@ -170,7 +170,7 @@ export default function RecurrentState({ mode = 'linear' }) {
                   className="w-full rounded-t"
                   style={{
                     height: `${Math.max(2, Math.min(84, err * 84))}px`,
-                    backgroundColor: reuse && t === 1 ? '#d946ef' : err > 0.5 ? '#ef4444' : err > 0.2 ? '#f59e0b' : '#10b981',
+                    backgroundColor: reuse && t === 1 && cur > T - 2 ? '#d946ef' : err > 0.5 ? '#ef4444' : err > 0.2 ? '#f59e0b' : '#10b981',
                   }}
                 />
                 <span className="mt-0.5 font-mono text-[9px] text-zinc-400">{t}</span>

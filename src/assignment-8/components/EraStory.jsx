@@ -80,8 +80,8 @@ export default function EraStory() {
         </ol>
         <p className="mt-3 text-sm text-zinc-700 dark:text-zinc-200">
           <b>Scorecard so far (Aug 2026):</b> (1) and (4) already happened once — DeepSeek-V4 (Apr 2026) compresses every m tokens, lets the
-          indexer pick the top-k compressed entries, and interleaves that with heavily-compressed layers; Qwen3.5 (Feb) and Kimi K3 (Jul) made the
-          3:1 delta-rule hybrid a flagship default. (2) is half-done — NoPE global layers are common, DroPE-style removal is not yet in a frontier
+          indexer pick the top-k compressed entries, and interleaves that with heavily-compressed layers; GLM-5 (Feb) adopted DSA and MiniMax M3 (Jun)
+          came back to sparse attention after M2's retreat; Qwen3.5 (Feb) and Kimi K3 (Jul) made the 3:1 delta-rule hybrid a flagship default. (2) is half-done — NoPE global layers are common, DroPE-style removal is not yet in a frontier
           model. (3) is unproven. So the next guess, one step further: the compression ratio and the index become learned per layer, and the
           "exact" layers disappear as a category — every layer reads a compressed, selected view, at a resolution the model chooses.
         </p>

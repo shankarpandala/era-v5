@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Slider from '../../components/ui/Slider.jsx'
 import { fmtBytes } from '../lib/costModel.js'
+import useIsDark from '../lib/useIsDark.js'
 
 // The KV-layout family: how many key/value vectors are stored per token, and
 // therefore how big the cache is. MHA → MQA → GQA → MLA → CLA is one story:
@@ -32,8 +33,14 @@ function Box({ children, className = '' }) {
 }
 
 export default function KVCacheHeads({ mode = 'gqa' }) {
-  const [heads, setHeads] = useState(32)
-  const [groups, setGroups] = useState(8)
+  const [heads, setHeadsRaw] = useState(32)
+  const [groups, setGroupsRaw] = useState(8)
+  const setHeads = (h) => {
+    setHeadsRaw(h)
+    setGroupsRaw((g) => Math.min(g, h))
+  }
+  const setGroups = (g) => setGroupsRaw(Math.min(g, heads))
+  const dark = useIsDark()
   const [dHead, setDHead] = useState(128)
   const [latent, setLatent] = useState(512)
   const [ropeDim, setRopeDim] = useState(64)
@@ -113,7 +120,7 @@ export default function KVCacheHeads({ mode = 'gqa' }) {
                   <div
                     key={i}
                     className="h-4 rounded-sm"
-                    style={{ backgroundColor: [3, 9, 14, 20, 27].includes(i) ? 'rgba(0,0,0,0.06)' : ['#3b82f6', '#10b981', '#f59e0b'][i % 3], opacity: 0.8 }}
+                    style={{ backgroundColor: [3, 9, 14, 20, 27].includes(i) ? (dark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)') : ['#3b82f6', '#10b981', '#f59e0b'][i % 3], opacity: 0.8 }}
                   />
                 ))}
               </div>
