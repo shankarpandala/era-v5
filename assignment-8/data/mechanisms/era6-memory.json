@@ -413,7 +413,7 @@
       },
       "agent1m": {
         "v": "yes",
-        "why": "the smallest exact-attention KV cache in production"
+        "why": "the smallest exact-attention KV cache at MHA-level quality in production (plain MQA is smaller, at a quality cost)"
       },
       "verdict": "Right when you train from scratch at scale and decode is KV-bound; wrong for small models where GQA is enough — and note the price is a kernel team."
     },
@@ -564,7 +564,7 @@
       "compute",
       "kv-memory"
     ],
-    "problem": "Mamba-1's selective scan is not tensor-core friendly and limits state size; and there was no theory linking SSMs to attention.",
+    "problem": "Mamba-1's selective scan is not tensor-core friendly and limits state size; and the linear-attention ↔ RNN link had not been made exact for SSMs.",
     "idea": "SSMs and masked linear attention are two views of structured semiseparable matrices. The SSD layer computes the recurrence with chunked matmuls — 2–8× faster than Mamba-1's scan, much larger state (N=64–256).",
     "buys": [
       "Unifies the two efficiency threads in one theorem; tensor-parallel and sequence-parallel friendly",
@@ -683,11 +683,11 @@
     "problem": "Decode at long context is bottlenecked by loading the whole KV cache per query; eviction (H2O, sinks) drops tokens permanently, but which tokens matter depends on the query.",
     "idea": "Keep min/max key values per KV page, upper-bound each page's score for the current query, load only the top-K pages. Nothing is dropped.",
     "buys": [
-      "Up to 7× self-attention speedup, 2.2× end-to-end at 32K with negligible loss; training-free"
+      "Up to 7× self-attention speedup at 32K (2K-token budget); the 2.2× end-to-end figure is measured with 4-bit weights; training-free"
     ],
     "costs": [
       "Full KV still stored — bandwidth, not memory, is saved",
-      "Upper bound can pick wrong pages; budget per task; awkward with GQA / paged serving; no gain at short context"
+      "Upper bound can pick wrong pages; budget per task; awkward with GQA (query heads sharing a KV head want different pages); no gain at short context — it is built on paged KV by design"
     ],
     "pickWhen": {
       "chatbot2k": {
@@ -761,8 +761,8 @@
     ],
     "pickWhen": {
       "chatbot2k": {
-        "v": "yes",
-        "why": "cheap and safe"
+        "v": "maybe",
+        "why": "harmless, but at ≤4K every local layer is a full layer"
       },
       "rag32k": {
         "v": "yes",
@@ -776,7 +776,7 @@
         "v": "maybe",
         "why": "the global layers still pay n²; pair with sparse selection"
       },
-      "verdict": "Not the first sliding-window model (Mistral) — the first mainstream one to *interleave* it, which is what survived."
+      "verdict": "Not the first sliding-window model (Mistral), nor the first to interleave — GPT-3 alternated dense and banded layers, and Character.AI described 1 global per 6 layers a week earlier — but the first open-weights model to make interleaving the headline design that Gemma 3 and gpt-oss copied."
     },
     "viz": {
       "kind": "matrix",
@@ -846,7 +846,7 @@
     "instructorList": false,
     "era": 6,
     "order": 0,
-    "name": "Llama 3.1 — 128K by base 500K + 'llama3' scaling + staged long-context pretraining",
+    "name": "Llama 3.1 — 128K by 'llama3' RoPE scaling + staged long-context pretraining (base 500K unchanged from Llama 3)",
     "short": "Llama 3.1 128K",
     "date": "2024-07-23",
     "datePrecision": "day",
@@ -869,7 +869,7 @@
       "length"
     ],
     "problem": "Take dense 8K models to 128K with no architecture change.",
-    "idea": "Base 500K, a YaRN-style wavelength-dependent scaling (high-frequency dims untouched, low-frequency ÷ 8, ramp between), and ~800B tokens of continued pretraining in six length stages.",
+    "idea": "Keep Llama 3's base 500K (already the 8K models' setting), add the 'llama3' wavelength-dependent scaling (high-frequency dims untouched, low-frequency ÷ 8, ramp between), and ~800B tokens of continued pretraining in six length stages — the 128K came from the scaling + training, not from raising the base.",
     "buys": [
       "The safest, no-architecture-risk path to 128K; the numbers in every Llama-family config.json"
     ],
@@ -888,7 +888,7 @@
       },
       "coding128k": {
         "v": "yes",
-        "why": "if you can spend ~10¹¹ tokens"
+        "why": "if you can spend ~8×10¹¹ tokens of continued pretraining"
       },
       "agent1m": {
         "v": "no",
@@ -957,7 +957,7 @@
       "Claims ~65% of the parameters or tokens to match a Transformer's loss; better needle retrieval, ICL and order robustness; fewer outliers"
     ],
     "costs": [
-      "~10–12% lower throughput; needs a custom FlashAttention variant; evidence to ~13B",
+      "~5–12% lower throughput (−9/−12% at 3B, −5/−6% at 13B); runs on stock FlashAttention with two calls, a customised kernel is optional; evidence to ~13B",
       "Zero saving on KV or context; not retrofittable; no frontier adoption found"
     ],
     "pickWhen": {

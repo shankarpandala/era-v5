@@ -52,6 +52,12 @@ export default function Sources() {
               MiniCPM-SALA, HySparse, NAtS-L, DeepSeek-V4, FlashMemory, Kimi K3) were checked directly against the arXiv API and Hugging Face
               repo metadata; their evidence strings say so.
             </li>
+            <li>
+              A third pass tried to <i>refute</i> the trade-off text: six adversarial reviewers re-read every quoted number, first-ship
+              attribution and description on the 76 timeline nodes against the papers — 71 sourced findings, all applied (e.g. Falcon-40B
+              shipped grouped KV heads before Llama 2 named it GQA; Jukebox used Sparse-Transformer attention before GPT-3; NSA’s 11.6× decode
+              is an expected, not measured, speedup; T5’s bias extrapolates better than RoPE, not worse).
+            </li>
           </ol>
           <p className="mt-2 font-mono text-[11px] text-zinc-500">
             by kind: {Object.entries(KIND_COUNTS).map(([k, v]) => `${DATE_KIND_LABEL[k] || k} ${v}`).join(' · ')}
