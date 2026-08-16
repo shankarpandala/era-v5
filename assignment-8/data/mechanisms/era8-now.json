@@ -46,8 +46,8 @@
       "extrapolation",
       "length"
     ],
-    "problem": "RoPE models collapse past their pretraining length. Zero-shot scaling (PI, NTK, YaRN, LongRoPE2) keeps perplexity by compressing low frequencies — but the paper shows this warps the semantic-attention heads so the model effectively *crops* far-away tokens. And the standard fix, long-context fine-tuning, is quadratic-cost and needs long data. NoPE from scratch is worse and unstable (vanishing positional-bias gradients at init).",
-    "idea": "Treat the positional encoding as a transient training aid. Pretrain with RoPE (it accelerates convergence), then delete it from every layer — the model becomes NoPE, position available only through the causal mask — and briefly continue pretraining at the *original* length so the network re-learns its induction heads without explicit PE. There is now no out-of-distribution positional signal at longer lengths, so it extrapolates zero-shot.",
+    "problem": "RoPE models collapse past their pretraining length. Zero-shot scaling (PI, NTK, YaRN, LongRoPE2) keeps perplexity by compressing low frequencies — but the paper shows this warps the semantic-attention heads so the model effectively *crops* far-away tokens. And the standard fix, long-context fine-tuning, is quadratic-cost and needs long data. NoPE from scratch converges more slowly and ends worse (bounded positional-bias gradients at init).",
+    "idea": "Treat the positional encoding as a transient training aid. Pretrain with RoPE (it accelerates convergence), then delete it from every layer — the model becomes NoPE, position available only through the causal mask — and briefly continue pretraining at the *original* length so the network re-learns its induction heads without explicit PE. There is now no out-of-distribution positional signal at longer lengths, so it extrapolates zero-shot — with one inference-time knob: a softmax logit scale (β* ≈ 1 + 0.4·ln s from scratch, 1 + 0.1·ln s for SmolLM) tuned on a held-out set at the target length.",
     "buys": [
       "Zero-shot 2–8×+ context: 0.5B model NIAH at 2× 28.0 / 41.6 / 23.3 (multi-query/key/value) vs YaRN 17.8 / 0.5 / 14.6; SmolLM-360M NIAH at 8× 52.2% vs LongRoPE2 16.45%; LongBench Llama-2-7B 26.08 vs NTK 21.88 / YaRN 19.14",
       ">95% of short-context performance recovered after <5B recalibration tokens (0.8% of a 600B budget); can be folded into a pretraining recipe at zero extra cost (drop RoPE for the last ~12% of tokens)",
@@ -56,7 +56,7 @@
     "costs": [
       "Not an inference-time knob: needs the weights and a training run on pretraining-distribution data (2B tokens for 0.5B; ~20B for 7B) — useless with API-only access",
       "Absolute long-context scores remain low (multi-key NIAH 41.6% at 2×; Llama-2-7B LongBench avg 26) — 'far better than YaRN zero-shot' is not 'solved'; evidence is ≤7B",
-      "Timing matters (dropping too early hurts final perplexity); long recalibrations needed QK-Norm for stability; unproven at 1M-token agent scale"
+      "Timing matters (dropping too early hurts final perplexity); the long-context numbers use a tuned logit-scale knob at inference — the same kind of heuristic SWAN and Llama 4 lean on; QK-Norm was needed only for the high-LR SmolLM-360M recalibrations; unproven at 1M-token agent scale"
     ],
     "pickWhen": {
       "chatbot2k": {

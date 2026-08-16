@@ -27,15 +27,15 @@
       }
     ],
     "firstShipped": {
-      "model": "Llama 2 70B",
-      "date": "2023-07-18",
-      "url": "https://arxiv.org/abs/2307.09288"
+      "model": "Falcon-40B shipped grouped KV heads (128 Q / 8 KV, 'multigroup') three days after the paper; Llama 2 70B (18 Jul 2023) is the first to name it GQA and cite the paper",
+      "date": "2023-05-25",
+      "url": "https://huggingface.co/tiiuae/falcon-40b"
     },
     "family": "heads-kv",
     "bill": [
       "kv-memory"
     ],
-    "problem": "MQA fixes the KV bill but costs quality and needs training from scratch. Every lab in 2023 owned MHA checkpoints and a KV cache that was suddenly the serving constraint. Wanted: most of MQA's saving, almost none of its quality loss, and a way to convert what you already have.",
+    "problem": "MQA fixes the KV bill but costs quality, and every lab in 2023 owned MHA checkpoints and a KV cache that was suddenly the serving constraint. The paper's first contribution is an uptraining recipe (MHA → MQA/GQA at ~5% of pretraining compute); its second, GQA, is a quality point between MQA and MHA.",
     "idea": "Share each K/V head across a *group* of query heads: 64 query heads → 8 KV heads is an 8× smaller cache. Convert an MHA checkpoint by mean-pooling its K/V heads into groups and 'uptraining' for ~5% of the original pretraining compute.",
     "buys": [
       "KV cache and read traffic ÷ (heads / groups) at near-MHA quality — between MQA and MHA in quality, near MQA in speed",
@@ -193,6 +193,11 @@
     },
     "secondary": [
       {
+        "label": "Jamba: 'positional embeddings or mechanisms like RoPE are not necessary' (Mamba layers carry position)",
+        "url": "https://arxiv.org/abs/2403.19887",
+        "date": "2024-03-28"
+      },
+      {
         "label": "Cohere Command R7B model card: 'a fourth layer uses global attention without positional embeddings'",
         "url": "https://huggingface.co/CohereLabs/c4ai-command-r7b-12-2024",
         "date": "2024-12-13"
@@ -209,7 +214,7 @@
       }
     ],
     "firstShipped": {
-      "model": "Cohere Command R7B (3 SWA-RoPE layers : 1 global layer without positional embeddings); then Command A (Mar 2025), Llama 4 iRoPE (Apr 2025)",
+      "model": "Cohere Command R7B — the first Transformer-only SWA-RoPE : NoPE-global hybrid (Jamba, Mar 2024, had already dropped positional encoding, with its Mamba layers carrying position); then Command A, Llama 4 iRoPE",
       "date": "2024-12-13",
       "url": "https://huggingface.co/CohereLabs/c4ai-command-r7b-12-2024"
     },
@@ -246,7 +251,7 @@
         "v": "yes",
         "why": "as the interleaved global layers, never as the sole PE"
       },
-      "verdict": "Its 2023 impact was conceptual; the practical uptake came 18 months later as one half of a hybrid (Command R7B, Dec 2024)."
+      "verdict": "Its 2023 impact was conceptual; the practical uptake came later as one half of a hybrid — Jamba dropped positional encoding in Mar 2024 with Mamba supplying position, Command R7B (Dec 2024) is the first Transformer-only NoPE-global design."
     },
     "viz": {
       "kind": "position",
@@ -292,9 +297,9 @@
       }
     ],
     "firstShipped": {
-      "model": "LongChat-7B/13B-16K (LMSYS)",
-      "date": "2023-06-29",
-      "url": "https://lmsys.org/blog/2023-06-29-longchat/"
+      "model": "kaiokendev's SuperHOT-13B-8K LoRA (HF upload, RoPE scale 0.25); LongChat-16K (29 Jun) is the first lab release with the trick",
+      "date": "2023-06-20",
+      "url": "https://huggingface.co/kaiokendev/superhot-13b-8k-no-rlhf-test"
     },
     "family": "scaling",
     "bill": [
@@ -374,7 +379,7 @@
     ],
     "costs": [
       "Pure serving change: attention semantics, compute and context length untouched",
-      "Block indirection in kernels; later work (vAttention, FlashInfer) argues the paging itself has overhead"
+      "Block indirection in kernels; later work (vAttention) argues the paging indirection itself has overhead versus contiguous virtual memory"
     ],
     "pickWhen": {
       "chatbot2k": {
@@ -586,8 +591,8 @@
         "why": "as insurance against occasional overflow"
       },
       "rag32k": {
-        "v": "yes",
-        "why": "a 4K model seeing 6–8K without crashing quality"
+        "v": "maybe",
+        "why": "a 4K model seeing 6–8K without crashing quality; not a way to reach 32K"
       },
       "coding128k": {
         "v": "no",
@@ -718,7 +723,7 @@
       "quality",
       "stability"
     ],
-    "problem": "Softmax forces every head to put its weight *somewhere*, so heads with nothing to say dump attention on the first token, producing massive-activation outliers that wreck low-bit quantisation.",
+    "problem": "Softmax forces every head to put its weight somewhere, so heads with nothing to say park it on no-op tokens — delimiters and whitespace in Miller's telling, following Bondarenko et al.; later shown to be mostly the first token — producing massive-activation outliers that wreck low-bit quantisation.",
     "idea": "softmax₁(x)_i = exp(x_i) / (1 + Σ_j exp(x_j)): give the head a way to abstain. The 'sink' becomes an explicit escape hatch instead of the BOS token.",
     "buys": [
       "Heads can output ≈0; fewer outliers; cheaper quantisation; a principled place to put the sink"
@@ -744,12 +749,19 @@
         "v": "maybe",
         "why": ""
       },
-      "verdict": "The sink fix that predates the sink paper. It reached production, renamed, in gpt-oss."
+      "verdict": "A blog restatement — after Bondarenko et al. (Jun 2023) — of the 'let a head abstain' fix, two months before StreamingLLM named the sink. It reached production, renamed, in gpt-oss."
     },
     "viz": {
       "kind": "matrix",
       "mode": "window-sinks"
-    }
+    },
+    "secondary": [
+      {
+        "label": "Bondarenko et al., 'Quantizable Transformers: Removing Outliers by Helping Attention Heads Do Nothing' (clipped softmax / gated attention)",
+        "url": "https://arxiv.org/abs/2306.12929",
+        "date": "2023-06-22"
+      }
+    ]
   },
   {
     "id": "rerope-lm-infinite-selfextend",
@@ -793,12 +805,12 @@
       "extrapolation"
     ],
     "problem": "Attention explodes at unseen relative distances and models 'forget' the start; wanted extrapolation with zero training on a pretrained RoPE model.",
-    "idea": "Keep exact positions inside a window and clamp / floor-divide relative positions beyond it, so no distance the model never saw is ever presented (three near-simultaneous variants of one trick).",
+    "idea": "ReRoPE (Aug 2023) clamps relative positions beyond a window; LM-Infinite (Aug 2023) uses a Λ-shaped mask — the first tokens plus a recent window — with a distance ceiling; SelfExtend (Jan 2024) floor-divides far positions into groups while keeping exact neighbour positions. Three variants of one rule: never present a distance the model was not trained on.",
     "buys": [
-      "Flat perplexity to very long inputs; SelfExtend passes needle tests at 4–8× the window; shipped in llama.cpp"
+      "Flat perplexity to very long inputs; SelfExtend keeps passkey retrieval intact at ~3× (Mistral 8K → 24K) and is usable at 4–6× on long-context benchmarks; shipped in llama.cpp"
     ],
     "costs": [
-      "Far tokens get blurred, coarse positions; two attention passes (~2× prefill) unless fused",
+      "Far tokens get blurred, coarse positions; ReRoPE and SelfExtend need two attention passes (~2× prefill) unless fused; LM-Infinite is a single cheaper pass (2.7× faster decode at 32K) but drops mid-context tokens unless its optional top-k middle attention is on",
       "All obsolete once you can train long context"
     ],
     "pickWhen": {
@@ -832,7 +844,7 @@
     "instructorList": false,
     "era": 5,
     "order": 0,
-    "name": "RoPE base-frequency scaling, trained in (Code Llama θ=1e6; 'ABF')",
+    "name": "RoPE base-frequency scaling, trained in (Code Llama θ=1e6; later named 'ABF' by Xiong et al.)",
     "short": "RoPE base scaling (ABF)",
     "aka": "Adjusted Base Frequency; rope_theta = 500k / 1e6; 'static NTK'",
     "date": "2023-08-24",
@@ -867,13 +879,13 @@
       "length"
     ],
     "problem": "Repository-level code needs long inputs; PI squeezes positions and hurts local resolution. If you are fine-tuning anyway, is there a cleaner lever?",
-    "idea": "The trained-in cousin of NTK-aware: raise θ (10K → 1M) and fine-tune on 16K sequences. Low-frequency dims now rotate slowly enough to cover the new length; short-context quality is kept.",
+    "idea": "The trained-in cousin of NTK-aware: raise θ (10K → 1M) and fine-tune on 16K sequences. Low-frequency dims now rotate slowly enough to cover the new length; short-context quality is mostly kept (a small measured drop).",
     "buys": [
       "One config line; extrapolates beyond training length better than linear PI ('improvements on inputs with up to 100k tokens')",
       "Became the default recipe: Llama 3 (500K), Qwen (1M+) — the number you see in every config.json"
     ],
     "costs": [
-      "Needs a long-sequence fine-tune stage; perplexity creeps up past the training length",
+      "Needs a long-sequence fine-tune stage; the price is a small short-context regression (−0.5 pt HumanEval, −1.9 pt MBPP, up to −2 BLEU on <4K prompts) — perplexity keeps falling well past the 16K training length and only creeps up beyond ~100K",
       "θ is chosen heuristically; low-frequency dims are undertrained (later refined per-dim by YaRN / LongRoPE)"
     ],
     "pickWhen": {
@@ -933,9 +945,9 @@
       }
     ],
     "firstShipped": {
-      "model": "DeepSeek-V2 (4K → 128K); Yarn-Llama-2 checkpoints from Nous at release",
-      "date": "2024-05-06",
-      "url": "https://arxiv.org/abs/2405.04434"
+      "model": "Yarn-Llama-2-7b/13b-64k/128k from the authors at release; DeepSeek-V2 (May 2024) is the first frontier-lab base model to ship with YaRN",
+      "date": "2023-08-31",
+      "url": "https://huggingface.co/NousResearch/Yarn-Llama-2-7b-128k"
     },
     "family": "scaling",
     "bill": [
@@ -1046,7 +1058,7 @@
     "buys": [
       "Attention cost and KV cache bounded by W regardless of input length (rolling buffer halves the cache at 8K)",
       "Longformer's idea finally in a mainstream decoder, with weights anyone could run",
-      "Second GQA model after Llama 2 70B"
+      "Brought GQA to the popular 7B size (Falcon-40B, Code Llama 34B and Falcon-180B had shipped it before)"
     ],
     "costs": [
       "Beyond the window, information flows only indirectly through stacked layers → poor exact recall far back",
@@ -1332,7 +1344,7 @@
         "v": "maybe",
         "why": "hybrids; never alone for retrieval"
       },
-      "verdict": "The recurrent thread's loudest 2023 paper. Mamba-2 later showed it and linear attention are the same object."
+      "verdict": "The recurrent thread's loudest 2023 paper. Mamba-2 later showed that a restricted selective SSM (scalar decay) is exactly a form of gated linear attention — a refinement, not an identity."
     },
     "viz": {
       "kind": "state",
@@ -1376,7 +1388,7 @@
     ],
     "costs": [
       "Fixed-size state → weak on recall-intensive tasks vs softmax; paper scale ≤1.3B",
-      "Custom Triton kernels; pure-GLA models never shipped — hybrids with some full-attention layers did"
+      "GLA itself never shipped; only descendant layers (Gated DeltaNet, KDA) did, always inside hybrids with some full-attention layers; custom Triton kernels"
     ],
     "pickWhen": {
       "chatbot2k": {

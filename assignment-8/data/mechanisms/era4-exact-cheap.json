@@ -106,7 +106,7 @@
     "bill": [
       "extrapolation"
     ],
-    "problem": "ALiBi's fixed linear slope decays too aggressively; T5 buckets do not extrapolate.",
+    "problem": "ALiBi's fixed linear slope decays too aggressively; T5's log-bucketed bias extrapolates but degrades past ~4× the training length and is ~10% slower — KERPLE keeps the log shape with 2 parameters per head instead of 32.",
     "idea": "Replace the linear penalty with conditionally-positive-definite kernels of |m−n| (log / power variants, two learned parameters per head); Sandwich later gives a parameter-free sinusoid-derived bias.",
     "buys": [
       "Better extrapolation perplexity than ALiBi/T5 with negligible parameters"
@@ -177,9 +177,9 @@
       }
     ],
     "firstShipped": {
-      "model": "PyTorch 2.0 scaled_dot_product_attention backend (ecosystem-level); MPT-7B first named open model",
-      "date": "2023-03-15",
-      "url": "https://pytorch.org/blog/pytorch-2.0-release/"
+      "model": "LLaMA-1 — first named open model using it (xformers attention 'uses the backward from Dao et al. (2022)'); PyTorch 2.0 made it a default SDPA backend three weeks later; MPT-7B first to advertise it",
+      "date": "2023-02-24",
+      "url": "https://arxiv.org/abs/2302.13971"
     },
     "family": "systems",
     "bill": [
@@ -189,7 +189,7 @@
     "problem": "Exact attention was slow not because of FLOPs but because the n×n score matrix is written to and read from HBM — memory-bandwidth-bound and O(n²) memory. Long sequences were impractical even where compute was affordable.",
     "idea": "Change nothing about the maths. Tile Q, K, V into SRAM-sized blocks, compute softmax online (running max and sum), never materialise the n×n matrix, and recompute scores in the backward pass instead of storing them. FA2 fixed work partitioning (25–40% → 50–73% of A100 peak); FA3 added Hopper asynchrony and FP8.",
     "buys": [
-      "Same outputs, O(n) memory, 2–4× wall-clock (3× on GPT-2 in the paper); first Transformer to beat chance on Path-X 16K",
+      "Same outputs, O(n) memory, a 2–4× faster attention kernel — end-to-end up to 3× on GPT-2 vs the HuggingFace baseline (1.7× vs Megatron), 15% on BERT-large; first Transformer to beat chance on Path-X 16K",
       "Made 32K–128K dense-attention training and serving economical — the reason the 2020 approximations stopped mattering at ordinary lengths",
       "Ecosystem-level: a default backend in PyTorch 2.0, in every serving stack"
     ],
@@ -318,7 +318,7 @@
     "costs": [
       "FFT convolutions use tensor cores poorly",
       "Weak in-context recall/copying vs attention; needs hybrids",
-      "No frontier text LLM adopted it (used for DNA / long signals: StripedHyena, Evo)"
+      "No frontier text LLM adopted it — the text instance stopped at StripedHyena-7B (Dec 2023); the durable uses are long low-density signals (Evo for DNA)"
     ],
     "pickWhen": {
       "chatbot2k": {
