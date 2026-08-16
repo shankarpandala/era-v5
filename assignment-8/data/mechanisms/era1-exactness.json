@@ -1,0 +1,216 @@
+[
+  {
+    "id": "standard-attention",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 1,
+    "order": 0,
+    "name": "Standard scaled dot-product attention (multi-head, softmax)",
+    "short": "Standard attention",
+    "aka": "SDPA; MHA; vanilla / full / dense attention; 'Attention Is All You Need'",
+    "date": "2017-06-12",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Attention Is All You Need",
+      "authors": "Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, Polosukhin (Google)",
+      "arxiv": "1706.03762",
+      "url": "https://arxiv.org/abs/1706.03762",
+      "evidence": "[v1] Mon, 12 Jun 2017 17:57:34 UTC (NIPS 2017)"
+    },
+    "firstShipped": { "model": "GPT-1 / BERT (kept SDPA+MHA, swapped sinusoids for learned positions)", "date": "2018-06-11", "url": "https://openai.com/index/language-unsupervised/" },
+    "family": "attention",
+    "bill": ["compute", "quality"],
+    "problem": "RNNs compute one token at a time — 'precludes parallelization within training examples' — and a dependency between distant tokens has to travel O(n) steps. The Transformer's bet: throw the recurrence away and pay for all-pairs attention instead.",
+    "idea": "softmax(QKᵀ/√d_k)·V. Every position scores every other position with a dot product, the scores are scaled by 1/√d_k so softmax does not saturate at large d_k, softmax turns them into weights, and the output is a weighted sum of values. Do it h times in parallel with smaller heads (multi-head) at the cost of one full-width head.",
+    "buys": [
+      "O(1) sequential ops and O(1) maximum path length per layer (Table 1) — everything is a batched matmul, so the base model trains in 12 h on 8 P100s",
+      "Multi-head (h=8, d_k=64) costs the same as one big head and single-head is 0.9 BLEU worse (Table 3 A)",
+      "Exact: every token can read every other token; the reference quality every mechanism below is measured against"
+    ],
+    "costs": [
+      "O(n²·d) time and an n×n score matrix per head per layer — the quadratic bill every later mechanism exists to lower",
+      "At inference the KV cache grows linearly with context: 2·layers·heads·d_head values per token",
+      "'Reduced effective resolution due to averaging' (their words); the sinusoid's extrapolation was only 'may allow' and in practice was weak enough that GPT-1/BERT dropped it"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "yes", "why": "the default — with FlashAttention it is exact and fast" },
+      "rag32k": { "v": "yes", "why": "still fine on modern kernels; KV cache is the thing to watch" },
+      "coding128k": { "v": "maybe", "why": "exact is best for recall; the KV cache is what forces GQA/MLA" },
+      "agent1m": { "v": "no", "why": "1M² scores per head and a terabyte-scale KV cache — you keep the semantics and change the pattern" },
+      "verdict": "Never wrong, only expensive. Everything on this timeline is somebody looking at this bill and paying less of it."
+    },
+    "viz": { "kind": "baseline" }
+  },
+  {
+    "id": "sinusoidal-positions",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 1,
+    "order": 1,
+    "name": "Sinusoidal positional encoding",
+    "short": "Sinusoidal",
+    "aka": "fixed / parameter-free positional encoding",
+    "date": "2017-06-12",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Attention Is All You Need, §3.5 Positional Encoding",
+      "authors": "Vaswani et al. (Google)",
+      "arxiv": "1706.03762",
+      "url": "https://arxiv.org/abs/1706.03762",
+      "evidence": "[v1] Mon, 12 Jun 2017 — §3.5: learned vs sinusoidal 'produced nearly identical results (see Table 3 row (E))'; sinusoids chosen because they 'may allow the model to extrapolate'"
+    },
+    "firstShipped": { "model": "the original Transformer (tensor2tensor)", "date": "2017-06-12", "url": "https://arxiv.org/abs/1706.03762" },
+    "family": "position",
+    "bill": ["quality", "extrapolation"],
+    "problem": "No recurrence means position has to be injected somewhere. Learned tables (ConvS2S, a month earlier) work but cap the length. Can a fixed function do the same job and maybe generalise beyond it?",
+    "idea": "PE(pos, 2i) = sin(pos/10000^{2i/d}), PE(pos, 2i+1) = cos(·): each dimension pair is a sinusoid at a geometrically spaced wavelength from 2π to 10000·2π. Because PE(pos+k) is a linear function of PE(pos), relative offsets are in principle learnable.",
+    "buys": [
+      "Zero parameters; defined for any position, so nothing crashes past training length",
+      "Quality tied learned positions on WMT (25.7 vs 25.8 BLEU)",
+      "The frequency-band idea is exactly what RoPE later turns into a rotation"
+    ],
+    "costs": [
+      "'May allow' extrapolation was optimistic: models trained short still degrade past training length because the *model* never saw those inputs, even if the encoding is defined",
+      "Adds position to the residual stream, so it leaks into values and every layer, not just the attention score",
+      "Absolute in form; the relative structure has to be discovered by the network"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "yes", "why": "harmless; the classic encoder choice" },
+      "rag32k": { "v": "maybe", "why": "fine at trained length; do not expect free extension" },
+      "coding128k": { "v": "no", "why": "RoPE + scaling gives you a lever; sinusoids do not" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "The right first guess in 2017. It lost to learned positions in GPT/BERT and to RoPE in every decoder after 2021, but its frequency ladder lives on inside RoPE."
+    },
+    "viz": { "kind": "position", "mode": "sinusoidal" }
+  },
+  {
+    "id": "image-transformer-local",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 1,
+    "order": 0,
+    "name": "Local (block) self-attention — Image Transformer",
+    "short": "Local self-attention",
+    "date": "2018-02-15",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Image Transformer",
+      "authors": "Parmar, Vaswani, Uszkoreit, Kaiser, Shazeer, Ku, Tran (Google)",
+      "arxiv": "1802.05751",
+      "url": "https://arxiv.org/abs/1802.05751",
+      "evidence": "[v1] Thu, 15 Feb 2018 20:37:15 UTC"
+    },
+    "family": "pattern-sparse",
+    "bill": ["compute"],
+    "problem": "32×32×3 images are 3,072-token sequences; full self-attention was already too expensive eight months after the Transformer.",
+    "idea": "Restrict each query block to a local 1-D or 2-D neighbourhood of memory blocks — the first local self-attention in a transformer, two years before Longformer named the sliding window.",
+    "buys": ["Attention cost proportional to block size, not sequence length", "Kept SOTA image generation at the time"],
+    "costs": ["Receptive field grows only with depth; no global tokens", "Hand-picked block geometry per modality"],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "" },
+      "rag32k": { "v": "no", "why": "" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "Lineage: the ancestor of every sliding-window layer, born in vision."
+    },
+    "viz": { "kind": "matrix", "mode": "window" }
+  },
+  {
+    "id": "shaw-relative-positions",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 1,
+    "order": 0,
+    "name": "Relative position representations (Shaw et al.)",
+    "short": "Relative positions",
+    "aka": "Shaw RPE; relation-aware self-attention; a^K_ij / a^V_ij edge embeddings",
+    "date": "2018-03-06",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Self-Attention with Relative Position Representations",
+      "authors": "Shaw, Uszkoreit, Vaswani (Google)",
+      "arxiv": "1803.02155",
+      "url": "https://arxiv.org/abs/1803.02155",
+      "evidence": "[v1] Tue, 6 Mar 2018 13:13:11 UTC (NAACL 2018)"
+    },
+    "firstShipped": { "model": "Music Transformer (with the linear-memory 'skewing' trick)", "date": "2018-09-12", "url": "https://arxiv.org/abs/1809.04281" },
+    "family": "position",
+    "bill": ["quality"],
+    "problem": "Absolute positions (learned or sinusoidal) carry no built-in notion of 'how far apart are i and j', which translation clearly wants. Quality, not cost.",
+    "idea": "Learn a vector per relative offset (clipped at ±k, k=16) and add it to the key (and optionally the value) inside the attention score: e_ij = x_iW^Q (x_jW^K + a^K_{i−j})ᵀ/√d.",
+    "buys": [
+      "+1.3 BLEU En-De over absolute positions; adding absolute on top gave nothing more",
+      "Translation-invariant: the same parameters serve any absolute position",
+      "The origin of the whole relative family: Transformer-XL, T5 bias, ALiBi and, in spirit, RoPE"
+    ],
+    "costs": [
+      "The naive implementation materialises an [n, n, d] tensor per layer — quadratic memory; Music Transformer had to invent 'skewing' to make it linear",
+      "Offsets beyond the clip distance are indistinguishable",
+      "Cache-unfriendly for incremental decoding compared with bias-only (T5) or rotation-only (RoPE) schemes"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "maybe", "why": "fine for short encoders (DeBERTa descends from it)" },
+      "rag32k": { "v": "no", "why": "the [n,n,d] cost or the clip bites" },
+      "coding128k": { "v": "no", "why": "use RoPE" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "The idea won; this implementation lost to cheaper ways of saying the same thing."
+    },
+    "viz": { "kind": "position", "mode": "relative" }
+  },
+  {
+    "id": "music-transformer",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 1,
+    "order": 0,
+    "name": "Music Transformer (relative attention with 'skewing')",
+    "short": "Music Transformer",
+    "date": "2018-09-12",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Music Transformer",
+      "authors": "Huang et al. (Google Brain)",
+      "arxiv": "1809.04281",
+      "url": "https://arxiv.org/abs/1809.04281",
+      "evidence": "[v1] 12 Sep 2018"
+    },
+    "family": "position",
+    "bill": ["quality"],
+    "oneLiner": "First at-scale use of Shaw-style relative attention; the 'skewing' trick reduces its memory from O(n²d) to O(nd).",
+    "whyFootnote": "An implementation fix for a node already on the timeline."
+  },
+  {
+    "id": "efficient-attention-2018",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 1,
+    "order": 0,
+    "name": "Efficient Attention: Attention with Linear Complexities",
+    "short": "Efficient Attention",
+    "date": "2018-12-04",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Efficient Attention: Attention with Linear Complexities",
+      "authors": "Shen, Zhang, Zhao, Yi, Li",
+      "arxiv": "1812.01243",
+      "url": "https://arxiv.org/abs/1812.01243",
+      "evidence": "[v1] Tue, 4 Dec 2018"
+    },
+    "family": "linear-recurrent",
+    "bill": ["compute"],
+    "oneLiner": "Reorders softmax(Q)·(softmax(K)ᵀV) so cost is linear in n — the earliest linear-complexity attention found, in vision, 18 months before 'Transformers are RNNs'.",
+    "whyFootnote": "Vision-only and did not give the causal/RNN form; the canonical linear-attention launch is Katharopoulos 2020."
+  }
+]

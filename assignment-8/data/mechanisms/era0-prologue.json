@@ -1,0 +1,166 @@
+[
+  {
+    "id": "additive-attention",
+    "tier": "major",
+    "prologue": true,
+    "instructorList": false,
+    "era": 0,
+    "order": 0,
+    "name": "Additive (Bahdanau) attention",
+    "short": "Bahdanau",
+    "aka": "concat attention, MLP attention, 'alignment model', RNNsearch",
+    "date": "2014-09-01",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Neural Machine Translation by Jointly Learning to Align and Translate",
+      "authors": "Bahdanau, Cho, Bengio",
+      "arxiv": "1409.0473",
+      "url": "https://arxiv.org/abs/1409.0473",
+      "evidence": "[v1] Mon, 1 Sep 2014 16:33:02 UTC (ICLR 2015)"
+    },
+    "firstShipped": { "model": "GNMT (Google Translate)", "date": "2016-09-26", "url": "https://arxiv.org/abs/1609.08144" },
+    "family": "attention",
+    "bill": ["quality"],
+    "problem": "The 2014 RNN encoder–decoder squeezed a whole source sentence into one fixed vector; translation quality collapsed on sentences longer than ~30 words. There was no efficiency question yet — the bill being paid was BLEU.",
+    "idea": "Let the decoder soft-search the encoder states at every step: a small MLP scores each source state against the decoder state, softmax turns scores into weights, and the context vector is the weighted sum. Alignment falls out for free.",
+    "buys": [
+      "BLEU stays flat with sentence length (RNNsearch-50 vs RNNencdec-50, Fig. 2 of the paper)",
+      "Fully differentiable, trained end-to-end; the soft alignments are interpretable",
+      "The template every later attention keeps: score → softmax → weighted sum"
+    ],
+    "costs": [
+      "The score is an MLP evaluated T_source × T_target times per pair — the paper already pre-computes U_a·h_j to make it bearable",
+      "Extra parameters (W_a, U_a, v_a); slower and less memory-friendly than a dot product (Vaswani §3.2.1)",
+      "Bolted onto a sequential RNN decoder: no parallelism, cross-attention only"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "scaled dot product does the same job faster" },
+      "rag32k": { "v": "no", "why": "MLP scoring at 32K² pairs is pointless" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "Teaching value only. Its one surviving argument — additive beats *unscaled* dot product at large d_k — was answered by the 1/√d in 2017."
+    },
+    "viz": { "kind": "matrix", "mode": "cross" }
+  },
+  {
+    "id": "dot-product-attention",
+    "tier": "major",
+    "prologue": true,
+    "instructorList": false,
+    "era": 0,
+    "order": 0,
+    "name": "Dot-product (Luong) attention, global and local",
+    "short": "Luong dot-product",
+    "aka": "multiplicative attention; dot / general / concat scores; local-m / local-p",
+    "date": "2015-08-17",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Effective Approaches to Attention-based Neural Machine Translation",
+      "authors": "Luong, Pham, Manning (Stanford)",
+      "arxiv": "1508.04025",
+      "url": "https://arxiv.org/abs/1508.04025",
+      "evidence": "[v1] Mon, 17 Aug 2015 13:43:19 UTC (EMNLP 2015)"
+    },
+    "secondary": [
+      { "label": "MemN2N v1 already used inner-product + softmax (eq. 1)", "url": "https://arxiv.org/abs/1503.08895", "date": "2015-03-31" }
+    ],
+    "firstShipped": { "model": "the Transformer (scaled form)", "date": "2017-06-12", "url": "https://arxiv.org/abs/1706.03762" },
+    "family": "attention",
+    "bill": ["quality", "compute"],
+    "problem": "Bahdanau's MLP score was expensive and nobody had compared attention designs. Luong asked the simplest question: is a plain dot product enough? And, for the first time, worried about cost — attending to every source word 'is expensive and can potentially render it impractical to translate longer sequences'.",
+    "idea": "score(h_t, h̄_s) = h_tᵀh̄_s (dot) or h_tᵀW h̄_s (general): one matmul, zero or one extra matrix. Local attention restricts each step to a window [p_t−D, p_t+D] with a Gaussian taper — the 2015 ancestor of sliding-window attention.",
+    "buys": [
+      "One matmul instead of an MLP; +5.0 BLEU over a dropout baseline (Table 4)",
+      "Named and benchmarked the design space (dot / general / concat, global / local)",
+      "Local-p makes per-step cost a fixed 2D+1 — the first attention efficiency trade in print"
+    ],
+    "costs": [
+      "Unscaled dot products grow with dimension and push softmax into tiny-gradient regions — exactly why Vaswani added 1/√d_k",
+      "Local attention adds a position predictor and a hand-set window D, and assumes monotonic alignment",
+      "Still RNN-bound: no parallelism gain, cross-attention only"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "yes", "why": "in scaled form, it *is* the transformer's attention" },
+      "rag32k": { "v": "yes", "why": "same" },
+      "coding128k": { "v": "yes", "why": "same" },
+      "agent1m": { "v": "maybe", "why": "the score function survives; the all-pairs pattern does not" },
+      "verdict": "The score function every LLM uses today, minus the scaling. Its local variant is the seed of the sliding-window family."
+    },
+    "viz": { "kind": "matrix", "mode": "cross-local" }
+  },
+  {
+    "id": "learned-absolute-positions",
+    "tier": "major",
+    "prologue": true,
+    "instructorList": true,
+    "era": 0,
+    "order": 0,
+    "name": "Learned absolute position embeddings",
+    "short": "Learned absolute",
+    "aka": "APE; 'temporal encoding' (MemN2N); 'position embeddings' (ConvS2S); W_p (GPT-1) / wpe (GPT-2)",
+    "date": "2017-05-08",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Convolutional Sequence to Sequence Learning (§3.1 Position Embeddings — the reference Vaswani §3.5 cites for learned positions)",
+      "authors": "Gehring, Auli, Grangier, Yarats, Dauphin (FAIR)",
+      "arxiv": "1705.03122",
+      "url": "https://arxiv.org/abs/1705.03122",
+      "evidence": "[v1] Mon, 8 May 2017 23:25:30 UTC — 35 days before the Transformer's v1"
+    },
+    "secondary": [
+      { "label": "Prehistory: MemN2N 'temporal encoding' (learned per-slot vectors), v1 titled 'Weakly Supervised Memory Networks'", "url": "https://arxiv.org/abs/1503.08895", "date": "2015-03-31" },
+      { "label": "GPT-1: 'learned position embeddings instead of the sinusoidal version'", "url": "https://openai.com/index/language-unsupervised/", "date": "2018-06-11" },
+      { "label": "BERT", "url": "https://arxiv.org/abs/1810.04805", "date": "2018-10-11" }
+    ],
+    "firstShipped": { "model": "GPT-1 (117M, 512-token context)", "date": "2018-06-11", "url": "https://openai.com/index/language-unsupervised/" },
+    "family": "position",
+    "bill": ["quality"],
+    "problem": "Order-blind layers — memory lookups, convolutions, and soon attention — have no idea where a token sits. The fix everyone reached for first: give each position its own trainable vector and add it to the token embedding.",
+    "idea": "An n_ctx × d table. Position p contributes row p. Nothing else changes; the model learns whatever positional structure the data has.",
+    "buys": [
+      "Trivial to implement; on WMT En-De it matched sinusoids exactly (Vaswani Table 3 row (E): 25.7 vs 25.8 BLEU, PPL 4.92 both)",
+      "No hand-designed frequencies; the model can learn irregular structure",
+      "The choice GPT-1, GPT-2, GPT-3 and BERT all made"
+    ],
+    "costs": [
+      "A hard maximum length equal to the table size and zero extrapolation: position 2049 does not exist (ConvS2S: 'impose a restriction on the maximum sentence length')",
+      "n_ctx × d extra parameters; late positions see fewer examples and are worse trained",
+      "Absolute only — no built-in sense of 'how far apart', which Shaw (2018), RoPE and ALiBi later supplied"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "yes", "why": "fixed short context with lots of data — the BERT/GPT-2 regime" },
+      "rag32k": { "v": "maybe", "why": "only if the table is that big at training time; no room to grow" },
+      "coding128k": { "v": "no", "why": "cannot run past the trained length; RoPE + scaling instead" },
+      "agent1m": { "v": "no", "why": "a 1M-row table with sparse coverage of far positions" },
+      "verdict": "Right for a fixed, short, data-rich context — encoders and ViTs still use it. Wrong the moment you need to run one token past training length."
+    },
+    "viz": { "kind": "position", "mode": "learned" }
+  },
+  {
+    "id": "kv-memory-networks",
+    "tier": "footnote",
+    "prologue": true,
+    "instructorList": false,
+    "era": 0,
+    "order": 0,
+    "name": "Key-Value Memory Networks",
+    "short": "KV-MemNN",
+    "date": "2016-06-09",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Key-Value Memory Networks for Directly Reading Documents",
+      "authors": "Miller et al. (FAIR)",
+      "arxiv": "1606.03126",
+      "url": "https://arxiv.org/abs/1606.03126",
+      "evidence": "[v1] Thu, 9 Jun 2016"
+    },
+    "family": "attention",
+    "bill": ["quality"],
+    "oneLiner": "The explicit key/value split — address with keys, read out values — a year before the Transformer made K and V separate projections.",
+    "whyFootnote": "Lineage, not an attention mechanism you would pick."
+  }
+]

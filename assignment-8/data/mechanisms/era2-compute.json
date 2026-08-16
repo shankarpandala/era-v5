@@ -1,0 +1,638 @@
+[
+  {
+    "id": "transformer-xl",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Transformer-XL — segment recurrence + relative positions",
+    "short": "Transformer-XL",
+    "aka": "TXL; 'Attentive Language Models Beyond a Fixed-Length Context'",
+    "date": "2019-01-09",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context",
+      "authors": "Dai, Yang, Yang, Carbonell, Le, Salakhutdinov (CMU / Google Brain)",
+      "arxiv": "1901.02860",
+      "url": "https://arxiv.org/abs/1901.02860",
+      "evidence": "[v1] Wed, 9 Jan 2019 18:28:19 UTC (ACL 2019)"
+    },
+    "firstShipped": { "model": "XLNet", "date": "2019-06-19", "url": "https://arxiv.org/abs/1906.08237" },
+    "family": "hybrid",
+    "bill": ["length", "compute"],
+    "problem": "Vanilla Transformer LMs were trained on fixed segments with no information across segments (context fragmentation) and re-computed everything for each new token at eval. First mechanism to say: the bill is *effective context length*.",
+    "idea": "Cache the previous segment's hidden states per layer (stop-gradient) and let the current segment attend to them, so effective context grows with depth × segment length; make that work with a relative positional scheme (sinusoidal R_{i−j} plus learned global u, v vectors) so cached states stay position-consistent.",
+    "buys": [
+      "Dependencies '80% longer than RNNs and 450% longer than vanilla Transformers'; SOTA on enwik8 / text8 / WikiText-103 / One Billion Word",
+      "Up to ~1,800× faster than vanilla at eval because states are reused rather than recomputed",
+      "Its relative-position half is a distinct branch from Shaw's (sinusoidal, not per-offset learned)"
+    ],
+    "costs": [
+      "Extra memory to hold cached hidden states for every layer (mem_len × layers × d) — on top of what became the KV cache",
+      "Training must feed segments in document order: no free shuffling, harder data pipelines",
+      "Recurrence gives a soft, decaying context — no random access to tokens beyond cache range; four-term relative attention is costlier per layer"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "plain attention with a 2K window is simpler and exact" },
+      "rag32k": { "v": "no", "why": "retrieval wants random access, not decaying recurrence" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "maybe", "why": "the *idea* returns as compressive/Infini-style memory; this exact form does not" },
+      "verdict": "The relative-position idea survived; the recurrence mostly did not — until Infini-attention and the delta-rule RNNs picked it up again in 2024."
+    },
+    "viz": { "kind": "matrix", "mode": "segment-recurrence" }
+  },
+  {
+    "id": "sparse-transformer",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 2,
+    "order": 0,
+    "name": "Sparse Transformer — strided / fixed factorized patterns",
+    "short": "Sparse Transformer",
+    "aka": "OpenAI Sparse Transformer; 'locally banded sparse attention'",
+    "date": "2019-04-23",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Generating Long Sequences with Sparse Transformers",
+      "authors": "Child, Gray, Radford, Sutskever (OpenAI)",
+      "arxiv": "1904.10509",
+      "url": "https://arxiv.org/abs/1904.10509",
+      "evidence": "[v1] Tue, 23 Apr 2019 19:29:47 UTC"
+    },
+    "firstShipped": { "model": "GPT-3 ('alternating dense and locally banded sparse attention patterns … similar to the Sparse Transformer')", "date": "2020-05-28", "url": "https://arxiv.org/abs/2005.14165" },
+    "family": "pattern-sparse",
+    "bill": ["compute"],
+    "problem": "Images (64×64×3 = 12K tokens), raw audio and long text made the n×n score matrix the whole cost — in FLOPs and in activation memory. Sequences of tens of thousands of steps and hundreds of layers were untrainable.",
+    "idea": "Factor attention into hand-designed patterns each head can compute cheaply: 'strided' (a local window plus every ℓ-th column) and 'fixed' (attend within a block plus to summary columns), so any token reaches any other in two layers at O(n√n) cost. Plus custom block-sparse kernels and attention recomputation.",
+    "buys": [
+      "O(n√n) instead of O(n²), with full receptive field in two hops",
+      "SOTA density modelling on enwik8, CIFAR-10, ImageNet-64 in 2019; sequences of tens of thousands of timesteps",
+      "The banded-local idea GPT-3 actually shipped, and the ancestor of gpt-oss's alternating banded layers"
+    ],
+    "costs": [
+      "Static, hand-designed patterns: no content adaptivity, information must hop through summary positions",
+      "Needs custom kernels to see real speed — a dense matmul with a mask saves nothing",
+      "Speedup at ≤2K is small; wins at 8K+ — and at those lengths FlashAttention later ate most of the niche"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "dense + FlashAttention is simpler and as fast" },
+      "rag32k": { "v": "maybe", "why": "only with a kernel; the pattern may miss the relevant chunk" },
+      "coding128k": { "v": "maybe", "why": "as banded layers interleaved with dense ones (GPT-3 / gpt-oss style)" },
+      "agent1m": { "v": "no", "why": "fixed patterns lose relevant tokens; you want content-based selection (NSA/DSA)" },
+      "verdict": "Right when you control the kernels and the data has structure (images, audio); as a general LLM trick it survives only as the banded half of a hybrid."
+    },
+    "viz": { "kind": "matrix", "mode": "strided" }
+  },
+  {
+    "id": "t5-relative-bias",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "T5 relative position bias",
+    "short": "T5 bias",
+    "aka": "bucketed relative attention bias",
+    "date": "2019-10-23",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+      "authors": "Raffel, Shazeer, Roberts, Lee, Narang, Matena, Zhou, Li, Liu (Google)",
+      "arxiv": "1910.10683",
+      "url": "https://arxiv.org/abs/1910.10683",
+      "evidence": "[v1] Wed, 23 Oct 2019 17:37:36 UTC"
+    },
+    "firstShipped": { "model": "T5 (released with the paper); mT5, Flan-T5, UL2", "date": "2019-10-23", "url": "https://arxiv.org/abs/1910.10683" },
+    "family": "position",
+    "bill": ["quality"],
+    "problem": "Keep Shaw's relative-position benefit without per-offset vectors and their O(n²d) memory, in a model meant to scale to 11B.",
+    "idea": "Each relative offset adds a learned *scalar* to the attention logit; 32 log-spaced buckets per head up to offset 128, everything beyond mapped to one bucket; shared across layers.",
+    "buys": ["Nearly free: a scalar per bucket per head", "Depends only on i−j, so KV-cache friendly", "Deeper layers 'build sensitivity to larger offsets'"],
+    "costs": ["Content-independent: cannot express content–position interactions the way Shaw / RoPE do", "Beyond 128 every offset looks identical — a soft ceiling on precise long-range position", "Weaker length extrapolation than ALiBi/RoPE for decoders"],
+    "pickWhen": {
+      "chatbot2k": { "v": "yes", "why": "encoder-decoders at 512–2K" },
+      "rag32k": { "v": "maybe", "why": "" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "The parameter-light relative scheme of the encoder-decoder world; decoders went RoPE. Note the co-author: Shazeer wrote MQA two weeks later."
+    },
+    "viz": { "kind": "position", "mode": "t5" }
+  },
+  {
+    "id": "mqa",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 2,
+    "order": 0,
+    "name": "Multi-Query Attention (MQA)",
+    "short": "MQA",
+    "aka": "one write-head; shared key/value heads",
+    "date": "2019-11-06",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Fast Transformer Decoding: One Write-Head is All You Need",
+      "authors": "Noam Shazeer (Google)",
+      "arxiv": "1911.02150",
+      "url": "https://arxiv.org/abs/1911.02150",
+      "evidence": "[v1] Wed, 6 Nov 2019 00:19:05 UTC"
+    },
+    "secondary": [
+      { "label": "AlphaCode — first mainstream use ('we take advantage of multi-query attention (Shazeer 2019)')", "url": "https://arxiv.org/abs/2203.07814", "date": "2022-02-02" },
+      { "label": "PaLM 540B", "url": "https://arxiv.org/abs/2204.02311", "date": "2022-04-05" },
+      { "label": "StarCoder (open weights)", "url": "https://arxiv.org/abs/2305.06161", "date": "2023-05-09" },
+      { "label": "Falcon-7B/40B", "url": "https://huggingface.co/tiiuae/falcon-7b", "date": "2023-05-25" }
+    ],
+    "firstShipped": { "model": "AlphaCode (DeepMind) — not PaLM, as often stated", "date": "2022-02-02", "url": "https://deepmind.google/discover/blog/competitive-programming-with-alphacode/" },
+    "family": "heads-kv",
+    "bill": ["kv-memory"],
+    "problem": "Nobody else in 2019 was looking at this bill: at incremental decoding each new token must re-read the whole cached K and V (n·d per layer), so decoding is bound by memory bandwidth, not FLOPs. The paper's ratio: Θ(n/d + 1/b).",
+    "idea": "Keep h query heads but a single shared key head and value head. The KV cache and per-step memory traffic shrink by a factor h; the cost ratio becomes Θ(1/d + n/(dh) + 1/b).",
+    "buys": [
+      "KV cache ÷ h; decoder incremental time 3.8 µs/token vs 46 µs/token (~12×) in the paper",
+      "Quality nearly intact: WMT14 En-De 28.5 vs 28.4 BLEU, dev log-ppl 1.439 vs 1.424",
+      "Enables large-batch, long-context serving — AlphaCode's sampling went 0.37 → 4.74 samples/TPU-s"
+    ],
+    "costs": [
+      "A small but real quality drop, and later work found MQA more prone to instability at scale — the reason GQA exists",
+      "No training-compute saving; must be chosen at pretraining time (or 'uptrained' à la GQA)",
+      "One KV head interacts badly with tensor parallelism — every shard needs the same K/V (Falcon-40B used per-shard KV, i.e. effectively grouped)"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "maybe", "why": "little benefit when compute, not bandwidth, dominates" },
+      "rag32k": { "v": "yes", "why": "KV bandwidth is the decode cost" },
+      "coding128k": { "v": "yes", "why": "heavy sampling — exactly AlphaCode's case" },
+      "agent1m": { "v": "yes", "why": "though GQA-8 or MLA is the usual modern choice at frontier scale" },
+      "verdict": "The first mechanism to see the KV bill, two years before anyone needed it. Today: small/edge models pick MQA; large ones pick GQA."
+    },
+    "viz": { "kind": "kv", "mode": "mqa" }
+  },
+  {
+    "id": "topk-attention",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 2,
+    "order": 0,
+    "name": "Explicit Sparse Transformer — top-k attention",
+    "short": "Top-k attention",
+    "aka": "explicit selection; originally 'Sparse Transformer: Concentrated Attention Through Explicit Selection'",
+    "date": "2019-12-25",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Explicit Sparse Transformer: Concentrated Attention Through Explicit Selection",
+      "authors": "Zhao, Lin, Zhang, Ren, Su, Sun (Peking University)",
+      "arxiv": "1912.11637",
+      "url": "https://arxiv.org/abs/1912.11637",
+      "evidence": "[v1] Wed, 25 Dec 2019 10:59:31 UTC; public earlier as an ICLR 2020 OpenReview submission (25 Sep 2019)"
+    },
+    "secondary": [
+      { "label": "Memory-efficient Transformers via Top-k Attention (Gupta et al.) — makes it chunked/efficient", "url": "https://arxiv.org/abs/2106.06899", "date": "2021-06-13" }
+    ],
+    "firstShipped": { "model": "Not in this form; top-k token selection reached production as DeepSeek Sparse Attention (V3.2-Exp)", "date": "2025-09-29", "url": "https://api-docs.deepseek.com/news/news250929" },
+    "family": "content-sparse",
+    "bill": ["quality"],
+    "problem": "Softmax spreads mass over irrelevant tokens ('noise'). The original bill was quality — BLEU, CIDEr, perplexity — not compute: the full n×n matrix is still computed.",
+    "idea": "Compute P = QKᵀ/√d, keep the k largest scores per row (k=8 worked best), set the rest to −∞, then softmax. No new parameters.",
+    "buys": [
+      "Consistent gains over the baseline on En-De / En-Vi / De-En MT, MS-COCO captioning, enwik8",
+      "~2× faster than sparsemax and ~10× than α-entmax because it is a plain mask",
+      "The conceptual seed of every 'attend to the k most relevant tokens' scheme (Quest, NSA select branch, DSA)"
+    ],
+    "costs": [
+      "No compute or memory saving in this form — the dense score matrix is computed and then masked",
+      "Hard selection has zero gradient to non-selected positions; k is a fixed hyperparameter, so a token needing broad context is capped",
+      "Efficient descendants had to pay for a cheap *indexer* (NSA, DSA) or chunked computation (Gupta 2021) to avoid the dense pre-pass"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "maybe", "why": "as a regulariser on a small model, plausibly" },
+      "rag32k": { "v": "no", "why": "no saving without an indexer" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "maybe", "why": "only in its learned-indexer form (DSA), which is a different mechanism" },
+      "verdict": "Right idea, wrong decade: it needed a cheap way to *find* the top-k without computing everything, which arrived in 2025."
+    },
+    "viz": { "kind": "matrix", "mode": "topk" }
+  },
+  {
+    "id": "reformer",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Reformer — LSH attention (+ reversible layers)",
+    "short": "Reformer",
+    "date": "2020-01-13",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Reformer: The Efficient Transformer",
+      "authors": "Kitaev, Kaiser, Levskaya (Google / Berkeley)",
+      "arxiv": "2001.04451",
+      "url": "https://arxiv.org/abs/2001.04451",
+      "evidence": "[v1] Mon, 13 Jan 2020 18:38:28 UTC (ICLR 2020; OpenReview submission Sep 2019)"
+    },
+    "family": "content-sparse",
+    "bill": ["compute", "kv-memory"],
+    "problem": "64K–1M-token sequences on a single 16 GB accelerator: activation memory per layer and O(n²) attention.",
+    "idea": "Share Q and K, hash them into buckets with random rotations, sort, and attend only within (adjacent) buckets — O(n log n); reversible residuals so activations for one layer are stored instead of N.",
+    "buys": ["O(n log n) attention; 'sequences of 1M words on 16 GB' (Google blog)", "Reversible layers cut activation memory to ~1 layer"],
+    "costs": ["Requires K = Q, so no cross-attention and poor decoding behaviour", "Multi-round hashing adds sequential ops; hashing noise slows convergence; large constants — gains only past ~2K", "LSH sort/bucket is awkward on GPUs; no mainstream LLM ever shipped it"],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "" },
+      "rag32k": { "v": "no", "why": "" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "no", "why": "KV memory, not activation memory, is today's bill" },
+      "verdict": "A memory trick for 2020 hardware. Content-based sparsity returns in 2025 with learned indexers, not hashes."
+    },
+    "viz": { "kind": "matrix", "mode": "lsh" }
+  },
+  {
+    "id": "routing-transformer",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Routing Transformer — content-based sparse attention via online k-means",
+    "short": "Routing Transformer",
+    "date": "2020-03-12",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Efficient Content-Based Sparse Attention with Routing Transformers",
+      "authors": "Roy, Saffar, Vaswani, Grangier (Google)",
+      "arxiv": "2003.05997",
+      "url": "https://arxiv.org/abs/2003.05997",
+      "evidence": "[v1] Thu, 12 Mar 2020 19:50:14 UTC"
+    },
+    "family": "content-sparse",
+    "bill": ["compute"],
+    "problem": "Sparse patterns fixed by position (local/strided) miss content; can the sparsity pattern depend on what the tokens *say*?",
+    "idea": "Layer-norm queries and keys onto the unit ball, cluster them into k≈√n centroids by online spherical k-means, and let each query attend within its cluster: O(n^1.5·d).",
+    "buys": ["Data-dependent sparsity; SOTA on PG-19 (33.2 ppl) and Wikitext-103 (15.8) in 2020", "Framed attention as approximate maximum-inner-product search — the DSA framing five years early"],
+    "costs": ["Balanced clusters need sort/gather/scatter — hardware-unfriendly; tokens can land in several or no clusters", "Centroid EMA maintenance; shared QK in causal mode", "The authors note plain local attention is 'a surprisingly strong baseline'"],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "" },
+      "rag32k": { "v": "no", "why": "" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "maybe", "why": "the goal is right; today it is done with a learned top-k indexer (DSA), not k-means" },
+      "verdict": "The right question ('choose keys by content') answered with 2020 tools."
+    },
+    "viz": { "kind": "matrix", "mode": "routing" }
+  },
+  {
+    "id": "sliding-window",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 2,
+    "order": 0,
+    "name": "Sliding-window (+ dilated + global) attention — Longformer",
+    "short": "Sliding window",
+    "aka": "SWA; local + global attention; LED",
+    "date": "2020-04-10",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Longformer: The Long-Document Transformer",
+      "authors": "Beltagy, Peters, Cohan (AI2)",
+      "arxiv": "2004.05150",
+      "url": "https://arxiv.org/abs/2004.05150",
+      "evidence": "[v1] Fri, 10 Apr 2020 17:54:09 UTC"
+    },
+    "secondary": [
+      { "label": "Idea lineage: Luong local attention 2015; Image Transformer local blocks 2018; Sparse Transformer banded 2019", "url": "https://arxiv.org/abs/1904.10509", "date": "2019-04-23" },
+      { "label": "GPT-3 ships banded local layers (Sparse-Transformer lineage)", "url": "https://arxiv.org/abs/2005.14165", "date": "2020-05-28" },
+      { "label": "Mistral 7B — 'sliding window attention' in a mainstream open LLM, W=4096, rolling KV buffer", "url": "https://mistral.ai/news/announcing-mistral-7b/", "date": "2023-09-27" }
+    ],
+    "firstShipped": { "model": "Mistral 7B (as 'SWA'; GPT-3's banded layers came earlier from the Sparse-Transformer line)", "date": "2023-09-27", "url": "https://mistral.ai/news/announcing-mistral-7b/" },
+    "family": "pattern-sparse",
+    "bill": ["compute", "kv-memory"],
+    "problem": "BERT/RoBERTa stopped at 512 tokens because of quadratic memory; long-document QA, summarisation and coreference needed 4K–16K, ideally as a drop-in for a pretrained checkpoint.",
+    "idea": "Each token attends to w/2 neighbours on each side — O(n·w) — with dilated windows on some heads and a few *global* tokens (task tokens, [CLS]) that attend everywhere; receptive field grows ℓ·w with depth.",
+    "buys": [
+      "Linear in n; at w=512 the same FLOPs as RoBERTa on 4,096-token inputs; beat RoBERTa on long-doc tasks",
+      "The KV cache is bounded by w — the reason Mistral 7B could keep a rolling buffer",
+      "The pattern the field settled on for the *cheap* layers of every 2024–25 hybrid (Gemma 2/3, gpt-oss, Command A)"
+    ],
+    "costs": [
+      "Windowed layers see only w tokens; long-range information must percolate through depth, and global tokens are needed to stay competitive",
+      "Banded matmul is not native: the naive loop is 'unusably slow', chunking doubles memory, so a custom kernel is required",
+      "No free length extrapolation — position still has to be handled — and pure sliding window everywhere hurts retrieval"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "maybe", "why": "no need — dense fits" },
+      "rag32k": { "v": "yes", "why": "as the local layers of a local:global stack" },
+      "coding128k": { "v": "yes", "why": "same; keep some dense/global layers for cross-file recall" },
+      "agent1m": { "v": "maybe", "why": "bounded KV is exactly what you want, but retrieval needs the global layers or a sparse indexer" },
+      "verdict": "Right as one half of a hybrid; wrong as the whole story for anything retrieval-heavy."
+    },
+    "viz": { "kind": "matrix", "mode": "window-global" }
+  },
+  {
+    "id": "linformer",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Linformer — low-rank projected keys/values",
+    "short": "Linformer",
+    "date": "2020-06-08",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Linformer: Self-Attention with Linear Complexity",
+      "authors": "Wang, Li, Khabsa, Fang, Ma (Facebook AI)",
+      "arxiv": "2006.04768",
+      "url": "https://arxiv.org/abs/2006.04768",
+      "evidence": "[v1] Mon, 8 Jun 2020 17:37:52 UTC"
+    },
+    "family": "linear-recurrent",
+    "bill": ["compute"],
+    "problem": "The softmax attention matrix is empirically (and by the JL lemma, provably) low-rank; why compute all n² of it?",
+    "idea": "Project K and V along the *sequence* axis with learned n×k matrices; attention becomes softmax(Q(EK)ᵀ)(FV) in O(nk).",
+    "buys": ["k=128–256 matched RoBERTa on GLUE at n=512/1024", "1.5× (n=512) to 20× (n=65K) inference speedups reported"],
+    "costs": ["The n×k projections bake a maximum length into the weights — no extrapolation, must pad", "Mixing all positions breaks causal masking: bidirectional only, never for decoding", "Low-rank fails when attention must be sharp / pointer-like"],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "not causal" },
+      "rag32k": { "v": "no", "why": "" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "Fixed-length encoders only. The low-rank instinct returns, done right, as MLA's latent KV in 2024."
+    },
+    "viz": { "kind": "matrix", "mode": "lowrank" }
+  },
+  {
+    "id": "linear-attention",
+    "tier": "major",
+    "prologue": false,
+    "instructorList": true,
+    "era": 2,
+    "order": 0,
+    "name": "Linear attention — 'Transformers are RNNs'",
+    "short": "Linear attention",
+    "aka": "Linear Transformer; kernelised attention; feature-map (elu+1) attention",
+    "date": "2020-06-29",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention",
+      "authors": "Katharopoulos, Vyas, Pappas, Fleuret (Idiap / EPFL)",
+      "arxiv": "2006.16236",
+      "url": "https://arxiv.org/abs/2006.16236",
+      "evidence": "[v1] Mon, 29 Jun 2020 17:55:38 UTC (ICML 2020)"
+    },
+    "secondary": [
+      { "label": "Earlier: Performer/FAVOR protein paper (random features, no causal RNN form)", "url": "https://arxiv.org/abs/2006.03555", "date": "2020-06-05" },
+      { "label": "Earlier still: Efficient Attention (Shen et al.), vision, linear complexity", "url": "https://arxiv.org/abs/1812.01243", "date": "2018-12-04" }
+    ],
+    "firstShipped": { "model": "MiniMax-01 (456B, 'lightning attention' hybrid, 1M-token training context)", "date": "2025-01-14", "url": "https://arxiv.org/abs/2501.08313" },
+    "family": "linear-recurrent",
+    "bill": ["compute", "kv-memory"],
+    "problem": "Two bills at once: O(n²) attention, and autoregressive inference whose per-token cost *and memory* grow with context — the paper stresses that Sparse Transformer and Reformer 'do not speed up autoregressive inference'.",
+    "idea": "Replace exp(q·k) with φ(q)ᵀφ(k), φ = elu+1. Associativity gives φ(Q)(φ(K)ᵀV) in O(n). In the causal case this is an RNN with a d×d state S = Σ φ(k_j)v_jᵀ and a normaliser z — constant per-token cost and constant memory, no KV cache at all.",
+    "buys": [
+      "O(n) time and memory; constant-cost decoding with a fixed-size state instead of a growing KV cache",
+      "Up to 4,000× faster CIFAR-10 image generation vs softmax; comparable bits/dim",
+      "The template every 2023–25 linear layer (RetNet, GLA, DeltaNet, lightning attention) builds on"
+    ],
+    "costs": [
+      "Not softmax: elu+1 is a weak kernel; a real quality gap where sharp attention matters (WSJ ASR PER 8.08 vs 5.12)",
+      "A fixed d×d state bounds what can be remembered — the recall/retrieval weakness the delta rule later attacks",
+      "Causal training via cumulative sums is bandwidth-bound and needs custom kernels; pure linear attention has never matched softmax at frontier scale — production uses hybrids"
+    ],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "exact recall at 2K is cheap; do not give it up" },
+      "rag32k": { "v": "maybe", "why": "as the cheap layers of a hybrid; not for the retrieval layers" },
+      "coding128k": { "v": "maybe", "why": "same" },
+      "agent1m": { "v": "yes", "why": "constant per-token memory is the whole point at 1M — in a 3:1 / 7:1 hybrid" },
+      "verdict": "It buys a bounded state and sells exact recall. Right when the sequence is long and the memory bill is binding; wrong when you need to find one needle."
+    },
+    "viz": { "kind": "state", "mode": "linear" }
+  },
+  {
+    "id": "bigbird",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "BigBird — window + global + random block-sparse attention",
+    "short": "BigBird",
+    "date": "2020-07-28",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Big Bird: Transformers for Longer Sequences",
+      "authors": "Zaheer et al. (Google)",
+      "arxiv": "2007.14062",
+      "url": "https://arxiv.org/abs/2007.14062",
+      "evidence": "[v1] Tue, 28 Jul 2020 08:34:04 UTC (NeurIPS 2020)"
+    },
+    "family": "pattern-sparse",
+    "bill": ["compute"],
+    "problem": "Get BERT-style encoders to 4,096 tokens (8×) on the same hardware, with theory that sparse attention keeps expressivity (universal approximation, Turing completeness).",
+    "idea": "On 64-token blocks: a sliding window (3 blocks) + a few global tokens + 3 random blocks per query, so window/global reduce to dense block matmuls.",
+    "buys": ["8× longer encoder inputs; SOTA long-doc QA and summarisation in 2020", "Theory: sparse attention with global tokens is as expressive as full"],
+    "costs": ["Random attention needs gathers the paper itself calls inefficient", "Global tokens are essential ('random blocks and local window were insufficient') — a hint at attention sinks", "Encoder-only; never in a mainstream decoder LLM"],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "" },
+      "rag32k": { "v": "maybe", "why": "long-doc encoders with a RoBERTa/Pegasus checkpoint" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "The most complete 2020 pattern; too fiddly and too encoder-shaped to survive into decoders."
+    },
+    "viz": { "kind": "matrix", "mode": "bigbird" }
+  },
+  {
+    "id": "performer",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Performer — FAVOR+ random-feature softmax",
+    "short": "Performer",
+    "date": "2020-09-30",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Rethinking Attention with Performers",
+      "authors": "Choromanski et al. (Google / Cambridge / DeepMind / Alan Turing Inst.)",
+      "arxiv": "2009.14794",
+      "url": "https://arxiv.org/abs/2009.14794",
+      "evidence": "[v1] Wed, 30 Sep 2020 17:09:09 UTC (ICLR 2021); FAVOR without '+' in 2006.03555, 5 Jun 2020"
+    },
+    "family": "linear-recurrent",
+    "bill": ["compute"],
+    "problem": "Linear attention with an arbitrary kernel is not softmax. Can we approximate the *actual* softmax kernel, unbiased, at linear cost — so pretrained models convert?",
+    "idea": "exp(q·k) as an expectation over positive orthogonal random features; m = Θ(d log d) features independent of n; then φ(Q)(φ(K)ᵀV).",
+    "buys": ["Provably unbiased, linear-cost softmax surrogate", "Competitive on protein LM, ImageNet-64, PG-19"],
+    "costs": ["Approximation error compounds through layers — pretrained weights still need fine-tuning", "sin/cos features NaN; positive features mandatory and must be redrawn", "Variance for peaked attention; not competitive with exact softmax on LM at scale; never shipped"],
+    "pickWhen": {
+      "chatbot2k": { "v": "no", "why": "" },
+      "rag32k": { "v": "no", "why": "" },
+      "coding128k": { "v": "no", "why": "" },
+      "agent1m": { "v": "no", "why": "" },
+      "verdict": "Elegant theory, and the last serious attempt to be softmax without paying for softmax. FlashAttention made the question moot for a while."
+    },
+    "viz": { "kind": "state", "mode": "linear" }
+  },
+  {
+    "id": "qk-norm",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "QK-Norm (query-key normalisation)",
+    "short": "QK-Norm",
+    "aka": "QK-LayerNorm / QK-RMSNorm; cosine attention",
+    "date": "2020-10-08",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": {
+      "title": "Query-Key Normalization for Transformers",
+      "authors": "Henry, Dachapally, Pawar, Chen",
+      "arxiv": "2010.04245",
+      "url": "https://arxiv.org/abs/2010.04245",
+      "evidence": "[v1] Thu, 8 Oct 2020 20:12:35 UTC"
+    },
+    "secondary": [
+      { "label": "ViT-22B (vision, at scale)", "url": "https://arxiv.org/abs/2302.05442", "date": "2023-02-10" },
+      { "label": "Gemma 3: 'we replace the soft-capping of Gemma 2 with QK-norm'", "url": "https://arxiv.org/abs/2503.19786", "date": "2025-03-25" }
+    ],
+    "firstShipped": { "model": "ViT-22B; in LLMs OLMo 2, Gemma 3, Qwen3", "date": "2023-02-10", "url": "https://arxiv.org/abs/2302.05442" },
+    "family": "stability",
+    "bill": ["stability"],
+    "problem": "Attention logits q·k grow without bound, saturating softmax and causing loss spikes at scale, high learning rate, or long context.",
+    "idea": "Normalise q and k per head (L2 or RMSNorm) before the dot product; add a learnable scale so the temperature is not fixed.",
+    "buys": ["Bounded logits, stable large-scale training, higher LR; Gemma 3 dropped logit soft-capping for it"],
+    "costs": ["Extra norms per head (small); fixes the temperature so a scale must be learned; interacts with fused-QK kernels and with attention sinks"],
+    "pickWhen": {
+      "chatbot2k": { "v": "yes", "why": "default in 2025 pretraining recipes" },
+      "rag32k": { "v": "yes", "why": "" },
+      "coding128k": { "v": "yes", "why": "" },
+      "agent1m": { "v": "yes", "why": "" },
+      "verdict": "Not a bill item — a stability item — but you cannot read a 2025 attention block without it."
+    },
+    "viz": { "kind": "none" }
+  },
+  {
+    "id": "adaptive-span",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Adaptive Attention Span",
+    "short": "Adaptive Span",
+    "date": "2019-05-19",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": { "title": "Adaptive Attention Span in Transformers", "authors": "Sukhbaatar, Grave, Bojanowski, Joulin (FAIR)", "arxiv": "1905.07799", "url": "https://arxiv.org/abs/1905.07799", "evidence": "[v1] Sun, 19 May 2019" },
+    "family": "pattern-sparse",
+    "bill": ["compute"],
+    "oneLiner": "Each head learns its own soft attention span, so most heads stay local and a few reach far — a learned sliding window a year before Longformer.",
+    "whyFootnote": "Same family as sliding window; not separately adopted."
+  },
+  {
+    "id": "sparse-sinkhorn",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Sparse Sinkhorn Attention",
+    "short": "Sinkhorn",
+    "date": "2020-02-26",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": { "title": "Sparse Sinkhorn Attention", "authors": "Tay, Bahri, Yang, Metzler, Juan (Google)", "arxiv": "2002.11296", "url": "https://arxiv.org/abs/2002.11296", "evidence": "[v1] Wed, 26 Feb 2020" },
+    "family": "content-sparse",
+    "bill": ["compute"],
+    "oneLiner": "Learns a differentiable block permutation (Sinkhorn balancing) so local attention over re-sorted blocks approximates content-based sparsity.",
+    "whyFootnote": "One of several 2020 content-sparse designs; not adopted."
+  },
+  {
+    "id": "talking-heads",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Talking-Heads Attention",
+    "short": "Talking Heads",
+    "date": "2020-03-05",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": { "title": "Talking-Heads Attention", "authors": "Shazeer, Lan, Cheng, Ding, Hou (Google)", "arxiv": "2003.02436", "url": "https://arxiv.org/abs/2003.02436", "evidence": "[v1] Thu, 5 Mar 2020 05:17:17 UTC" },
+    "family": "attention",
+    "bill": ["quality"],
+    "oneLiner": "Linear projections across the heads dimension before and after softmax — more quality for more compute.",
+    "whyFootnote": "Moves the bill the wrong way; a quality tweak, not an efficiency mechanism."
+  },
+  {
+    "id": "etc",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "ETC — Extended Transformer Construction",
+    "short": "ETC",
+    "date": "2020-04-17",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": { "title": "ETC: Encoding Long and Structured Inputs in Transformers", "authors": "Ainslie et al. (Google)", "arxiv": "2004.08483", "url": "https://arxiv.org/abs/2004.08483", "evidence": "[v1] Fri, 17 Apr 2020" },
+    "family": "pattern-sparse",
+    "bill": ["compute"],
+    "oneLiner": "Global–local attention with a separate global memory; BigBird is 'an extension over ETC'. Same first author as GQA three years later.",
+    "whyFootnote": "Subsumed by Longformer/BigBird on the timeline."
+  },
+  {
+    "id": "clustered-attention",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Fast Transformers with Clustered Attention",
+    "short": "Clustered Attention",
+    "date": "2020-07-09",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": { "title": "Fast Transformers with Clustered Attention", "authors": "Vyas, Katharopoulos, Fleuret", "arxiv": "2007.04825", "url": "https://arxiv.org/abs/2007.04825", "evidence": "[v1] Thu, 9 Jul 2020" },
+    "family": "content-sparse",
+    "bill": ["compute"],
+    "oneLiner": "Cluster queries, compute attention once per centroid, broadcast — from the same group as linear attention ten days earlier.",
+    "whyFootnote": "Not adopted."
+  },
+  {
+    "id": "long-range-arena",
+    "tier": "footnote",
+    "prologue": false,
+    "instructorList": false,
+    "era": 2,
+    "order": 0,
+    "name": "Long Range Arena (benchmark)",
+    "short": "LRA",
+    "date": "2020-11-08",
+    "datePrecision": "day",
+    "dateKind": "arxiv-v1",
+    "source": { "title": "Long Range Arena: A Benchmark for Efficient Transformers", "authors": "Tay et al. (Google)", "arxiv": "2011.04006", "url": "https://arxiv.org/abs/2011.04006", "evidence": "[v1] Sun, 8 Nov 2020" },
+    "family": "systems",
+    "bill": ["compute"],
+    "oneLiner": "The benchmark that lined up Reformer, Linformer, Linear Transformer, Longformer, BigBird, Performer, Sinkhorn and found no clear winner — and, in hindsight, did not predict what would ship.",
+    "whyFootnote": "A benchmark, not a mechanism; included because it closes the 2020 wave."
+  }
+]

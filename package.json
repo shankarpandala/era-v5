@@ -9,7 +9,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "parity": "node scripts/check_parity.mjs"
+    "parity": "node scripts/check_parity.mjs",
+    "a8:check": "node scripts/check_assignment8.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^9.122.0",

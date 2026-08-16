@@ -1,0 +1,110 @@
+[
+  {
+    "id": 0,
+    "key": "prologue",
+    "title": "Before the clock",
+    "span": "Sep 2014 – May 2017",
+    "from": "2014-09-01",
+    "to": "2017-06-11",
+    "wanted": "a quality fix",
+    "color": "#71717a",
+    "narrative": "Attention starts as a quality fix, not an efficiency trick. The RNN encoder–decoder squeezed a whole sentence into one vector and BLEU collapsed past ~30 words; Bahdanau's soft alignment (2014) let the decoder look back at every source state, Luong (2015) showed a plain dot product does the job with zero extra parameters, and learned absolute positions (MemN2N 2015, ConvS2S May 2017) gave order-blind layers a sense of place. Nobody was counting FLOPs yet — the bill had not arrived.",
+    "short": "before"
+  },
+  {
+    "id": 1,
+    "key": "exactness",
+    "title": "Wants exactness",
+    "span": "Jun 2017 – 2018",
+    "from": "2017-06-12",
+    "to": "2018-12-31",
+    "wanted": "parallel training + quality; pay O(n²) gladly",
+    "color": "#3b82f6",
+    "narrative": "The Transformer throws the recurrence away and pays O(n²·d) per layer on purpose: every position sees every other in one hop, everything is a batched matmul, and the base model trains in 12 hours on 8 P100s. Positions are a footnote — the paper reports learned and sinusoidal as 'nearly identical' and picks sinusoids only in the hope of extrapolating. Shaw et al. (2018) add relative offsets for quality. Exact, dense, expensive — and nobody minds, because contexts are 512 tokens.",
+    "short": "exact"
+  },
+  {
+    "id": 2,
+    "key": "compute",
+    "title": "The bill arrives — wants compute back",
+    "span": "2019 – 2020",
+    "from": "2019-01-01",
+    "to": "2020-12-31",
+    "wanted": "escape n² (and, quietly, decode memory)",
+    "color": "#8b5cf6",
+    "narrative": "Contexts grow past 1K and the quadratic term is suddenly the whole cost. The first efficiency wave tries every escape at once: recurrence for length (Transformer-XL), hand-designed sparsity (Sparse Transformer, Longformer, BigBird), content-routed sparsity (Reformer, Routing), keep-only-the-top-k, low rank (Linformer), and kernels that make attention linear (Katharopoulos, Performer). One paper — Shazeer's MQA — notices a different bill entirely: at decode time you re-read the whole KV cache for every token, and that is memory bandwidth, not FLOPs. Almost none of the approximations ship in language models (GPT-3 takes the banded-sparse pattern); dense matmul on GPUs keeps winning on quality per dollar. The lesson the field learns: sparsity that the hardware cannot exploit is not a saving.",
+    "short": "compute"
+  },
+  {
+    "id": 3,
+    "key": "positions",
+    "title": "Positions become the lever",
+    "span": "2021",
+    "from": "2021-01-01",
+    "to": "2021-12-31",
+    "wanted": "relative position for free; a promise of extrapolation",
+    "color": "#10b981",
+    "narrative": "With the compute question parked, attention's *other* problem gets attacked: absolute positions cap the model at its training length. RoPE (Mar/Apr 2021) rotates queries and keys so the dot product depends only on the offset — no parameters, KV-cache friendly. ALiBi (Aug 2021) throws positions away and just penalises distance linearly, and trains short to test long. Quietly, in February, Schlag/Irie/Schmidhuber show linear transformers are fast-weight programmers and fix their overwrite problem with the delta rule — the seed of DeltaNet, ignored for three years.",
+    "short": "positions"
+  },
+  {
+    "id": 4,
+    "key": "exact-cheap",
+    "title": "Exact got cheap",
+    "span": "2022",
+    "from": "2022-01-01",
+    "to": "2022-12-31",
+    "wanted": "the same math, but IO-aware",
+    "color": "#f59e0b",
+    "narrative": "FlashAttention (May 2022) changes nothing about the maths and everything about the bill: tile the computation so the n×n matrix never touches HBM, and exact attention becomes 2–4× faster and linear in memory. Overnight the 2020 approximations lose their reason to exist at ordinary lengths — why accept a quality hit for a speedup a kernel gives you for free? The field re-learns that a systems change can beat an algorithmic one. Meanwhile Haviv et al. show a decoder learns position with no positional encoding at all, a hint that will matter in 2025.",
+    "short": "exact→cheap"
+  },
+  {
+    "id": 5,
+    "key": "length",
+    "title": "Wants length",
+    "span": "2023",
+    "from": "2023-01-01",
+    "to": "2023-12-31",
+    "wanted": "context as the product; stretch what you have",
+    "color": "#ef4444",
+    "narrative": "The ChatGPT year: context length is suddenly a headline feature and everyone owns a RoPE model trained at 2–4K. GQA (May) squeezes the KV cache without MQA's quality hit; vLLM's PagedAttention (June) makes KV memory *the* number serving engineers watch. Then, in ten days of June, three ways to stretch RoPE without retraining appear — kaiokendev's interpolation blog, Meta's PI paper, and bloc97's NTK-aware post on Reddit, followed a day later by Dynamic NTK — and YaRN (Aug) unifies them. Code Llama simply raises the base frequency. StreamingLLM (Sep) explains why the first tokens must never be evicted (attention sinks); Mistral 7B ships a 4K sliding window in a mainstream model; Ring Attention shards attention across devices. And the linear thread wakes up for length: RWKV, RetNet, GLA, Mamba.",
+    "short": "length"
+  },
+  {
+    "id": 6,
+    "key": "memory",
+    "title": "Wants memory back",
+    "span": "2024",
+    "from": "2024-01-01",
+    "to": "2024-12-31",
+    "wanted": "the KV cache is the constraint at 128K+",
+    "color": "#06b6d4",
+    "narrative": "At 128K tokens the KV cache, not the FLOPs, decides how many users a GPU can serve. DeepSeek-V2's MLA (May) compresses keys and values into a small latent and caches only that — a 57× reduction with no quality loss. The recurrent thread becomes competitive: Mamba-2 shows SSMs and linear attention are the same object, DeltaNet gets a parallel training algorithm, and Gated DeltaNet (Dec) combines gating with the delta rule. Gemma 2 interleaves local and global layers so most of the cache is bounded. Length recipes go mainstream (Llama 3.1's 128K, LongRoPE, Dual Chunk), and eviction/selection schemes (H2O, SnapKV, Quest, DuoAttention) trade recall for memory.",
+    "short": "memory"
+  },
+  {
+    "id": 7,
+    "key": "hybrids",
+    "title": "Hybrids — memory back again, sparsity that trains",
+    "span": "2025",
+    "from": "2025-01-01",
+    "to": "2025-11-30",
+    "wanted": "few exact layers, cheap everything else",
+    "color": "#d946ef",
+    "narrative": "The two efficiency threads converge on the same shape. Linear/recurrent layers carry most of the depth with a few exact attention layers for recall — MiniMax-01 (Jan), Qwen3-Next's 3:1 Gated DeltaNet (Sep), Kimi Linear (Oct). Positions get out of the way: Cohere, Llama 4 and SWAN interleave NoPE global layers with RoPE local ones. Sparsity finally becomes *trainable and hardware-aligned* — NSA's compress/select/window branches (Feb), MoBA, and DeepSeek's DSA in V3.2 (Sep) — so the exact layers themselves read only a few thousand of a million tokens. gpt-oss ships learned attention sinks and 128-token banded layers; Gemma 3 goes 5:1 local:global. Every one of these is the same sentence: pay full price for a small part of the model, and make the rest nearly free.",
+    "short": "hybrids"
+  },
+  {
+    "id": 8,
+    "key": "now",
+    "title": "Now — compress, then select; the hybrids become defaults",
+    "span": "Dec 2025 – Aug 2026",
+    "from": "2025-12-01",
+    "to": "2026-08-31",
+    "wanted": "1M as the default: compressed KV, selected by an index; positions as a training aid",
+    "color": "#84cc16",
+    "narrative": "DroPE (Sakana, Dec 2025) treats RoPE as scaffolding: train with it, then drop it and briefly recalibrate, and the model extends its context zero-shot — the 2021 lever, removed. Then 2026 makes the timeline's prediction concrete: Qwen3.5 (Feb) runs 45 of 60 layers on Gated DeltaNet at flagship scale; MiniCPM-SALA (Feb) puts sparse and linear attention in one 9B stack; DeepSeek-V4 (Apr) ships Compressed Sparse Attention — compress every m tokens into one KV entry, let the lightning indexer pick the top-k *compressed* entries, keep a small window — interleaved with Heavily Compressed Attention, for 27% of V3.2's FLOPs and 10% of its KV at 1M; Kimi K3 (Jul) runs Kimi Delta Attention 3:1 at 2.8T. The exact layers no longer read tokens; they read a few compressed entries chosen by an index, and most layers are not attention at all.",
+    "short": "now"
+  }
+]
