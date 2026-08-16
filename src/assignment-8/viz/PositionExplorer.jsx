@@ -57,7 +57,7 @@ function FrequencyLadder({ d, L, base, freqScale, height = 150 }) {
     const hi = 4
     const yFor = (rot) => {
       const v = Math.log10(Math.max(rot, 1e-9))
-      const t = (v - lo) / (hi - lo)
+      const t = Math.min(1, Math.max(0, (v - lo) / (hi - lo)))
       return height - pad - t * (height - 2 * pad)
     }
     // one-rotation line
@@ -162,7 +162,7 @@ export default function PositionExplorer({ mode = 'rope' }) {
       case 'dyn-ntk':
         return { freqScale: FREQ.ntk(s), effBase: base, label: `base' = base·${s}^(d/(d−2)) ≈ ${Math.round(base * Math.pow(s, d / (d - 2))).toLocaleString()}` }
       case 'yarn':
-        return { freqScale: FREQ.yarn(s, L), effBase: base, label: `by-parts: keep ≥32 rotations, interpolate ≤1, ramp between; s=${s}` }
+        return { freqScale: FREQ.yarn(s, L, 1, 32, base), effBase: base, label: `by-parts: keep ≥32 rotations, interpolate ≤1, ramp between; s=${s}` }
       case 'abf':
         return { freqScale: FREQ.none(), effBase: 1_000_000, label: 'base θ = 1,000,000 (Code Llama), fine-tuned at the new length' }
       default:
@@ -181,7 +181,7 @@ export default function PositionExplorer({ mode = 'rope' }) {
 
   // score vs distance curve out to s·L (or 4L for non-scaling modes)
   const curve = useMemo(() => {
-    const maxDist = Math.max(2, Math.round((isScaling ? s : 4) * L))
+    const maxDist = mode === 'alibi' ? 128 : Math.max(2, Math.round((isScaling ? s : 4) * L))
     const pts = 160
     const out = []
     for (let p = 0; p <= pts; p++) {
@@ -193,7 +193,8 @@ export default function PositionExplorer({ mode = 'rope' }) {
           break
         }
         case 'learned': {
-          y = dist <= L ? 0.5 + 0.3 * Math.sin(dist / 97) : NaN
+          if (dist > L) continue // the table ends: no point past L_train
+          y = 0.5 + 0.3 * Math.sin(dist / 97)
           break
         }
         case 'alibi': {
@@ -232,7 +233,7 @@ export default function PositionExplorer({ mode = 'rope' }) {
           y = ropeKernel(dist, d, effBase, freqScale)
         }
       }
-      out.push({ x: dist, y: Number.isFinite(y) ? y : 0 })
+      if (Number.isFinite(y)) out.push({ x: dist, y })
     }
     return out
   }, [mode, L, s, d, q, k, effBase, freqScale, isScaling])
@@ -287,14 +288,15 @@ export default function PositionExplorer({ mode = 'rope' }) {
               <LineChart
                 width={360}
                 height={160}
-                xLabel="distance |i−j|"
+                xLabel="distance |i−j| (0–32)"
                 yLabel="bias"
-                yMin={-8}
+                yMin={-alibiSlope(0, HEADS) * 32}
                 yMax={0}
+                showLegend={false}
                 series={Array.from({ length: HEADS }, (_, h) => ({
                   label: '',
                   color: `hsl(${(h * 40) % 360} 70% 50%)`,
-                  data: Array.from({ length: 33 }, (_, i) => ({ x: i * 4, y: -alibiSlope(h, HEADS) * i * 4 })),
+                  data: Array.from({ length: 33 }, (_, i) => ({ x: i, y: -alibiSlope(h, HEADS) * i })),
                 }))}
               />
             </>
@@ -327,19 +329,23 @@ export default function PositionExplorer({ mode = 'rope' }) {
             height={190}
             xLabel="relative distance"
             yLabel="score"
-            yMin={mode === 'alibi' ? -8 : isRopeFamily && mode !== 'drope' ? 0 : -1.2}
+            yMin={mode === 'alibi' ? -alibiSlope(0, HEADS) * 128 : isRopeFamily && mode !== 'drope' ? 0 : -1.2}
             yMax={mode === 'alibi' ? 0 : 1.2}
-            series={[
-              { label: mode, color: '#3b82f6', data: curve },
-              { label: 'L_train', color: '#ef4444', dashed: true, data: mode === 'alibi' ? [{ x: L, y: -8 }, { x: L, y: 0 }] : trainedMark },
-            ]}
+            series={
+              mode === 'alibi'
+                ? [{ label: 'head 0 (steepest slope)', color: '#3b82f6', data: curve }]
+                : [
+                    { label: mode, color: '#3b82f6', data: curve },
+                    { label: 'L_train', color: '#ef4444', dashed: true, data: trainedMark },
+                  ]
+            }
           />
           <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
             {mode === 'rope' && 'Inside L_train the curve is what the model trained on. Beyond it, the low-frequency bands rotate into angles it never saw — the curve is still defined, the model is not.'}
             {mode === 'pi' && 'Everything is squeezed: the far region now looks like the near region — at the cost of resolution between neighbours.'}
             {(mode === 'ntk' || mode === 'dyn-ntk') && 'The near-range structure is kept; the far range is stretched into the trained band. Some bands still extrapolate a little, which is why YaRN treats bands separately.'}
             {mode === 'yarn' && 'High-frequency detail untouched, low-frequency bands brought into range, temperature keeps the softmax as sharp as it was in training.'}
-            {mode === 'alibi' && 'The bias is the same function at every length. Extrapolation in perplexity comes free — because far tokens are simply discounted.'}
+            {mode === 'alibi' && 'The bias is the same linear function at every length (shown for the steepest head over 0–128 tokens; the shallowest head is 256× flatter). Extrapolation in perplexity comes free — because far tokens are simply discounted.'}
             {(mode === 'nope' || mode === 'drope') && 'Flat: there is no positional term to go out of distribution.'}
             {mode === 'sinusoidal' && 'Defined at any distance and quasi-periodic — but the model has only trained on the left of the red line.'}
             {mode === 'learned' && 'The curve stops: there is no embedding for positions past the table.'}

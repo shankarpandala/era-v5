@@ -80,7 +80,7 @@ export function topkMask(S, k) {
     const idx = row.map((v, j) => [v, j]).filter(([, j]) => j <= i).sort((a, b) => b[0] - a[0]).slice(0, k)
     return new Set(idx.map(([, j]) => j))
   })
-  return (i, j) => keep[i].has(j)
+  return (i, j) => keep[i]?.has(j) ?? false
 }
 
 // Block-select (MoBA / NSA "selected" branch): mean-pool keys per block, keep the
@@ -92,7 +92,8 @@ export function blockSelectMask(S, block, topBlocks, { window = 0, sinks = 0 } =
   for (let i = 0; i < n; i++) {
     const own = Math.floor(i / block)
     const blockScores = []
-    for (let b = 0; b <= own; b++) {
+    // rank only the earlier blocks; the own block is always attended (added below)
+    for (let b = 0; b < own; b++) {
       let s = 0
       let c = 0
       for (let j = b * block; j < Math.min(n, (b + 1) * block); j++) {
@@ -107,7 +108,7 @@ export function blockSelectMask(S, block, topBlocks, { window = 0, sinks = 0 } =
     chosen.add(own)
     keep.push(chosen)
   }
-  return (i, j) => j <= i && (keep[i].has(Math.floor(j / block)) || (window && i - j < window) || j < sinks)
+  return (i, j) => j <= i && ((keep[i]?.has(Math.floor(j / block)) ?? false) || (window && i - j < window) || j < sinks)
 }
 
 // LSH buckets: hash by sign of projection onto a few random directions (Reformer-style).
@@ -182,8 +183,8 @@ export const FREQ = {
   // NTK-aware: base' = base·s^{d/(d-2)} ⇒ per-band scale = s^{-2i/(d-2)}
   ntk: (s) => (i, d) => Math.pow(s, (-2 * i) / (d - 2)),
   // YaRN / NTK-by-parts: high-freq bands untouched, low-freq interpolated, ramp between.
-  yarn: (s, L = 2048, alpha = 1, beta = 32) => (i, d) => {
-    const theta = Math.pow(10000, (-2 * i) / d)
+  yarn: (s, L = 2048, alpha = 1, beta = 32, base = 10000) => (i, d) => {
+    const theta = Math.pow(base, (-2 * i) / d)
     const wavelength = (2 * Math.PI) / theta
     const r = L / wavelength // number of rotations over the training length
     if (r >= beta) return 1 // high frequency: keep

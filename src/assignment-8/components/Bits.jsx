@@ -23,8 +23,8 @@ export function FamilyChip({ family, small = false }) {
   const f = FAMILIES[family] || { label: family, color: '#71717a' }
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-px font-medium ${small ? 'text-[10px]' : 'text-[11px]'}`}
-      style={{ borderColor: f.color, color: f.color }}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-px font-medium text-zinc-700 dark:text-zinc-200 ${small ? 'text-[10px]' : 'text-[11px]'}`}
+      style={{ borderColor: f.color }}
     >
       <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: f.color }} />
       {f.label}

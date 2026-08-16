@@ -54,7 +54,13 @@ export default function DecisionMatrix() {
                   const g = PICK_GLYPH[cell.v] || PICK_GLYPH.na
                   return (
                     <td key={s.key} className="px-3 py-2 text-center" title={cell.why || g.label}>
-                      <span className={`inline-block rounded-md px-2 py-0.5 font-mono font-bold ${g.cls}`}>{g.glyph}</span>
+                      <span
+                        className={`inline-block rounded-md px-2 py-0.5 font-mono font-bold ${g.cls}`}
+                        role="img"
+                        aria-label={`${s.label}: ${g.label}${cell.why ? ' — ' + cell.why : ''}`}
+                      >
+                        {g.glyph}
+                      </span>
                     </td>
                   )
                 })}

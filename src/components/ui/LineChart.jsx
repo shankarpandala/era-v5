@@ -12,6 +12,7 @@ export default function LineChart({
   xMax,
   logX = false,
   yTicks = 4,
+  showLegend = true,
 }) {
   const pad = { l: 44, r: 12, t: 12, b: 34 }
   const iw = width - pad.l - pad.r
@@ -95,7 +96,7 @@ export default function LineChart({
 
       {/* legend */}
       <g>
-        {series.map((s, si) => (
+        {showLegend && series.filter((s) => s.label).map((s, si) => (
           <g key={si} transform={`translate(${pad.l + 6 + si * 96}, ${pad.t + 4})`}>
             <line x1="0" x2="16" y1="0" y2="0" stroke={s.color} strokeWidth="2" strokeDasharray={s.dashed ? '4 3' : undefined} />
             <text x="20" y="3" className="fill-zinc-600 dark:fill-zinc-300 text-[10px]">

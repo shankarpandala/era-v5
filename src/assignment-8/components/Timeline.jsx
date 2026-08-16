@@ -7,17 +7,28 @@ import { ExtLink, Rich } from './Bits.jsx'
 // The timeline proper: era bands in launch order, each with its narrative and
 // its nodes (major cards + minor cards), a filter bar, and the footnote table.
 
+// Black or white text depending on the chip colour's luminance (WCAG contrast).
+function readableOn(hex) {
+  const n = parseInt(hex.replace('#', ''), 16)
+  const r = (n >> 16) & 255
+  const g = (n >> 8) & 255
+  const b = n & 255
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return lum > 0.6 ? '#18181b' : '#ffffff'
+}
+
 function Chip({ active, onClick, children, color }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={!!active}
       className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
         active
           ? 'border-transparent bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
           : 'border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800'
       }`}
-      style={active && color ? { backgroundColor: color, color: '#fff' } : undefined}
+      style={active && color ? { backgroundColor: color, color: readableOn(color) } : undefined}
     >
       {children}
     </button>

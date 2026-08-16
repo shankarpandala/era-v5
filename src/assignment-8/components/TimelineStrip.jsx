@@ -21,7 +21,7 @@ export default function TimelineStrip({ onJump, visibleIds }) {
 
   return (
     <div className="panel overflow-x-auto p-3">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[640px]" role="img" aria-label="timeline overview 2014 to 2026">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[640px]" aria-label="timeline overview 2014 to 2026: one dot per node, click to jump">
         {ERAS.map((e) => {
           const x0 = x(e.from, W)
           const x1 = x(e.to, W)
@@ -51,7 +51,20 @@ export default function TimelineStrip({ onJump, visibleIds }) {
           const dim = visible && !visible.has(m.id)
           const era = ERAS.find((e) => e.id === m.era)
           return (
-            <g key={m.id} className="cursor-pointer" onClick={() => onJump?.(m.id)} onMouseEnter={() => setHover(m)} onMouseLeave={() => setHover(null)}>
+            <a
+              key={m.id}
+              href={`#m-${m.id}`}
+              className="cursor-pointer focus:outline-none"
+              aria-label={`${fmtDate(m.date, m.datePrecision)} — ${m.name}`}
+              onClick={(e) => {
+                e.preventDefault()
+                onJump?.(m.id)
+              }}
+              onMouseEnter={() => setHover(m)}
+              onMouseLeave={() => setHover(null)}
+              onFocus={() => setHover(m)}
+              onBlur={() => setHover(null)}
+            >
               <circle
                 cx={cx}
                 cy={major ? 41 : 51}
@@ -63,7 +76,7 @@ export default function TimelineStrip({ onJump, visibleIds }) {
                 className="text-zinc-900 dark:text-zinc-50"
               />
               <title>{`${fmtDate(m.date, m.datePrecision)} — ${m.name}`}</title>
-            </g>
+            </a>
           )
         })}
         {hover && (

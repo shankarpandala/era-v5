@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Slider from '../../components/ui/Slider.jsx'
 import MaskCanvas, { Legend } from './MaskCanvas.jsx'
 import {
@@ -44,6 +44,8 @@ export default function AttentionMatrix({ mode = 'causal', params = {} }) {
   const [devices, setDevices] = useState(4)
   const [rank, setRank] = useState(8)
   const [hoverRow, setHoverRow] = useState(null)
+  useEffect(() => setHoverRow(null), [n, mode])
+  const NON_CAUSAL = mode === 'cross' || mode === 'cross-local' || mode === 'lowrank'
 
   const { Q, K } = useMemo(() => makeQKV(n, D, 7), [n])
   const S = useMemo(() => scores(Q, K).map((r) => r.map((v) => v / Math.sqrt(D))), [Q, K])
@@ -153,6 +155,7 @@ export default function AttentionMatrix({ mode = 'causal', params = {} }) {
                 <button
                   key={p}
                   type="button"
+                  aria-pressed={pattern === p}
                   onClick={() => setPattern(p)}
                   className={`rounded-md border px-2 py-1 ${pattern === p ? 'border-brand-500 bg-brand-500 text-white' : 'border-zinc-300 text-zinc-600 dark:border-zinc-700 dark:text-zinc-300'}`}
                 >
@@ -289,12 +292,12 @@ export default function AttentionMatrix({ mode = 'causal', params = {} }) {
         break
       }
       case 'lowrank': {
-        m = rank
+        m = Math.min(rank, n)
         allow = () => true
         cat = () => 'compressed'
         legend = [['compressed', `keys projected to k=${rank} rows`]]
         describe = 'Linformer: project the n keys/values down to k along the sequence axis; attention is n×k. Bidirectional only, length baked into the weights.'
-        extraControls = <Slider label="rank k" value={rank} min={2} max={16} onChange={setRank} />
+        extraControls = <Slider label="rank k" value={Math.min(rank, n)} min={2} max={Math.min(16, n)} onChange={setRank} />
         break
       }
       case 'local-global': {
@@ -353,13 +356,15 @@ export default function AttentionMatrix({ mode = 'causal', params = {} }) {
     for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (allow(i, j)) c++
     return c
   })()
-  const dense = (n * (n + 1)) / 2
+  const dense = NON_CAUSAL ? n * n : (n * (n + 1)) / 2
   const pct = Math.min(100, (100 * total) / dense)
-  const rowReads = hoverRow == null ? null : (() => {
+  const hr = hoverRow != null && hoverRow < n ? hoverRow : null
+  const rowReads = hr == null ? null : mode === 'lowrank' ? m : (() => {
     let c = 0
-    for (let j = 0; j < n; j++) if (allow(hoverRow, j)) c++
+    for (let j = 0; j < n; j++) if (allow(hr, j)) c++
     return c
   })()
+  const available = hr == null ? 0 : NON_CAUSAL ? n : hr + 1
 
   const cacheNote = (() => {
     switch (mode) {
@@ -399,13 +404,13 @@ export default function AttentionMatrix({ mode = 'causal', params = {} }) {
           <p className="text-sm text-zinc-700 dark:text-zinc-200">{describe}</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
             <Stat label="scores computed" value={`${total.toLocaleString()} / ${dense.toLocaleString()}`} />
-            <Stat label="share of the causal n² bill" value={`${pct.toFixed(0)}%`} />
+            <Stat label={NON_CAUSAL ? 'share of the dense n² bill' : 'share of the causal n² bill'} value={`${pct.toFixed(0)}%`} />
             <Stat label="KV cache" value={cacheNote} />
           </div>
           <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            {hoverRow == null
+            {hr == null
               ? 'Hover a row to see how many keys that query reads.'
-              : `query ${hoverRow} reads ${rowReads} of ${hoverRow + 1} available keys`}
+              : `query ${hr} reads ${rowReads} of ${available} available keys`}
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
             <Slider label="sequence length n" value={n} min={8} max={64} step={1} onChange={setN} />
