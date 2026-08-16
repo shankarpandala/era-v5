@@ -54,11 +54,11 @@
       },
       "rag32k": {
         "v": "yes",
-        "why": ""
+        "why": "the 32K KV cache is the serving constraint; 8× smaller at near-MHA quality"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "128K of KV caps batch size; GQA shrinks it at near-MHA recall"
       },
       "agent1m": {
         "v": "yes",
@@ -69,81 +69,6 @@
     "viz": {
       "kind": "kv",
       "mode": "gqa"
-    }
-  },
-  {
-    "id": "rwkv",
-    "tier": "minor",
-    "prologue": false,
-    "instructorList": false,
-    "era": 5,
-    "order": 1,
-    "name": "RWKV — Receptance Weighted Key Value",
-    "short": "RWKV",
-    "date": "2023-05-22",
-    "datePrecision": "day",
-    "dateKind": "arxiv-v1",
-    "source": {
-      "title": "RWKV: Reinventing RNNs for the Transformer Era",
-      "authors": "Peng et al. (RWKV / EleutherAI)",
-      "arxiv": "2305.13048",
-      "url": "https://arxiv.org/abs/2305.13048",
-      "evidence": "[v1] Mon, 22 May 2023 13:57:41 UTC — the RWKV-4 Pile checkpoints predate the paper (HF uploads 'RWKV-4-Pile-169M-20220807' / '430M-20220808' on 2022-08-17; repo README lists 'RWKV-4-Pile-1B5-20220903')"
-    },
-    "secondary": [
-      {
-        "label": "RWKV-4-Pile-169M / 430M uploaded to HF",
-        "url": "https://huggingface.co/BlinkDL/rwkv-4-pile-169m/commits/main",
-        "date": "2022-08-17"
-      },
-      {
-        "label": "RWKV-LM repo (RWKV-4-Pile-1B5-20220903)",
-        "url": "https://github.com/BlinkDL/RWKV-LM",
-        "date": "2022-09-03"
-      }
-    ],
-    "firstShipped": {
-      "model": "RWKV-4-Pile 169M/430M checkpoints on Hugging Face (the 1B5 checkpoint is dated 2022-09-03)",
-      "date": "2022-08-17",
-      "url": "https://huggingface.co/BlinkDL/rwkv-4-pile-169m/commits/main"
-    },
-    "family": "linear-recurrent",
-    "bill": [
-      "compute",
-      "kv-memory"
-    ],
-    "problem": "Quadratic attention and a growing KV cache; wanted RNN-style O(1) per-token inference with transformer-style parallel training.",
-    "idea": "Replace attention with a linear time-mix (WKV) plus channel-mix; trainable in parallel, run as an RNN at inference.",
-    "buys": [
-      "Linear time, constant memory, no KV cache; competitive with same-size transformers up to 14B in the paper",
-      "Fully open weights and code; the community proof that the RNN was not dead"
-    ],
-    "costs": [
-      "Fixed state → weak exact recall / needle retrieval; prompt-order sensitivity",
-      "Kernel and serving ecosystem less mature; the paper is a post-hoc description of RWKV-4"
-    ],
-    "pickWhen": {
-      "chatbot2k": {
-        "v": "maybe",
-        "why": "edge/CPU where memory dominates"
-      },
-      "rag32k": {
-        "v": "no",
-        "why": "recall"
-      },
-      "coding128k": {
-        "v": "no",
-        "why": ""
-      },
-      "agent1m": {
-        "v": "no",
-        "why": "not for retrieval-heavy agents"
-      },
-      "verdict": "Same day as GQA — the two threads of 2023 side by side: shrink the cache, or abolish it."
-    },
-    "viz": {
-      "kind": "state",
-      "mode": "rwkv"
     }
   },
   {
@@ -241,7 +166,7 @@
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "32K is trained-length territory where pure NoPE lags RoPE; no θ knob either"
       },
       "coding128k": {
         "v": "maybe",
@@ -332,7 +257,7 @@
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "reaching 1M needs a factor far past the 8–16× where PI degrades"
       },
       "verdict": "The community's fix arrived a week before the lab's paper. Historic now — YaRN subsumes it — but the idea 'squeeze, don't stretch' is the whole 2023 lineage."
     },
@@ -388,15 +313,15 @@
       },
       "rag32k": {
         "v": "yes",
-        "why": ""
+        "why": "block tables keep 32K KV caches unfragmented; prefix sharing covers the common prompt"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "128K caches would fragment badly; paging keeps waste under 4% and shares repo prefixes"
       },
       "agent1m": {
         "v": "yes",
-        "why": ""
+        "why": "1M of KV only fits paged; still a serving change, not a math one"
       },
       "verdict": "Not a modelling decision — but it is the moment 'KV memory' became the number everyone optimises against, and every 2024 mechanism is measured in its units."
     },
@@ -441,7 +366,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "a 2K cache is not worth evicting from; it also fights FlashAttention kernels"
       },
       "rag32k": {
         "v": "maybe",
@@ -453,7 +378,7 @@
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "irreversible eviction of tokens the agent may need again; whole-context recall is the job"
       },
       "verdict": "The 'evict' branch of the KV bill (vs share = GQA/CLA, compress = MLA, quantise = KIVI). Same week as vLLM."
     },
@@ -519,7 +444,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "nothing to stretch; a static α only costs short-context perplexity"
       },
       "rag32k": {
         "v": "yes",
@@ -531,7 +456,7 @@
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "a few-× zero-fine-tune trick; 1M is far beyond what base scaling alone survives"
       },
       "verdict": "The most influential Reddit post in the field: it found the right knob (θ) in a weekend, and the labs shipped it trained-in within two months."
     },
@@ -596,11 +521,11 @@
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "falls apart beyond a few-× extension; 128K needs YaRN or a trained-in base"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "an inference hack for a few-× overshoot; cached-key inconsistency and collapse well before 1M"
       },
       "verdict": "The overflow valve. Right for serving a fixed-context model that occasionally sees more; not a way to build long context."
     },
@@ -672,15 +597,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "O(1) decode buys little at 2K; softmax attention wins on quality"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "fixed exponential decay forgets the retrieved chunks; QA needs exact recall over 32K"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "input-independent decay caps long-range recall; cross-file lookups need exact attention"
       },
       "agent1m": {
         "v": "maybe",
@@ -739,15 +664,15 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "a pretraining-time choice that helps quantisation, not retrieval; sinks form anyway"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "an explicit abstain slot pairs with windowed layers, but only if you pretrain"
       },
       "agent1m": {
         "v": "maybe",
-        "why": ""
+        "why": "a principled sink for bounded-cache layers (gpt-oss's learned logit); cannot be retrofitted"
       },
       "verdict": "A blog restatement — after Bondarenko et al. (Jun 2023) — of the 'let a head abstain' fix, two months before StreamingLLM named the sink. It reached production, renamed, in gpt-oss."
     },
@@ -816,7 +741,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "no unseen distances to remap at 2K; the extra attention pass buys nothing"
       },
       "rag32k": {
         "v": "maybe",
@@ -824,11 +749,11 @@
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "far files get blurred, coarse positions; cross-file recall needs exact ones, so train long"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "coarse far positions and 2× prefill; usable at a few ×, not 1M"
       },
       "verdict": "How RoPE fails, taught by fixing it for free; not frontier production."
     },
@@ -895,7 +820,7 @@
       },
       "rag32k": {
         "v": "yes",
-        "why": ""
+        "why": "one config line plus a long-sequence fine-tune stage; local resolution kept, unlike PI"
       },
       "coding128k": {
         "v": "yes",
@@ -968,7 +893,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "nothing to extend; the fine-tune and hyperparameters only nudge short-context perplexity up"
       },
       "rag32k": {
         "v": "yes",
@@ -1154,7 +1079,7 @@
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "evicted files are gone; cross-file recall needs the whole 128K, not a rolling window"
       },
       "agent1m": {
         "v": "maybe",
@@ -1209,11 +1134,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "2K fits one device with FlashAttention; ring communication is pure overhead"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "32K fits a single device with FlashAttention; sharding the sequence adds interconnect for nothing"
       },
       "coding128k": {
         "v": "maybe",
@@ -1265,19 +1190,19 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "no length to generalise to at 2K; the per-pair MLP is pure overhead"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "RoPE-scaled models already reach 32K; a learned bias means leaving the RoPE ecosystem"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "additive per-pair bias fights fused kernels at 128K; RoPE + scaling won here"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "per-pair MLP bias at 1M is unfused compute and does nothing for KV"
       },
       "verdict": "Endpoint of the learned-bias branch that lost to 'RoPE + scaling'."
     },
@@ -1330,7 +1255,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "the KV cache is tiny at 2K; you'd pay weak in-context copying for nothing"
       },
       "rag32k": {
         "v": "maybe",
@@ -1338,7 +1263,7 @@
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "hybrid only — cross-file exact recall needs the attention layers Mamba lacks"
       },
       "agent1m": {
         "v": "maybe",
@@ -1393,7 +1318,7 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "constant-memory decode buys nothing at 2K; fixed state loses recall to softmax"
       },
       "rag32k": {
         "v": "maybe",
@@ -1401,7 +1326,7 @@
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "as hybrid cheap layers; cross-file recall still needs the full-attention layers"
       },
       "agent1m": {
         "v": "yes",

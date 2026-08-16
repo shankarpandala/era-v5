@@ -121,7 +121,7 @@
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "defined at position 1M but never trained there; degrades and offers no scaling lever"
       },
       "verdict": "The right first guess in 2017. It lost to learned positions in GPT/BERT and to RoPE (or ALiBi / learned) in essentially every decoder after 2021, but its frequency ladder lives on inside RoPE."
     },
@@ -166,19 +166,19 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "dense attention fits at 2K; block-local buys nothing and loses global reach"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "no global tokens — the retrieved chunk must percolate through depth; Longformer windows instead"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "block-local only; cross-file recall would have to hop through depth with no global path"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "the sliding-window idea survives in every hybrid; this hand-picked 2-D block geometry does not"
       },
       "verdict": "Lineage: the ancestor of every sliding-window layer, born in vision."
     },
@@ -243,7 +243,7 @@
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "[n,n,d] training memory at 1M, and every offset past ±16 looks the same"
       },
       "verdict": "The idea won; this implementation lost to cheaper ways of saying the same thing."
     },

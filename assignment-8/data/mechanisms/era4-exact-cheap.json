@@ -66,7 +66,7 @@
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "trained-length QA gains nothing from dropping RoPE; slightly worse at every scale"
       },
       "coding128k": {
         "v": "maybe",
@@ -118,19 +118,19 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "maybe",
-        "why": ""
+        "why": "a softer learned ALiBi; fine at 2K but the additive bias needs FlexAttention-style kernels"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "the locality prior discounts far chunks; retrieval over 32K suffers like ALiBi"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "cross-file recall needs far tokens; the kernel-shaped bias still decays them"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "a distance-decayed bias makes 1M effectively local; never adopted by frontier models"
       },
       "verdict": "The ALiBi → KERPLE → FIRE lineage: the learned-bias branch that lost to RoPE + scaling."
     },
@@ -205,7 +205,7 @@
       },
       "rag32k": {
         "v": "yes",
-        "why": ""
+        "why": "the kernel that made dense 32K economical; the 2020 approximations stopped mattering here"
       },
       "coding128k": {
         "v": "yes",
@@ -258,19 +258,19 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "maybe",
-        "why": ""
+        "why": "the decay barely bites at 2K, so it is RoPE with offset tricks; pick RoPE"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "the exponential decay discounts far chunks; retrieval over the 32K suffers"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "the hard locality prior fades far files; use RoPE + θ-scaling"
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "ξ^{m−n} decay makes 1M effectively local; whole-context recall is lost"
       },
       "verdict": "The bridge from RoPE to RetNet's decay; not a production pick."
     },
@@ -323,15 +323,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "exact attention is cheap at 2K; FFT convolutions waste tensor cores for nothing"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "weak in-context recall/copying — retrieval QA is exactly what long convolutions cannot do"
       },
       "coding128k": {
         "v": "no",
-        "why": ""
+        "why": "cross-file recall needs attention-grade copying, which long convolutions lack"
       },
       "agent1m": {
         "v": "maybe",
@@ -343,5 +343,81 @@
       "kind": "state",
       "mode": "linear"
     }
+  },
+  {
+    "id": "rwkv",
+    "tier": "minor",
+    "prologue": false,
+    "instructorList": false,
+    "era": 4,
+    "order": 0,
+    "name": "RWKV — Receptance Weighted Key Value (RWKV-4 checkpoints, a year before the paper)",
+    "short": "RWKV",
+    "date": "2022-08-17",
+    "datePrecision": "day",
+    "dateKind": "model-release",
+    "source": {
+      "title": "RWKV-4-Pile checkpoints on Hugging Face (BlinkDL); paper 'RWKV: Reinventing RNNs for the Transformer Era'",
+      "authors": "Bo Peng et al. (RWKV / EleutherAI)",
+      "arxiv": "2305.13048",
+      "url": "https://huggingface.co/BlinkDL/rwkv-4-pile-169m/commits/main",
+      "evidence": "HF uploads 'RWKV-4-Pile-169M-20220807-8023.pth' / '430M-20220808-8066.pth' committed 2022-08-17 (repo README later lists 'RWKV-4-Pile-1B5-20220903'); the paper's arXiv v1 is [v1] Mon, 22 May 2023 13:57:41 UTC — dated here by first public appearance, per the timeline's rule"
+    },
+    "secondary": [
+      {
+        "label": "Paper, arXiv 2305.13048 (post-hoc description of RWKV-4)",
+        "url": "https://arxiv.org/abs/2305.13048",
+        "date": "2023-05-22"
+      },
+      {
+        "label": "RWKV-LM repo (RWKV-4-Pile-1B5-20220903)",
+        "url": "https://github.com/BlinkDL/RWKV-LM",
+        "date": "2022-09-03"
+      }
+    ],
+    "firstShipped": {
+      "model": "RWKV-4-Pile 169M/430M (its own open model line; HF transformers 4.29 added it 10 May 2023)",
+      "date": "2022-08-17",
+      "url": "https://huggingface.co/BlinkDL/rwkv-4-pile-169m/commits/main"
+    },
+    "family": "linear-recurrent",
+    "bill": [
+      "compute",
+      "kv-memory"
+    ],
+    "problem": "Quadratic attention and a growing KV cache; wanted RNN-style O(1) per-token inference with transformer-style parallel training.",
+    "idea": "Replace attention with a linear time-mix (WKV) plus channel-mix; trainable in parallel, run as an RNN at inference.",
+    "buys": [
+      "Linear time, constant memory, no KV cache; competitive with same-size transformers up to 14B in the paper",
+      "Fully open weights and code; the community proof that the RNN was not dead"
+    ],
+    "costs": [
+      "Fixed state → weak exact recall / needle retrieval; prompt-order sensitivity",
+      "Kernel and serving ecosystem less mature; the paper is a post-hoc description of RWKV-4"
+    ],
+    "pickWhen": {
+      "chatbot2k": {
+        "v": "maybe",
+        "why": "edge/CPU where memory dominates"
+      },
+      "rag32k": {
+        "v": "no",
+        "why": "recall"
+      },
+      "coding128k": {
+        "v": "no",
+        "why": "a fixed state cannot hold 128K of code for exact cross-file recall"
+      },
+      "agent1m": {
+        "v": "no",
+        "why": "not for retrieval-heavy agents"
+      },
+      "verdict": "The RNN revival shipped quietly in Aug 2022, nine months before its paper and the same spring GQA squeezed the cache — the two answers to the KV bill: shrink it, or abolish it."
+    },
+    "viz": {
+      "kind": "state",
+      "mode": "rwkv"
+    },
+    "paperDate": "2023-05-22"
   }
 ]

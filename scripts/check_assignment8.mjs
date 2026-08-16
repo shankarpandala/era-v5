@@ -96,11 +96,14 @@ for (const m of all) {
     if (!Array.isArray(m.buys) || !m.buys.length) fail(`${where}: needs buys[]`)
     if (!Array.isArray(m.costs) || !m.costs.length) fail(`${where}: needs costs[] — a mechanism with only pros is not understood yet`)
     if (!m.pickWhen || !m.pickWhen.verdict) fail(`${where}: needs pickWhen.verdict`)
-    for (const k of SCEN) if (!m.pickWhen?.[k] || !PICK.has(m.pickWhen[k].v)) fail(`${where}: pickWhen.${k}.v must be yes|maybe|no|na`)
+    for (const k of SCEN) {
+      if (!m.pickWhen?.[k] || !PICK.has(m.pickWhen[k].v)) fail(`${where}: pickWhen.${k}.v must be yes|maybe|no|na`)
+      else if (!m.pickWhen[k].why || !m.pickWhen[k].why.trim()) fail(`${where}: pickWhen.${k}.why is empty — every scenario cell needs a reason`)
+    }
     if (!m.viz || !VIZ.has(m.viz.kind)) fail(`${where}: viz.kind must be one of ${[...VIZ].join('|')}`)
   }
 }
-ok('schema: every record has a date, a kind, a primary source with the evidence string read from it, and (for nodes) buys, costs and a verdict')
+ok('schema: every record has a date, a kind, a primary source with the evidence string read from it, and (for nodes) buys, costs, a verdict and a reason in every scenario cell')
 
 // ---- instructor list -------------------------------------------------------
 for (const [label, want] of INSTRUCTOR) {

@@ -250,7 +250,7 @@
       },
       "agent1m": {
         "v": "no",
-        "why": ""
+        "why": "the recency penalty makes 1M effectively local; whole-context recall is gone"
       },
       "verdict": "It buys length in perplexity and sells long-range recall. Right for train-short-serve-longer small models; wrong for anything retrieval-heavy."
     },

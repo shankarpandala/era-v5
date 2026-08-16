@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ERAS, NODES, FOOTNOTES, FAMILIES, BILLS, fmtDate } from '../data.js'
 import { MajorCard, MinorCard } from './MechanismCard.jsx'
 import TimelineStrip from './TimelineStrip.jsx'
@@ -35,12 +35,28 @@ function Chip({ active, onClick, children, color }) {
   )
 }
 
+// Default view: the 32 major nodes carry the whole story; "everything" adds the
+// 56 minor nodes and 47 footnotes. Remembered per browser; ?view=all overrides.
+function initialView() {
+  if (typeof window === 'undefined') return 'story'
+  const q = new URLSearchParams(window.location.search).get('view')
+  if (q === 'all' || q === 'story') return q
+  const saved = window.localStorage.getItem('a8-view')
+  return saved === 'all' ? 'all' : 'story'
+}
+
 export default function Timeline() {
+  const [view, setView] = useState(initialView)
+  useEffect(() => {
+    try {
+      window.localStorage.setItem('a8-view', view)
+    } catch {}
+  }, [view])
   const [onlyList, setOnlyList] = useState(false)
   const [families, setFamilies] = useState(new Set())
   const [bills, setBills] = useState(new Set())
   const [q, setQ] = useState('')
-  const [showFootnotes, setShowFootnotes] = useState(true)
+  const [showFootnotes, setShowFootnotes] = useState(() => initialView() === 'all')
   const [vizMode, setVizMode] = useState('list') // which major cards start with their visual open
 
   const toggle = (set, setter, key) => {
@@ -53,6 +69,7 @@ export default function Timeline() {
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase()
     return NODES.filter((m) => {
+      if (view === 'story' && m.tier !== 'major') return false
       if (onlyList && !m.instructorList) return false
       if (families.size && !families.has(m.family)) return false
       if (bills.size && !m.bill.some((b) => bills.has(b))) return false
@@ -62,8 +79,9 @@ export default function Timeline() {
       }
       return true
     })
-  }, [onlyList, families, bills, q])
+  }, [view, onlyList, families, bills, q])
   const visibleIds = filtered.map((m) => m.id)
+  const majors = NODES.filter((m) => m.tier === 'major').length
 
   const jump = (id) => {
     const el = document.getElementById(`m-${id}`)
@@ -74,7 +92,49 @@ export default function Timeline() {
 
   return (
     <div className="space-y-6">
-      <TimelineStrip onJump={jump} visibleIds={anyFilter ? visibleIds : null} />
+      <div
+        className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-4"
+        style={{ borderColor: 'var(--claim-3)', backgroundColor: 'color-mix(in oklab, var(--claim-3) 10%, transparent)' }}
+        role="region"
+        aria-label="start here"
+      >
+        <div className="text-sm text-zinc-800 dark:text-zinc-100">
+          {view === 'story' ? (
+            <>
+              <span className="font-semibold">Start here.</span> Showing the <b>{majors} major nodes</b> that carry the whole story — the course’s 17
+              are tagged <span className="rounded-md bg-brand-500/15 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-300">on the list</span>.
+              The other {NODES.length - majors} nodes and {FOOTNOTES.length} footnotes are one click away.
+            </>
+          ) : (
+            <>
+              <span className="font-semibold">Showing everything:</span> {NODES.length} nodes + {FOOTNOTES.length} footnotes. The {majors} major nodes are the
+              short version.
+            </>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setView((v) => (v === 'story' ? 'all' : 'story'))
+              if (view === 'story') setShowFootnotes(true)
+            }}
+            className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+          >
+            {view === 'story' ? `Show everything (${NODES.length} + ${FOOTNOTES.length})` : `Back to the ${majors} that carry the story`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setOnlyList((v) => !v)}
+            aria-pressed={onlyList}
+            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          >
+            {onlyList ? 'Showing the course’s 17 only' : 'Just the course’s 17'}
+          </button>
+        </div>
+      </div>
+
+      <TimelineStrip onJump={jump} visibleIds={anyFilter || view === 'story' ? visibleIds : null} />
 
       <div className="panel sticky top-16 z-30 space-y-2 p-3">
         <div className="flex flex-wrap items-center gap-2">
@@ -162,7 +222,7 @@ export default function Timeline() {
 
       {!filtered.length && <div className="panel p-6 text-center text-sm text-zinc-500">No node matches those filters.</div>}
 
-      <section id="footnotes" className="scroll-mt-24">
+      <section id="footnotes" className={`scroll-mt-24 ${view === 'story' && !showFootnotes ? 'opacity-70' : ''}`}>
         <button
           type="button"
           onClick={() => setShowFootnotes((v) => !v)}

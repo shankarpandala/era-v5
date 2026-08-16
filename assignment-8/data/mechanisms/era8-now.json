@@ -69,7 +69,7 @@
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "2–8× zero-shot might reach 128K, but absolute recall stays low and you need the weights"
       },
       "agent1m": {
         "v": "no",
@@ -171,11 +171,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "sparse and linear layers both save nothing a 2K prompt is paying"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "the InfLLM-V2 quarter keeps retrieval fidelity, but three quarters blur; 9B, team's own evidence"
       },
       "coding128k": {
         "v": "maybe",
@@ -183,7 +183,7 @@
       },
       "agent1m": {
         "v": "maybe",
-        "why": ""
+        "why": "the right shape for 1M, but a 9B research release with the team's own recall evidence"
       },
       "verdict": "A footnote-sized model making the timeline's point: sparse for the exact layers, linear for the rest."
     },
@@ -245,11 +245,11 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "the throughput win is at long context; at 32K bounded linear-layer recall is the trade"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "262K native covers 128K; three quarters of layers hold a fixed-size state, decode cheap"
       },
       "agent1m": {
         "v": "yes",
@@ -281,7 +281,7 @@
       "authors": "DeepSeek-AI",
       "arxiv": "2606.19348",
       "url": "https://api-docs.deepseek.com/news/news260424/",
-      "evidence": "DeepSeek news: 'DeepSeek-V4 Preview Release 2026/04/24' — 'Novel Attention: Token-wise compression + DSA (DeepSeek Sparse Attention)', '1M context is now the default'; arXiv API for 2606.19348v1: published 2026-04-26T14:49:33Z (the identifier's YYMM prefix does not match the recorded April submission — recorded as the API returns it)"
+      "evidence": "DeepSeek news page (URL slug news260424; the fetched page header read 'DeepSeek-V4 Preview Release 2026/04/24' — the body copy itself carries no other date) — 'Novel Attention: Token-wise compression + DSA (DeepSeek Sparse Attention)', '1M context is now the default'; open weights on HF the same day; arXiv API for 2606.19348v1: published 2026-04-26T14:49:33Z (the identifier's YYMM prefix does not match the recorded April submission — recorded as the API returns it)"
     },
     "secondary": [
       {
@@ -334,7 +334,7 @@
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "lossy compression buys little at 32K and risks fine-grained recall beyond the sliding window"
       },
       "coding128k": {
         "v": "yes",
@@ -435,15 +435,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "a 2.8T 3:1 KDA hybrid to save KV a 2K prompt never spends"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "~75% less KV matters little at 32K; retrieval leans on the quarter of gated MLA layers"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "well inside the 1M it serves; KDA layers hold fixed state, the MLA quarter carries recall"
       },
       "agent1m": {
         "v": "yes",
@@ -520,15 +520,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "gradient steps at inference to remember beyond a window a 2K prompt never leaves"
       },
       "rag32k": {
         "v": "no",
-        "why": ""
+        "why": "retrieval needs exact recall; fast weights keep an uncertain subset, at research scale"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "constant memory per token tempts at 128K; cross-file recall depends on what weights retain"
       },
       "agent1m": {
         "v": "maybe",
@@ -577,11 +577,11 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "a 2.3B-token conversion to save KV a 2K prompt does not have"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "linear layers keep the usual recall limits; one softmax layer in four does retrieval"
       },
       "coding128k": {
         "v": "yes",
@@ -589,7 +589,7 @@
       },
       "agent1m": {
         "v": "maybe",
-        "why": ""
+        "why": "research scale (≤8B) plus a logit-scaling knob at long context; 1M is untested"
       },
       "verdict": "The recipe MiniCPM-SALA used; the timeline's 'retrofit-ability' prediction in one paper."
     },
@@ -677,15 +677,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "inherits DSA's fixed k and indexer scan; both are pure overhead at 2K"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "fixed k as DSA against only 32K keys; the indexer scan buys little"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "the DSA 128K serving-cost cut, now with a second lab's kernels and training behind it"
       },
       "agent1m": {
         "v": "yes",
@@ -785,15 +785,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "a fixed-size state and MIMO decode save nothing on a 2K KV cache"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "the SSM still trails softmax on exact recall, which is what retrieval QA tests"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "cheap decode, but exact cross-file recall is where the SSM thread still trails; research scale"
       },
       "agent1m": {
         "v": "yes",
@@ -845,19 +845,19 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "maybe",
-        "why": ""
+        "why": "a quality mechanism, not a bill item; extra depth-wise attention cost even at 2K"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "orthogonal to context length; helps selection over depth, not retrieval over 32K keys"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "adds memory for earlier layer outputs on top of 128K KV; the block variant bounds it"
       },
       "agent1m": {
         "v": "maybe",
-        "why": ""
+        "why": "shipped in Kimi K3, but it buys quality; the block variant only bounds its own overhead"
       },
       "verdict": "Not on the compute/KV bill at all — attention as a general selection operator, turned sideways."
     },
@@ -922,7 +922,7 @@
       },
       "rag32k": {
         "v": "yes",
-        "why": ""
+        "why": "the Gemma 3 recipe with the global layers' KV cut again; nothing to lose at 32K"
       },
       "coding128k": {
         "v": "yes",
@@ -1026,15 +1026,15 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "a bounded-state layer whose extra gates buy nothing when the KV cache is 2K"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "finer forgetting helps, but the state is still bounded and retrieval wants exact recall"
       },
       "coding128k": {
         "v": "maybe",
-        "why": ""
+        "why": "still a bounded state for cross-file recall; more gates, more kernel work, research scale"
       },
       "agent1m": {
         "v": "yes",
@@ -1101,19 +1101,19 @@
     "pickWhen": {
       "chatbot2k": {
         "v": "no",
-        "why": ""
+        "why": "a fixed 2,048-token budget covers a 2K prompt outright; the index branch is pure overhead"
       },
       "rag32k": {
         "v": "maybe",
-        "why": ""
+        "why": "selecting 2,048 of 32K is a modest cut; block granularity may miss needle passages"
       },
       "coding128k": {
         "v": "yes",
-        "why": ""
+        "why": "exact attention over selected uncompressed blocks on a GQA backbone, no MLA retrofit needed"
       },
       "agent1m": {
         "v": "yes",
-        "why": ""
+        "why": "the 1M bill is M3's stated target; the indexer's cost there is the trade"
       },
       "verdict": "The most telling 2026 data point on the timeline: linear was abandoned, sparse was adopted — same bill, different lever."
     },

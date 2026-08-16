@@ -34,7 +34,7 @@ export default function CostCalculator() {
   const series = useMemo(
     () =>
       PRESETS.map((p, i) => ({
-        label: '',
+        label: p.label,
         color: COLORS[i % COLORS.length],
         data: N_STOPS.map((x) => ({ x, y: Math.log10(Math.max(1, modelTotals(p, x, bytes).kv)) })),
       })),
@@ -43,7 +43,7 @@ export default function CostCalculator() {
   const flopSeries = useMemo(
     () =>
       PRESETS.map((p, i) => ({
-        label: '',
+        label: p.label,
         color: COLORS[i % COLORS.length],
         data: N_STOPS.map((x) => ({ x, y: Math.log10(Math.max(1, modelTotals(p, x, bytes).flops)) })),
       })),
