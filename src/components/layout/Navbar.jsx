@@ -20,6 +20,7 @@ export const ASSIGNMENTS = [
   { n: 6, text: 'Assignment 6', desc: 'Training data system (README)', href: `${GITHUB_TREE}/assignment-6` },
   { n: 7, text: 'Assignment 7', desc: 'Kronecker Embedding V2', page: 'assignment-7/' },
   { n: 8, text: 'Assignment 8', desc: 'Attention timeline', page: 'assignment-8/' },
+  { n: 9, text: 'Assignment 9', desc: 'Loss harness notebook (README)', href: `${GITHUB_TREE}/assignment-9` },
 ]
 
 function ChevronIcon({ open }) {

@@ -1,0 +1,43 @@
+[     0.0s] assignment-9 run_demo | mode=verify-only
+[     0.0s] [PASS] artifacts parse | results.json, loss_curves.json, per_token_losses.json
+[     0.0s] [PASS] padding: masked mean re-derived | 2.314618 vs reported 2.314619
+[     0.0s] [PASS] padding: unmasked mean re-derived | 10.433750 vs reported 10.433749
+[     0.0s] [PASS] padding: contributing count re-derived | 186 vs reported 186
+[     0.0s] [PASS] padding: count changes under the mask | 186 < 508
+[     0.0s] [PASS] padding: float-mask == ignore_index | 2.314619 vs 2.314618
+[     0.0s] [PASS] packing: loss-before re-derived | 2.554978 vs reported 2.554978
+[     0.0s] [PASS] packing: loss-after re-derived | 2.535710 vs reported 2.535711
+[     0.0s] [PASS] packing: masking the seam lowers the mean | 2.5357 < 2.5550
+[     0.0s] [PASS] packing: boundary count | 2 == 2
+[     0.0s] [PASS] packing: seam per-token losses match | [0.1466, 7.025]
+[     0.0s] [PASS] packing: the seam is harder than the average | seam mean 3.5858 > packed mean 2.5550
+[     0.0s] [PASS] perplexity: ln(V) recomputed | ln(259) = 5.556828
+[     0.0s] [PASS] perplexity: untrained CE sits at ln(V) | |5.5692 - 5.5568| < 0.15
+[     0.0s] [PASS] perplexity: ppl == exp(ce) | 262.23
+[     0.0s] [PASS] perplexity: untrained ppl within 15% of V | 262.2 vs V=259
+[     0.0s] [PASS] perplexity: loud init breaks the check (counterexample) | 33.1490 >> 5.5692
+[     0.0s] [PASS] tied/untied: delta equals V*d | 33,152 == 259*128
+[     0.0s] [PASS] tied/untied: counts differ by exactly the delta | 528,640 - 495,488
+[     0.0s] [PASS] memory: ratio re-derived | 13.13 vs reported 13.13
+[     0.0s] [PASS] memory: chunked is materially smaller | ratio 13.1x on cpu
+[     0.0s] [PASS] memory: analytic logits size recomputed | 785.3 MiB for [4,096, 50,257]
+[     0.0s] [PASS] part2: train sum == L1+L2
+[     0.0s] [PASS] part2: held sum == L1+L2
+[     0.0s] [PASS] part2: held-out L2 stays above L1 | 2.9745 > 2.5924
+[     0.0s] [PASS] part2: finals match the logged curves | results.json tail == loss_curves.json tail
+[     0.0s] [PASS] part2: held-out gap starts at zero (both heads ignorant) | step 1: gap -0.0056
+[     0.0s] [PASS] part2: L2 above L1 at every held-out log point after the start | 30 log points
+[     0.0s] [PASS] part3/correct: audit verdict is CORRECT | got CORRECT
+[     0.0s] [PASS] part3/correct: final loss matches its curve
+[     0.0s] [PASS] part3/reversed: audit verdict is REVERSED | got REVERSED
+[     0.0s] [PASS] part3/reversed: final loss matches its curve
+[     0.0s] [PASS] part3/no_shift: audit verdict is IDENTITY | got IDENTITY
+[     0.0s] [PASS] part3/no_shift: final loss matches its curve
+[     0.0s] [PASS] part3: both bugs end BELOW the correct arm (the warning, quantified) | correct 2.3386, reversed 0.0045, no_shift 0.0000
+[     0.0s] [PASS] part3: only the correct arm generates corpus-like text | 4-gram rates: correct 0.284, reversed 0.000, no_shift 0.000
+[     0.0s] [PASS] notebook: executed top to bottom, in order | 22 code cells
+[     0.0s] [PASS] notebook: zero error outputs | 0 error outputs
+[     0.0s] [PASS] notebook: renders on GitHub (< 1.5 MiB) | 257 KiB
+[     0.0s] [PASS] README quotes every headline number verbatim | 30 numbers checked
+[     0.0s] audit: PASS
+[     0.0s] verdict: PASS

@@ -1,0 +1,19 @@
+{
+  "d_model": 128,
+  "n_layer": 2,
+  "n_head": 4,
+  "max_pos": 512,
+  "T": 128,
+  "B": 8,
+  "steps_zoo": 300,
+  "steps_part2": 600,
+  "lr": 0.003,
+  "log_every": 20,
+  "mem_rows": 4096,
+  "mem_vocab": 50257,
+  "chunk_rows": 128,
+  "seed": 1337,
+  "device": "cpu",
+  "fast": false,
+  "torch": "2.13.0+cpu"
+}
