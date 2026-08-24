@@ -73,6 +73,19 @@ def test_boundary_mask_removes_exactly_the_seam(nb):
     assert int(tgt[0, len(ids1)]) == ids2[1]
 
 
+def test_crop_contract_semantics(nb):
+    """segments increment at <bos>, positions restart at <bos>, and the loss
+    mask drops exactly the read==<eos> slots."""
+    B_, E_ = nb.BOS_ID, nb.EOS_ID
+    a = nb.BYTE_OFFSET + ord("a")
+    tokens = torch.tensor([[a, a, E_, B_, a, a, E_, B_, a]])
+    segs, pos, mask = nb.crop_contract(tokens)
+    assert segs[0].tolist() == [0, 0, 0, 1, 1, 1, 1, 2, 2]
+    assert pos[0].tolist() == [0, 1, 2, 0, 1, 2, 3, 0, 1]
+    # slots read tokens[:-1]; the two <eos> reads (idx 2 and 6) are dropped
+    assert mask[0].tolist() == [1, 1, 0, 1, 1, 1, 0, 1]
+
+
 def test_block_causal_mask_stops_cross_document_attention(nb):
     segs = torch.tensor([[1, 1, 1, 2, 2, -1]])
     m = nb.block_causal_mask(segs)[0, 0]

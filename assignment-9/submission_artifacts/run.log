@@ -16,6 +16,7 @@
 [     0.0s] [PASS] packing: seam per-token losses match | [0.3934, 6.868]
 [     0.0s] [PASS] packing: the seam's two slots behave as claimed — one learnable (< mean), one impossible (> mean) | easy 0.3934 < mean 2.5564 < hard 6.8680
 [     0.0s] [PASS] packing: block-causal + position restart makes doc2 match doc2-alone | allclose atol=1e-4
+[     0.0s] [PASS] packing: the contract lives in the training loop, and learns | drops 0.120% of slots; final train loss 2.3629
 [     0.0s] [PASS] perplexity: ln(V) recomputed | ln(259) = 5.556828
 [     0.0s] [PASS] perplexity: untrained CE sits at ln(V) | |5.5656 - 5.5568| < 0.15
 [     0.0s] [PASS] perplexity: ppl == exp(ce) | 261.29
@@ -26,8 +27,8 @@
 [     0.0s] [PASS] init leak: both tied SHIFTED arms stay at PPL ~ V (the leak is specific to the identity target) | correct 265.8, reversed 263.0
 [     0.0s] [PASS] tied/untied: delta equals V*d | 33,152 == 259*128
 [     0.0s] [PASS] tied/untied: counts differ by exactly the delta | 528,640 - 495,488
-[     0.0s] [PASS] memory: row-chunked ratio re-derived | 13.09 vs reported 13.09
-[     0.0s] [PASS] memory: row-chunked is materially smaller | 13.1x on cpu
+[     0.0s] [PASS] memory: row-chunked ratio re-derived | 13.16 vs reported 13.16
+[     0.0s] [PASS] memory: row-chunked is materially smaller | 13.2x on cpu
 [     0.0s] [PASS] memory: online ratio re-derived | 13.97 vs reported 13.97
 [     0.0s] [PASS] memory: online is materially smaller | 14.0x on cpu
 [     0.0s] [PASS] memory: analytic logits size recomputed | 785.3 MiB for [4,096, 50,257]
@@ -41,6 +42,7 @@
 [     0.0s] [PASS] part2: step 0 is pre-update and the gap starts at zero | step 0: gap -0.0183
 [     0.0s] [PASS] part2: L2 above L1 at every held-out log point after step 0 | 30 log points
 [     0.0s] [PASS] part2: memorization asymmetry — train gap ends below held gap | train +0.3105 < held +0.3979
+[     0.0s] [PASS] part2: same-head estimator agrees on direction (and over-states, as its bias predicts) | same-head +1.6748 > two-heads +0.3979
 [     0.0s] [PASS] part3/correct: audit verdict is CORRECT | got CORRECT
 [     0.0s] [PASS] part3/correct: final loss matches its curve
 [     0.0s] [PASS] part3/reversed: audit verdict is REVERSED | got REVERSED
@@ -51,10 +53,10 @@
 [     0.0s] [PASS] part3: reversed's circuit named — copy-prev accuracy -> 1 | acc_prev 0.999
 [     0.0s] [PASS] part3: no_shift's circuit named — copy-self accuracy -> 1 | acc_self 1.000
 [     0.0s] [PASS] part3: the correct arm predicts, it does not copy | next 0.288 vs self 0.003 / prev 0.098
-[     0.0s] [PASS] notebook: executed top to bottom, in order | 27 code cells
+[     0.0s] [PASS] notebook: executed top to bottom, in order | 28 code cells
 [     0.0s] [PASS] notebook: zero error outputs | 0 error outputs
-[     0.0s] [PASS] notebook: renders on GitHub (< 1.5 MiB) | 379 KiB
+[     0.0s] [PASS] notebook: renders on GitHub (< 1.5 MiB) | 387 KiB
 [     0.0s] [PASS] notebook: the strings were actually printed (␣, <bos>, audit rows) | stdout carries the string audit, not just ids
-[     0.0s] [PASS] README quotes every headline number verbatim | 44 numbers checked
+[     0.0s] [PASS] README quotes every headline number verbatim | 45 numbers checked
 [     0.0s] audit: PASS
 [     0.0s] verdict: PASS
