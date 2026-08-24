@@ -43,7 +43,7 @@ def test_matches_shifted_batch_loss(nb):
     """The harness path (masked_ce over [B, P, V]) and the head path
     (plain_ce over flattened rows) are the same estimator."""
     nb.seed_all()
-    model = nb.TinyLM()
+    model = nb.TinyLM().to(nb.DEVICE)
     import random
     tokens = nb.sample_batch(nb.TRAIN_STREAM, 4, 32, random.Random(nb.SEED))
     with torch.no_grad():
