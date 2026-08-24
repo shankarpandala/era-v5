@@ -42,7 +42,7 @@ def test_training_is_deterministic(nb):
 
 def test_two_head_losses_use_different_shifts(nb):
     nb.seed_all()
-    m = nb.TinyLM(two_heads=True)
+    m = nb.TinyLM(two_heads=True).to(nb.DEVICE)
     import random
     tokens = nb.sample_batch(nb.TRAIN_STREAM, 2, 24, random.Random(nb.SEED))
     with torch.no_grad():

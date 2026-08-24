@@ -160,6 +160,11 @@ def run(check) -> int:
     c("part2: L2 above L1 at every held-out log point after the start",
       all(b > a for a, b in zip(mtp["held_L1"][1:], mtp["held_L2"][1:])),
       f"{len(mtp['held_L1']) - 1} log points")
+    train_gap = p2["train_L2"] - p2["train_L1"]
+    held_gap = p2["held_L2"] - p2["held_L1"]
+    c("part2: train gap ends below held gap (memorization signature)",
+      0 < train_gap < held_gap,
+      f"train {train_gap:+.4f} < held {held_gap:+.4f}")
 
     # -- part 3 ----------------------------------------------------------------
     arms = results.get("part3", {}).get("arms", {})

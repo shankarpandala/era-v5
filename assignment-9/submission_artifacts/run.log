@@ -1,4 +1,5 @@
 [     0.0s] assignment-9 run_demo | mode=verify-only
+[     0.0s] execution evidence: the committed loss_harness.ipynb itself — the audit below checks its execution counts are monotone and its outputs error-free, which no unexecuted notebook can satisfy
 [     0.0s] [PASS] artifacts parse | results.json, loss_curves.json, per_token_losses.json
 [     0.0s] [PASS] padding: masked mean re-derived | 2.314618 vs reported 2.314619
 [     0.0s] [PASS] padding: unmasked mean re-derived | 10.433750 vs reported 10.433749
@@ -18,8 +19,8 @@
 [     0.0s] [PASS] perplexity: loud init breaks the check (counterexample) | 33.1490 >> 5.5692
 [     0.0s] [PASS] tied/untied: delta equals V*d | 33,152 == 259*128
 [     0.0s] [PASS] tied/untied: counts differ by exactly the delta | 528,640 - 495,488
-[     0.0s] [PASS] memory: ratio re-derived | 13.13 vs reported 13.13
-[     0.0s] [PASS] memory: chunked is materially smaller | ratio 13.1x on cpu
+[     0.0s] [PASS] memory: ratio re-derived | 13.16 vs reported 13.16
+[     0.0s] [PASS] memory: chunked is materially smaller | ratio 13.2x on cpu
 [     0.0s] [PASS] memory: analytic logits size recomputed | 785.3 MiB for [4,096, 50,257]
 [     0.0s] [PASS] part2: train sum == L1+L2
 [     0.0s] [PASS] part2: held sum == L1+L2
@@ -27,6 +28,7 @@
 [     0.0s] [PASS] part2: finals match the logged curves | results.json tail == loss_curves.json tail
 [     0.0s] [PASS] part2: held-out gap starts at zero (both heads ignorant) | step 1: gap -0.0056
 [     0.0s] [PASS] part2: L2 above L1 at every held-out log point after the start | 30 log points
+[     0.0s] [PASS] part2: train gap ends below held gap (memorization signature) | train +0.2851 < held +0.3821
 [     0.0s] [PASS] part3/correct: audit verdict is CORRECT | got CORRECT
 [     0.0s] [PASS] part3/correct: final loss matches its curve
 [     0.0s] [PASS] part3/reversed: audit verdict is REVERSED | got REVERSED
@@ -37,7 +39,7 @@
 [     0.0s] [PASS] part3: only the correct arm generates corpus-like text | 4-gram rates: correct 0.284, reversed 0.000, no_shift 0.000
 [     0.0s] [PASS] notebook: executed top to bottom, in order | 22 code cells
 [     0.0s] [PASS] notebook: zero error outputs | 0 error outputs
-[     0.0s] [PASS] notebook: renders on GitHub (< 1.5 MiB) | 257 KiB
+[     0.0s] [PASS] notebook: renders on GitHub (< 1.5 MiB) | 258 KiB
 [     0.0s] [PASS] README quotes every headline number verbatim | 30 numbers checked
 [     0.0s] audit: PASS
 [     0.0s] verdict: PASS

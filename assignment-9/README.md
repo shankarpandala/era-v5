@@ -32,7 +32,7 @@ demonstrates why "observable" is not optional:
 > falling **2.5550 → 2.5357**; an untrained perplexity of **262.2** against a vocabulary
 > of 259; tied-vs-untied head counts of **495,488** vs **528,640** (delta exactly V·d =
 > **33,152**); and a self-written chunked cross-entropy that cuts the loss's peak memory
-> from **2,378.9 MiB to 181.2 MiB — 13.1×** — at GPT-2 vocabulary scale.
+> from **2,378.9 MiB to 180.8 MiB — 13.2×** — at GPT-2 vocabulary scale.
 >
 > **Claim B — the warning, quantified.** Trained under identical budgets, both classic
 > shift bugs produce *smoother, lower* loss curves than the correct objective — final
@@ -67,7 +67,7 @@ fails if any number here drifts from what the run produced.
 | 4 | pack two docs; mask the boundary; loss before/after | notebook §6 | **2.5550** → **2.5357** |
 | 5 | untrained perplexity ≈ vocab size | notebook §7 | PPL **262.2**, V = 259 |
 | 6 | tied vs untied parameter counts | notebook §8 | **495,488** vs **528,640** (Δ **33,152**) |
-| 7 | peak memory, ordinary vs chunked CE | notebook §9 | **2,378.9** vs **181.2** MiB (**13.1**×) |
+| 7 | peak memory, ordinary vs chunked CE | notebook §9 | **2,378.9** vs **180.8** MiB (**13.2**×) |
 | P2 | second head predicting t+2, both losses + sum | notebook §10 | held-out L1 **2.5924**, L2 **2.9745**, sum **5.5668** |
 | P3 | wrong shifts ⇒ beautiful curves; strings catch them | notebook §11 | final losses **0.0045** / **0.0000** vs **2.3386** |
 
@@ -94,7 +94,7 @@ Everything is self-contained and deterministic (seed 1337, bit-reproducible on C
 | component | choice | why |
 |---|---|---|
 | tokenizer | byte-level, V = 259 (`<pad>/<bos>/<eos>` + 256 bytes), inline | every id decodes to a printable string — the string audit needs totality; `ln(259) = 5.5568` makes requirement 5 crisp |
-| corpus | ~11 KB, 10 self-authored documents in two registers (prose about loss functions + pseudo-code), 2 held out | two registers make the packing seam readable; the corpus *describes the harness that trains on it* |
+| corpus | ~6.6 KB, 10 self-authored documents in two registers (prose about loss functions + pseudo-code), 2 held out | two registers make the packing seam readable; the corpus *describes the harness that trains on it* |
 | model | `TinyLM`: 2-layer pre-norm transformer, d = 128, 4 heads, tied head, GPT init (std 0.02) | `trunk()`/`head` split lets the notebook run the assignment's snippet literally; `segment_ids` switch on block-causal packing attention |
 | training | AdamW lr 3e-3, B = 8, T = 128, 300 steps per bug-zoo arm, 600 for Part 2 | identical init, crop stream, and budget across arms — the arms differ **only** in the two slicing lines |
 | memory experiment | standalone head at N = 4,096 rows, V = 50,257 (the GPT-2 vocabulary) | requirement 7 is a large-vocabulary phenomenon; measuring it at V = 259 would be theater |
@@ -199,14 +199,18 @@ including `ignore_index` rows, including a non-divisor chunk size), then measure
 | | peak memory attributable to the loss | 
 |---|---|
 | ordinary CE | **2,378.9** MiB |
-| chunked CE | **181.2** MiB |
-| ratio | **13.1**× |
+| chunked CE | **180.8** MiB |
+| ratio | **13.2**× |
 
 (CPU protocol: each variant in a fresh subprocess, sampling its own resident set at 1 kHz
 across the loss call, glibc's mmap threshold pinned so freed chunks return to the OS; on
 a CUDA runtime the notebook switches to allocator-exact `max_memory_allocated`. The
 mechanism is the observation behind Apple's Cut Cross-Entropy and Liger-style fused
-kernels — see §7.)
+kernels — see §7. One reconciliation: the chunked peak is far above one chunk's 24.5 MiB
+of logits because chunking cannot remove the fixed costs — the persistent `[V, d]` weight
+gradient, itself ≈ 24.5 MiB, plus input gradients, per-chunk recompute transients, and
+allocator slack — so the measured ratio *understates* the pure logits-storage ratio the
+analytic table predicts; the end-to-end number is the honest one.)
 
 ![memory](submission_artifacts/plots/memory_bars.png)
 
@@ -221,19 +225,22 @@ tokens[:, 2:]`, trained on the plain sum for 600 steps:
 | train | **2.3297** | **2.6148** | **4.9444** |
 | held-out | **2.5924** | **2.9745** | **5.5668** |
 
-**What happens to the second head's loss, and why.** At step 1 the two heads are
-indistinguishable — both sit at ln V (measured gap −0.006), because before training one
-step ahead and two steps ahead are equally unknowable. Then both losses fall and a gap
-opens and never closes: L2 stays above L1 at every subsequent log point, ending at
-+0.38 nats held-out. The mechanism is conditional entropy: predicting t+2 means
-marginalizing over the unknown token in between, and conditioning on strictly less
-information cannot help — `H(x_{t+2}|x_{≤t}) ≥ H(x_{t+2}|x_{≤t+1})`. The gap *is* the
-information carried by the skipped token, so the model must first learn the language
-before the gap has anything to be made of — which is why it grows as the losses shrink.
-The two splits tell it honestly: held-out, the entropy argument is about the language and
-cannot be cheated; on the memorizable ~10 KB training stream the gap narrows (the skipped
-token becomes implicitly known) — a memorization signature, reported rather than
-averaged away.
+**What happens to the second head's loss, and why.** At the first log point the two
+heads are indistinguishable — still at the ignorance plateau after one update (measured
+gap −0.006), because before the model knows anything, one step ahead and two steps ahead
+are equally unknowable. Then both losses fall and a gap opens and never closes: L2 stays
+above L1 at every subsequent log point, ending at +0.38 nats held-out. The mechanism is
+conditional entropy: predicting t+2 means marginalizing over the unknown token in
+between, and conditioning on strictly less information cannot help —
+`H(x_{t+2}|x_{≤t}) ≥ H(x_{t+2}|x_{≤t+1})`, whose right-hand side is head 1's own task
+one step later (by stationarity). The gap *is* the information carried by the skipped
+token, so the model must first learn the language before the gap has anything to be made
+of — which is why it grows as the losses shrink. The two splits tell it honestly: on
+held-out text the gap keeps growing late into training (final +0.38); on the memorizable
+~5.4 KB (5,355-token) training stream it stops growing and plateaus near +0.29, about
+0.10 nats below — memorization makes the skipped token partly known, capping what the
+train gap can be made of. That asymmetry is the memorization signature, reported rather
+than averaged away.
 
 ![mtp](submission_artifacts/plots/mtp_gap.png)
 
@@ -250,8 +257,9 @@ differ only in the two slicing lines:
 
 ![zoo](submission_artifacts/plots/bug_zoo_curves.png)
 
-All three curves are smooth and monotone. The two broken ones are *more* beautiful — they
-dive under the correct arm within the first few steps and end 500–∞× lower, because both
+All three curves fall smoothly (batch-to-batch jitter aside). The two broken ones are
+*more* beautiful — they dive under the correct arm within the first few steps and end at
+**0.0045** and **0.0000** (4 d.p.) against **2.3386**, because both
 bugs hand every position a target already inside its receptive field and the optimizer
 only has to build a copy wire. If a falling scalar is the only instrument, the bugs
 outshine the truth. Two cheap instruments catch them: the §3.2 string audit names each
@@ -283,7 +291,7 @@ identically.)
 | this notebook | the production-scale counterpart |
 |---|---|
 | t+2 head on a shared trunk, loss `L1+L2`, gap = conditional entropy | multi-token prediction as auxiliary objective: [Gloeckle et al. 2024, arXiv:2404.19737](https://arxiv.org/abs/2404.19737); sequential MTP module in [DeepSeek-V3, arXiv:2412.19437](https://arxiv.org/abs/2412.19437) |
-| `chunked_ce`: checkpointed row-chunks, logits never materialized, 13.1× measured | fused/blockwise CE kernels: [Cut Your Losses, arXiv:2411.09009](https://arxiv.org/abs/2411.09009) (Apple), Liger-Kernel chunked losses |
+| `chunked_ce`: checkpointed row-chunks, logits never materialized, 13.2× measured | fused/blockwise CE kernels: [Cut Your Losses, arXiv:2411.09009](https://arxiv.org/abs/2411.09009) (Apple), Liger-Kernel chunked losses |
 | tied head, Δ = V·d verified | [Press & Wolf 2016, arXiv:1608.05859](https://arxiv.org/abs/1608.05859) |
 | seam masking + block-causal packing attention, doc2 ≡ doc2-alone | sequence-composition effects: [arXiv:2402.13991](https://arxiv.org/abs/2402.13991); boundary-aware pretraining: [In-Context Pretraining, arXiv:2310.10638](https://arxiv.org/abs/2310.10638) |
 | PPL ≈ V at init as a harness test | folklore made executable (and given its counterexample) |
@@ -326,9 +334,16 @@ Colab: open the badge link, `Runtime → Run all`; on a GPU runtime the §9 memo
 switch to the allocator-exact CUDA path automatically. The notebook needs only stock
 `torch`/`matplotlib` — no pip installs, no downloads, no repo clone.
 
+One expected behavior on *your* machine: a full re-run regenerates `results.json` with
+your hardware's memory measurements, and the audit then holds this README to **your**
+run's numbers — it will flag exactly the machine-specific memory strings until they are
+updated. That is the drift detection working as intended; the committed-artifact check is
+`--verify-only`. Every other number is deterministic (seeded, CPU) and reproduces
+bit-identically.
+
 ## 10. Limitations, honestly
 
-1. **Toy scale.** Byte-level V = 259, 2 layers, ~11 KB corpus. The *mechanisms* measured
+1. **Toy scale.** Byte-level V = 259, 2 layers, ~6.6 KB corpus. The *mechanisms* measured
    (shift semantics, mask accounting, ln V at init, the MTP gap, the CE memory cliff)
    are scale-independent, but no claim here is about model quality.
 2. **CPU memory numbers are process-level.** The 1 kHz RSS sampler with a pinned mmap

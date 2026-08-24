@@ -96,9 +96,9 @@
       "V": 50257,
       "d": 128,
       "chunk_rows": 128,
-      "peak_full_mb": 2378.921875,
-      "peak_chunked_mb": 181.16796875,
-      "ratio": 13.131029129562949,
+      "peak_full_mb": 2378.89453125,
+      "peak_chunked_mb": 180.7578125,
+      "ratio": 13.160673380299952,
       "analytic_logits_mb": 785.265625,
       "analytic_chunk_mb": 24.53955078125
     }
@@ -152,7 +152,7 @@
       }
     }
   },
-  "wall_seconds": 54.3,
+  "wall_seconds": 76.2,
   "headline": {
     "shift_rate_correct": "1.0000",
     "pad_slots": "508",
@@ -170,8 +170,8 @@
     "params_delta": "33,152",
     "params_delta_gpt2": "6,432,896",
     "mem_full_mb": "2,378.9",
-    "mem_chunked_mb": "181.2",
-    "mem_ratio": "13.1",
+    "mem_chunked_mb": "180.8",
+    "mem_ratio": "13.2",
     "p2_train_L1": "2.3297",
     "p2_train_L2": "2.6148",
     "p2_train_sum": "4.9444",

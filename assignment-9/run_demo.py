@@ -33,17 +33,20 @@ ART = HERE / "submission_artifacts"
 class RunLog:
     """Mirrors every line to stdout and submission_artifacts/run.log."""
 
-    def __init__(self, path: Path):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        self._fh = open(path, "w", encoding="utf-8")
+    def __init__(self, path: Path, to_file: bool = True):
+        self._fh = None
+        if to_file:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self._fh = open(path, "w", encoding="utf-8")
         self._t0 = time.time()
         self.failures: list[str] = []
 
     def say(self, msg: str) -> None:
         line = f"[{time.time() - self._t0:8.1f}s] {msg}"
         print(line)
-        self._fh.write(line + "\n")
-        self._fh.flush()
+        if self._fh is not None:
+            self._fh.write(line + "\n")
+            self._fh.flush()
 
     def check(self, name: str, ok: bool, detail: str = "") -> None:
         tag = "[PASS]" if ok else "[FAIL]"
@@ -52,7 +55,8 @@ class RunLog:
             self.failures.append(name)
 
     def close(self) -> None:
-        self._fh.close()
+        if self._fh is not None:
+            self._fh.close()
 
 
 def execute_notebook(log: RunLog, fast: bool) -> None:
@@ -89,7 +93,11 @@ def main() -> int:
     log.say(f"assignment-9 run_demo | mode="
             f"{'verify-only' if args.verify_only else 'fast' if args.fast else 'full'}")
 
-    if not args.verify_only:
+    if args.verify_only:
+        log.say("execution evidence: the committed loss_harness.ipynb itself — the "
+                "audit below checks its execution counts are monotone and its outputs "
+                "error-free, which no unexecuted notebook can satisfy")
+    else:
         try:
             execute_notebook(log, fast=args.fast)
         except Exception as exc:  # a notebook that cannot run is a hard failure

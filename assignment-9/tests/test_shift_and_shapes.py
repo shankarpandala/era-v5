@@ -13,7 +13,7 @@ def _tokens(nb, B=4, T=32):
 
 def test_correct_targets_are_next_tokens(nb):
     tokens = _tokens(nb)
-    logits = torch.zeros(*tokens.shape, nb.VOCAB_SIZE)
+    logits = torch.zeros(*tokens.shape, nb.VOCAB_SIZE, device=tokens.device)
     pred, tgt, pos = nb.arm_correct(logits, tokens)
     assert torch.equal(tgt, tokens[:, 1:])
     assert pred.shape[1] == tokens.shape[1] - 1
@@ -47,7 +47,7 @@ def test_audit_correct_rate_is_exactly_one(nb):
 
 def test_untrained_loss_sits_at_ln_v(nb):
     nb.seed_all()
-    model = nb.TinyLM()
+    model = nb.TinyLM().to(nb.DEVICE)
     tokens = _tokens(nb, B=8, T=64)
     with torch.no_grad():
         pred, tgt, _ = nb.arm_correct(model(tokens), tokens)
@@ -57,7 +57,7 @@ def test_untrained_loss_sits_at_ln_v(nb):
 
 def test_loud_init_breaks_the_invariant(nb):
     nb.seed_all()
-    model = nb.TinyLM(init_std=1.0)
+    model = nb.TinyLM(init_std=1.0).to(nb.DEVICE)
     tokens = _tokens(nb, B=8, T=64)
     with torch.no_grad():
         pred, tgt, _ = nb.arm_correct(model(tokens), tokens)
