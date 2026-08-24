@@ -34,6 +34,24 @@ def test_second_head_is_separate_and_untied(nb):
     assert m.head2.weight.shape == (nb.VOCAB_SIZE, nb.CFG["d_model"])
 
 
+def test_part2_config_unties_both_heads(nb):
+    """A tied head 1 racing a fresh head 2 would confound the entropy gap."""
+    m = nb.TinyLM(two_heads=True, tie_weights=False)
+    assert m.head.weight is not m.tok_emb.weight
+    assert m.head2.weight is not m.tok_emb.weight
+    assert m.head.weight is not m.head2.weight
+
+
+def test_tied_init_rolls_the_shared_storage_once(nb):
+    """With tying, tok_emb and head share storage; init must not re-roll it
+    (same seed, tied and untied models must agree on tok_emb)."""
+    nb.seed_all()
+    tied = nb.TinyLM(tie_weights=True)
+    nb.seed_all()
+    untied = nb.TinyLM(tie_weights=False)
+    assert torch.equal(tied.tok_emb.weight, untied.tok_emb.weight)
+
+
 def test_training_is_deterministic(nb):
     _, c1 = nb.train_arm("correct", 5, log_every=5, quiet=True)
     _, c2 = nb.train_arm("correct", 5, log_every=5, quiet=True)
@@ -64,14 +82,28 @@ def _results():
 def test_results_have_all_required_numbers():
     r = _results()
     p1 = r["part1"]
-    for key in ("shapes", "shift_audit", "padding", "packing", "perplexity",
-                "tied_untied", "memory"):
+    for key in ("shapes", "shift_audit", "shift_audit_all", "padding", "sft",
+                "packing", "perplexity", "init_leak", "tied_untied", "memory",
+                "fp16_naive_is_nan"):
         assert key in p1, f"part1.{key} missing"
     for key in ("train_L1", "train_L2", "train_sum",
                 "held_L1", "held_L2", "held_sum"):
         assert key in r["part2"]["final"]
+    assert "final_logged" in r["part2"]
+    for key in ("peak_full_mb", "peak_chunked_mb", "peak_online_mb",
+                "ratio", "ratio_online"):
+        assert key in p1["memory"], f"memory.{key} missing"
     assert set(r["part3"]["arms"]) == {"correct", "reversed", "no_shift"}
+    for arm in r["part3"]["arms"].values():
+        for key in ("acc_next", "acc_self", "acc_prev"):
+            assert key in arm
     assert r["headline"], "headline numbers missing"
+
+
+def test_plots_include_the_circuit_figure():
+    if not (ART / "results.json").exists():
+        pytest.skip("artifacts not generated yet")
+    assert (ART / "plots" / "copy_circuits.png").exists()
 
 
 def test_run_log_has_no_failures():

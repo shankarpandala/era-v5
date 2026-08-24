@@ -13,6 +13,7 @@
     "mem_rows": 4096,
     "mem_vocab": 50257,
     "chunk_rows": 128,
+    "vocab_chunk": 2048,
     "seed": 1337,
     "device": "cpu",
     "fast": false,
@@ -53,34 +54,63 @@
       },
       "verdict": "CORRECT"
     },
+    "shift_audit_all": {
+      "correct": "CORRECT",
+      "reversed": "REVERSED",
+      "no_shift": "IDENTITY"
+    },
     "padding": {
       "n_slots": 508,
       "n_contributing": 186,
-      "loss_unmasked": 10.433749198913574,
-      "loss_masked": 2.3146185874938965,
-      "loss_ignore_index": 2.3146183490753174
+      "loss_unmasked": 10.360005378723145,
+      "loss_masked": 2.2886593341827393,
+      "loss_ignore_index": 2.2886595726013184,
+      "loss_wrongmean": 0.8379737138748169,
+      "gradient_discount": 0.3661417322834646
+    },
+    "sft": {
+      "n_slots": 64,
+      "n_completion": 16,
+      "loss_all": 2.8851635456085205,
+      "loss_completion": 1.9167122840881348
     },
     "packing": {
-      "loss_before": 2.5549778938293457,
-      "loss_after": 2.5357108116149902,
-      "loss_blocked": 2.566708564758301,
+      "loss_before": 2.55642032623291,
+      "loss_after": 2.536339521408081,
+      "loss_block_orig": 2.4922866821289062,
+      "loss_blocked": 2.460296154022217,
       "n_slots": 115,
       "n_pad": 6,
       "n_boundary": 2,
       "n_contributing": 107,
       "boundary_token_losses": [
-        0.146553635597229,
-        7.025008201599121
+        0.3934333026409149,
+        6.868034362792969
       ],
-      "doc2_blocked_equals_alone": true
+      "doc2_blocked_equals_alone": true,
+      "doc2_block_orig_equals_alone": false
     },
     "perplexity": {
       "vocab_size": 259,
       "ln_V": 5.556828061699537,
-      "untrained_ce": 5.569226264953613,
-      "untrained_ppl": 262.2311233152494,
-      "bad_init_ce": 33.14900588989258,
-      "bad_init_ppl": 249132472723838.8
+      "untrained_ce": 5.565617322921753,
+      "untrained_ppl": 261.2864520494931,
+      "bad_init_ce": 33.34657382965088,
+      "bad_init_ppl": 303551934271046.94
+    },
+    "init_leak": {
+      "correct": {
+        "tied": 5.582756996154785,
+        "untied": 5.566848278045654
+      },
+      "reversed": {
+        "tied": 5.572200298309326,
+        "untied": 5.561782360076904
+      },
+      "no_shift": {
+        "tied": 4.966009140014648,
+        "untied": 5.57962703704834
+      }
     },
     "tied_untied": {
       "tied": 495488,
@@ -91,98 +121,133 @@
     },
     "memory": {
       "device": "cpu",
-      "how": "resident-set growth during the loss call, sampled at 1 kHz, one fresh subprocess per variant (glibc mmap threshold pinned)",
+      "how": "resident-set growth during the loss call, sampled in-process, one fresh subprocess per variant (glibc mmap threshold pinned; /proc on Linux, getrusage fallback elsewhere)",
       "N": 4096,
       "V": 50257,
       "d": 128,
       "chunk_rows": 128,
-      "peak_full_mb": 2378.89453125,
-      "peak_chunked_mb": 180.7578125,
-      "ratio": 13.160673380299952,
+      "vocab_chunk": 2048,
+      "peak_full_mb": 2378.85546875,
+      "peak_chunked_mb": 181.75390625,
+      "peak_online_mb": 170.2890625,
+      "ratio": 13.088332007995014,
+      "ratio_online": 13.969514153323852,
       "analytic_logits_mb": 785.265625,
-      "analytic_chunk_mb": 24.53955078125
-    }
+      "analytic_chunk_mb": 24.53955078125,
+      "analytic_online_mb": 32.0
+    },
+    "fp16_naive_is_nan": true
   },
   "part2": {
     "final": {
-      "train_L1": 2.3296666145324707,
-      "train_L2": 2.6147804260253906,
-      "train_sum": 4.944447040557861,
-      "held_L1": 2.5923590660095215,
-      "held_L2": 2.9744856357574463,
-      "held_sum": 5.566844701766968
+      "train_L1": 2.1710742784137116,
+      "train_L2": 2.4815675039140004,
+      "train_sum": 4.652641782327712,
+      "held_L1": 2.56495422203084,
+      "held_L2": 2.9628769808976108,
+      "held_sum": 5.527831202928451
     },
-    "held_gap_first_log": -0.005588054656982422,
-    "held_gap_final": 0.3821265697479248
+    "final_logged": {
+      "train_L1": 2.192216396331787,
+      "train_L2": 2.511892557144165,
+      "held_L1": 2.56495422203084,
+      "held_L2": 2.9628769808976108
+    },
+    "held_gap_step0": -0.018270094523910707,
+    "held_gap_final": 0.39792275886677064,
+    "heads_untied": true
   },
   "part3": {
     "arms": {
       "correct": {
-        "final_loss": 2.3385610580444336,
+        "final_loss": 2.379312038421631,
         "verdict": "CORRECT",
         "rates": {
           "reversed(-1)": 0.02678571455180645,
           "identity(0)": 0.015748031437397003,
           "correct(+1)": 1.0
         },
-        "gram4": 0.28426395939086296,
-        "sample": "t igees t tiritarondnd th tinonict monts whe the le ikathe cos ist imutan e ctroghe ingeare lot try f rntobje whe anthe "
+        "acc_next": 0.2883858382701874,
+        "acc_self": 0.0029296875,
+        "acc_prev": 0.09842519462108612,
+        "gram4": 0.25888324873096447,
+        "sample": "tti mess wan italondndrts ti neringe nts whintlesle ika an ces ive tentan e coroghetingalyke do try f rntobje whe anthe "
       },
       "reversed": {
-        "final_loss": 0.004457819275557995,
+        "final_loss": 0.010165316052734852,
         "verdict": "REVERSED",
         "rates": {
           "reversed(-1)": 1.0,
           "identity(0)": 0.015748031437397003,
           "correct(+1)": 0.02678571455180645
         },
+        "acc_next": 0.02657480351626873,
+        "acc_self": 0.0234375,
+        "acc_prev": 0.999015748500824,
         "gram4": 0.0,
         "sample": ""
       },
       "no_shift": {
-        "final_loss": 4.637714027921902e-06,
+        "final_loss": 5.041286840423709e-06,
         "verdict": "IDENTITY",
         "rates": {
           "reversed(-1)": 0.015748031437397003,
           "identity(0)": 1.0,
           "correct(+1)": 0.015748031437397003
         },
+        "acc_next": 0.015748031437397003,
+        "acc_self": 1.0,
+        "acc_prev": 0.015748031437397003,
         "gram4": 0.0,
         "sample": ""
       }
     }
   },
-  "wall_seconds": 76.2,
+  "wall_seconds": 50.1,
   "headline": {
     "shift_rate_correct": "1.0000",
     "pad_slots": "508",
     "pad_contributing": "186",
-    "pad_loss_unmasked": "10.4337",
-    "pad_loss_masked": "2.3146",
-    "pack_loss_before": "2.5550",
-    "pack_loss_after": "2.5357",
-    "untrained_ppl": "262.2",
-    "untrained_ce": "5.5692",
+    "pad_loss_unmasked": "10.3600",
+    "pad_loss_masked": "2.2887",
+    "pad_loss_wrongmean": "0.8380",
+    "pad_discount": "0.366",
+    "sft_slots": "64",
+    "sft_completion_slots": "16",
+    "pack_loss_before": "2.5564",
+    "pack_loss_after": "2.5363",
+    "seam_easy": "0.3934",
+    "seam_hard": "6.8680",
+    "untrained_ppl": "261.3",
+    "untrained_ce": "5.5656",
     "ln_V": "5.5568",
-    "bad_init_ce": "33.1490",
+    "bad_init_ce": "33.3466",
+    "leak_noshift_tied_ppl": "143.5",
+    "leak_noshift_tied_ce": "4.9660",
+    "leak_noshift_untied_ppl": "265.0",
     "params_tied": "495,488",
     "params_untied": "528,640",
     "params_delta": "33,152",
     "params_delta_gpt2": "6,432,896",
     "mem_full_mb": "2,378.9",
-    "mem_chunked_mb": "180.8",
-    "mem_ratio": "13.2",
-    "p2_train_L1": "2.3297",
-    "p2_train_L2": "2.6148",
-    "p2_train_sum": "4.9444",
-    "p2_held_L1": "2.5924",
-    "p2_held_L2": "2.9745",
-    "p2_held_sum": "5.5668",
-    "zoo_correct_final": "2.3386",
-    "zoo_correct_gram4": "0.284",
-    "zoo_reversed_final": "0.0045",
+    "mem_chunked_mb": "181.8",
+    "mem_online_mb": "170.3",
+    "mem_ratio": "13.1",
+    "mem_ratio_online": "14.0",
+    "p2_train_L1": "2.1711",
+    "p2_train_L2": "2.4816",
+    "p2_train_sum": "4.6526",
+    "p2_held_L1": "2.5650",
+    "p2_held_L2": "2.9629",
+    "p2_held_sum": "5.5278",
+    "zoo_correct_final": "2.3793",
+    "zoo_correct_gram4": "0.259",
+    "zoo_reversed_final": "0.0102",
     "zoo_reversed_gram4": "0.000",
     "zoo_no_shift_final": "0.0000",
-    "zoo_no_shift_gram4": "0.000"
+    "zoo_no_shift_gram4": "0.000",
+    "zoo_correct_next_acc": "0.288",
+    "zoo_reversed_prev_acc": "0.999",
+    "zoo_no_shift_self_acc": "1.000"
   }
 }
