@@ -1,5 +1,6 @@
-"""chunked_ce must be the same estimator as plain_ce: same loss, same gradients,
-for divisor and non-divisor chunk sizes, with and without ignored rows."""
+"""chunked_ce and online_ce must be the same estimator as plain_ce: same loss,
+same gradients, for divisor and non-divisor chunk sizes, with and without
+ignored rows."""
 import pytest
 import torch
 
@@ -26,17 +27,33 @@ def test_loss_and_grads_match(nb, chunk_rows):
     assert torch.allclose(ga_W, gb_W, atol=1e-6)
 
 
+@pytest.mark.parametrize("vocab_chunk", [128, 300, 4096])
+def test_online_loss_and_grads_match(nb, vocab_chunk):
+    h, W, t = _problem(nb)
+    la = nb.plain_ce(h, W, t)
+    ga_h, ga_W = torch.autograd.grad(la, [h, W])
+    lc = nb.online_ce(h, W, t, vocab_chunk=vocab_chunk)
+    gc_h, gc_W = torch.autograd.grad(lc, [h, W])
+    assert torch.allclose(la, lc, atol=1e-6)
+    assert torch.allclose(ga_h, gc_h, atol=1e-6)
+    assert torch.allclose(ga_W, gc_W, atol=1e-6)
+
+
 def test_no_ignore_rows(nb):
     h, W, t = _problem(nb, with_ignore=False)
     assert torch.allclose(nb.plain_ce(h, W, t),
                           nb.chunked_ce(h, W, t, chunk_rows=100), atol=1e-6)
+    assert torch.allclose(nb.plain_ce(h, W, t),
+                          nb.online_ce(h, W, t, vocab_chunk=250), atol=1e-6)
 
 
 def test_all_rows_ignored_is_finite(nb):
     h, W, t = _problem(nb, N=64)
     t[:] = -100
     loss = nb.chunked_ce(h, W, t, chunk_rows=16)
-    assert torch.isfinite(loss) and float(loss) == 0.0
+    assert torch.isfinite(loss) and loss.detach().item() == 0.0
+    loss_o = nb.online_ce(h, W, t, vocab_chunk=100)
+    assert torch.isfinite(loss_o) and loss_o.detach().item() == 0.0
 
 
 def test_matches_shifted_batch_loss(nb):

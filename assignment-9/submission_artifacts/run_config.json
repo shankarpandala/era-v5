@@ -12,6 +12,7 @@
   "mem_rows": 4096,
   "mem_vocab": 50257,
   "chunk_rows": 128,
+  "vocab_chunk": 2048,
   "seed": 1337,
   "device": "cpu",
   "fast": false,
