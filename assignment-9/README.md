@@ -34,9 +34,11 @@ on itself — why "observable" is not optional:
 > into a learnable slot (**0.3934** nats) and an impossible one (**6.8680** nats), mean
 > falling **2.5564 → 2.5363** when the seam is masked; untrained perplexity **261.3**
 > against V = 259; tied-vs-untied counts **495,488** vs **528,640** (Δ exactly V·d =
-> **33,152**); and three cross-entropy implementations proven equivalent to the gradient,
-> with loss-attributable peak memory **2,378.9 → 181.8 → 170.3 MiB** (row-chunked
-> **13.1**×, online-softmax **14.0**×) at the GPT-2 vocabulary.
+> **33,152**); and three cross-entropy implementations proven equivalent to the
+> gradient, whose largest logits buffer shrinks **785.3 → 24.5 → 32.0 MiB** at the GPT-2
+> vocabulary — the online-softmax variant's buffer **independent of V entirely**
+> (measured on this machine: ≈2,379 → ≈181 → ≈170 MiB loss-attributable peaks, a 13×
+> reduction; the analytic column is the machine-independent, audited claim).
 >
 > **Claim B — the leak the harness caught in itself.** With the standard **tied** head,
 > the no-shift objective beats uniform *before a single optimizer step*: CE **4.9660**,
@@ -62,7 +64,7 @@ pip install -r requirements.txt
 python run_demo.py --verify-only   # ~5 s: independent audit of the committed artifacts
 python run_demo.py --fast          # ~40 s smoke run, reduced budgets, same pipeline
 python run_demo.py                 # ~2 min CPU: full re-run, rewrites every artifact
-python -m pytest tests -q          # 39 invariant tests (they exec the notebook's cells)
+python -m pytest tests -q          # 40 invariant tests (they exec the notebook's cells)
 ```
 
 **Definition of done** (all three green): `pytest` passes, `--verify-only` prints
@@ -82,7 +84,7 @@ fails if any number here drifts from what the run produced.
 | 4 | pack two docs; mask the boundary; loss before/after | notebook §6 | **2.5564** → **2.5363**; seam slots **0.3934** / **6.8680** |
 | 5 | untrained perplexity ≈ vocab size | notebook §7 | PPL **261.3**; tied no-shift leaks to **143.5** at init |
 | 6 | tied vs untied parameter counts | notebook §8 | **495,488** vs **528,640** (Δ **33,152**) |
-| 7 | peak memory, ordinary vs chunked CE | notebook §9 | **2,378.9** / **181.8** / **170.3** MiB (**13.1**× / **14.0**×) |
+| 7 | peak memory, ordinary vs chunked CE | notebook §9 | largest buffer **785.3** / **24.5** / **32.0** MiB (measured ≈2,379/181/170) |
 | P2 | second head predicting t+2, both losses + sum | notebook §10 | held-out sweep: L1 **2.5650**, L2 **2.9629**, sum **5.5278** |
 | P3 | wrong shifts ⇒ beautiful curves; instruments catch them | notebook §11 | **0.0102** / **0.0000** vs **2.3793**; circuits named by accuracy |
 
@@ -107,8 +109,9 @@ counted tokens, init-time identities, and behavioral accuracies no scalar can fa
 
 ## 2. Setup
 
-Self-contained and deterministic (seed 1337; every number except the two RSS
-measurements reproduces bit-identically on CPU):
+Self-contained and deterministic (seed 1337; every audited number reproduces
+bit-identically on CPU — only the un-audited measured memory peaks are
+machine-specific):
 
 | component | choice | why |
 |---|---|---|
@@ -195,6 +198,15 @@ doc-2-alone), while (c) block-causal **plus per-document position restart** make
 raises or lowers the mean is incidental and run-dependent; the contract's claim is the
 identity, not a direction.
 
+And the contract does not stay in the demo: **§6c retrains the correct arm with the full
+packing contract inside the training loop** — segment ids from the `<bos>` boundaries,
+per-document position restart, cross-seam slots dropped (0.12% of target slots on the
+training distribution, measured over 50 batches so the mask is visibly not decoration).
+Same seed, crops, and budget; the loop learns under the contract (final train loss
+**2.3629**, held-out sweep under its own protocol **2.6086**). Each arm is evaluated
+under its own protocol — comparing across protocols would compare different objectives,
+which is this section's whole lesson.
+
 ### 3.5 An untrained model must sit at perplexity ≈ V — and the check finds a real leak
 
 Measured at init on held-out text: CE **5.5656** vs ln(259) = **5.5568**, perplexity
@@ -230,11 +242,11 @@ At N = 4,096, V = 50,257 the logits are 785.3 MiB and plain CE holds roughly thr
 buffers. Three implementations, all proven the same estimator (loss and both gradients
 `allclose` at 1e-6, `ignore_index` rows and non-divisor chunks included):
 
-| implementation | largest logits buffer (analytic) | measured peak | vs plain |
-|---|---|---|---|
-| plain CE | `[N, V]` = 785.3 MiB | **2,378.9** MiB | — |
-| row-chunked + checkpoint | `[128, V]` = 24.5 MiB | **181.8** MiB | **13.1**× |
-| online-softmax (vocab-chunked) | `[N, 2,048]` = 32.0 MiB — **independent of V** | **170.3** MiB | **14.0**× |
+| implementation | largest logits buffer (analytic — **the audited claim**) | measured on this Linux container (machine-specific) |
+|---|---|---|
+| plain CE | `[N, V]` = **785.3** MiB | ≈2,379 MiB |
+| row-chunked + checkpoint | `[128, V]` = **24.5** MiB | ≈181 MiB (13.2×) |
+| online-softmax (vocab-chunked) | `[N, 2,048]` = **32.0** MiB — **independent of V** | ≈170 MiB (14.0×) |
 
 The online implementation is the mechanism behind Cut-CE/Liger kernels in miniature: a
 streaming logsumexp forward and a hand-written backward that recomputes each vocabulary
@@ -242,8 +254,10 @@ slice and applies `softmax − onehot` chunk by chunk — the vocabulary dimensi
 materialized at all. The measured chunked/online peaks sit far above their analytic
 buffers because chunking cannot remove fixed costs (the persistent `[V, d]` weight
 gradient ≈ 24.5 MiB, input gradients, recompute transients, allocator slack) — the
-measured ratios *understate* the logits-storage ratios, and the analytic column is the
-machine-independent claim. Protocol: CUDA allocator peaks when a GPU is present
+measured ratios *understate* the logits-storage ratios. **Only the analytic column is
+audited** — it is deterministic on any machine, so a full re-run anywhere keeps this
+README's verbatim check green; the measured peaks are this container's illustration and
+live un-audited in `results.json`. Protocol: CUDA allocator peaks when a GPU is present
 (byte-exact); on CPU, fresh subprocesses sampling their own resident set (`/proc` on
 Linux, a `getrusage` fallback elsewhere — the cell runs on macOS too, coarsely).
 
@@ -276,8 +290,16 @@ later (by stationarity) — the gap *is* the information carried by the skipped 
 it grows as the model learns enough language for that information to matter. The splits
 differ honestly: the held-out gap keeps growing late into training (final +0.40); the
 train gap plateaus near +0.31, below it — memorization makes the skipped token partly
-known, capping what the train gap can be made of. Audited: step-0 gap ≈ 0, L2 > L1 at
-every held-out point, train gap ends below held gap.
+known, capping what the train gap can be made of.
+
+A third estimator brackets the quantity from the other side: **the same head, asked two
+questions** — head 1's logits scored against `tokens[:, 1:]` and `tokens[:, 2:]`. One
+matrix, so the two-heads confound vanishes entirely; the remaining bias runs the other
+way (head 1 was optimized only for its own shift), and the measurement behaves exactly
+as that bias predicts: same-head gap **1.6748**, far above the two-untied-heads gap of
++0.40. The two estimators bracket the true difficulty difference. Audited: step-0 gap
+≈ 0, L2 > L1 at every held-out point, train gap ends below held gap, same-head gap
+positive and above the two-heads gap.
 
 ![mtp](submission_artifacts/plots/mtp_gap.png)
 
@@ -344,6 +366,12 @@ narrative claims v1's own data contradicted (train-gap "narrows", corpus size) �
 rewritten to match the artifacts. The audit gained predicates for each so none can
 silently regress.
 
+A verification pass on v2 left three items open; this version closes them: machine-
+specific RSS measurements are no longer the audited headline (the deterministic analytic
+buffers are — a re-run on any hardware keeps the verbatim check green); the same-head
+two-shift estimator was added (§4), behaving exactly as its bias predicts; and the
+packing contract now runs inside the training loop (§6c), not only in the demo.
+
 ## 9. What's in the box
 
 ```
@@ -352,7 +380,7 @@ assignment-9/
 ├── run_demo.py               # execute top-to-bottom (nbclient) + audit -> run.log
 ├── audit.py                  # independent: re-derives every claim from disk
 ├── requirements.txt
-├── tests/                    # 39 tests; conftest exec's the notebook's export cells,
+├── tests/                    # 40 tests; conftest exec's the notebook's export cells,
 │   ├── conftest.py           #   so tests share the notebook's code — nothing retyped
 │   ├── test_notebook_exports.py
 │   ├── test_shift_and_shapes.py
@@ -375,11 +403,10 @@ on a GPU the §9 memory numbers switch to the allocator-exact CUDA path automati
 macOS the memory cell falls back to `getrusage` (coarser, but it runs). No pip installs,
 no downloads, no repo clone.
 
-A full re-run regenerates `results.json` with your machine's two memory measurements,
-and the audit then holds this README to **your** run — it will flag exactly those
-machine-specific strings until they are updated. That is the drift detection working as
-intended; the committed-artifact check is `--verify-only`. Every other number is
-deterministic (seeded, CPU) and reproduces bit-identically.
+Every audited number in this README is deterministic (seeded, CPU) — including the
+analytic memory column — so a full re-run on any machine keeps the verbatim check
+green. The measured memory peaks in `results.json` are machine-specific by nature and
+are quoted here only as rounded illustrations, outside the audit.
 
 ## 11. Limitations, honestly
 
@@ -387,11 +414,11 @@ deterministic (seeded, CPU) and reproduces bit-identically.
    (shift semantics, mask accounting, the init identities, the MTP gap, the CE memory
    cliff) are scale-independent; no claim here is about model quality — the correct
    arm's 300-step samples are corpus-register word-salad, and are described as such.
-2. **CPU memory numbers are process-level.** The Linux sampler with a pinned mmap
-   threshold tracks the allocator well (2,378.9 measured vs ~2,356 analytic for three
-   `[N, V]` buffers); the macOS fallback is a high-water mark and coarser; the CUDA path
-   is byte-exact. The analytic column is the portable claim; ratios' second digits are
-   not.
+2. **CPU memory measurements are process-level and machine-specific** — which is why
+   they are not audited: the analytic buffer sizes are the claim. The Linux sampler with
+   a pinned mmap threshold tracks the allocator well (≈2,379 measured vs ~2,356 analytic
+   for three `[N, V]` buffers); the macOS fallback is a high-water mark and coarser; the
+   CUDA path is byte-exact.
 3. **The corpus is deliberately memorizable** — it makes the train-vs-held gap
    asymmetry visible, but train-split numbers describe memorization dynamics.
 4. **Single seed for training curves** (1337). The audited invariants (verdicts,

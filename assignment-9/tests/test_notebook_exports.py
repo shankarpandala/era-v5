@@ -11,7 +11,8 @@ EXPECTED = [
     "TinyLM", "causal_mask", "block_causal_mask",
     "arm_correct", "arm_reversed", "arm_no_shift", "ARMS",
     "masked_ce", "audit_shift", "explain",
-    "train_arm", "eval_sweep", "copy_stats", "generate", "four_gram_hit_rate",
+    "train_arm", "eval_sweep", "copy_stats", "crop_contract",
+    "generate", "four_gram_hit_rate",
     "plain_ce", "chunked_ce", "online_ce", "CE_IMPL_SRC",
     "fmt", "seed_all", "TRAIN_STREAM", "HELD_STREAM", "CORPUS_TEXT",
 ]

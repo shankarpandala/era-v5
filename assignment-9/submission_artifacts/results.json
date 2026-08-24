@@ -90,6 +90,12 @@
       "doc2_blocked_equals_alone": true,
       "doc2_block_orig_equals_alone": false
     },
+    "packing_train": {
+      "final_train_loss": 2.362912654876709,
+      "held_contract": 2.608636351683929,
+      "held_plain": 2.6072425074673284,
+      "mask_dropped_frac": 0.00120078740157481
+    },
     "perplexity": {
       "vocab_size": 259,
       "ln_V": 5.556828061699537,
@@ -127,11 +133,11 @@
       "d": 128,
       "chunk_rows": 128,
       "vocab_chunk": 2048,
-      "peak_full_mb": 2378.85546875,
-      "peak_chunked_mb": 181.75390625,
-      "peak_online_mb": 170.2890625,
-      "ratio": 13.088332007995014,
-      "ratio_online": 13.969514153323852,
+      "peak_full_mb": 2378.9921875,
+      "peak_chunked_mb": 180.828125,
+      "peak_online_mb": 170.28515625,
+      "ratio": 13.156096085716754,
+      "ratio_online": 13.97063748767004,
       "analytic_logits_mb": 785.265625,
       "analytic_chunk_mb": 24.53955078125,
       "analytic_online_mb": 32.0
@@ -155,6 +161,8 @@
     },
     "held_gap_step0": -0.018270094523910707,
     "held_gap_final": 0.39792275886677064,
+    "samehead_L2": 4.239755970250152,
+    "samehead_gap": 1.6748017482193118,
     "heads_untied": true
   },
   "part3": {
@@ -203,7 +211,7 @@
       }
     }
   },
-  "wall_seconds": 50.1,
+  "wall_seconds": 56.2,
   "headline": {
     "shift_rate_correct": "1.0000",
     "pad_slots": "508",
@@ -218,6 +226,8 @@
     "pack_loss_after": "2.5363",
     "seam_easy": "0.3934",
     "seam_hard": "6.8680",
+    "contract_final_train": "2.3629",
+    "contract_held": "2.6086",
     "untrained_ppl": "261.3",
     "untrained_ce": "5.5656",
     "ln_V": "5.5568",
@@ -229,17 +239,16 @@
     "params_untied": "528,640",
     "params_delta": "33,152",
     "params_delta_gpt2": "6,432,896",
-    "mem_full_mb": "2,378.9",
-    "mem_chunked_mb": "181.8",
-    "mem_online_mb": "170.3",
-    "mem_ratio": "13.1",
-    "mem_ratio_online": "14.0",
+    "mem_analytic_full": "785.3",
+    "mem_analytic_chunk": "24.5",
+    "mem_analytic_online": "32.0",
     "p2_train_L1": "2.1711",
     "p2_train_L2": "2.4816",
     "p2_train_sum": "4.6526",
     "p2_held_L1": "2.5650",
     "p2_held_L2": "2.9629",
     "p2_held_sum": "5.5278",
+    "p2_samehead_gap": "1.6748",
     "zoo_correct_final": "2.3793",
     "zoo_correct_gram4": "0.259",
     "zoo_reversed_final": "0.0102",

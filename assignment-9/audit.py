@@ -132,6 +132,12 @@ def run(check) -> int:
     c("packing: block-causal + position restart makes doc2 match doc2-alone",
       pk.get("doc2_blocked_equals_alone") is True,
       "allclose atol=1e-4")
+    pt = p1.get("packing_train", {})
+    c("packing: the contract lives in the training loop, and learns",
+      0 < pt.get("mask_dropped_frac", 0) < 0.1
+      and pt.get("final_train_loss", 99) < math.log(V),
+      f"drops {pt.get('mask_dropped_frac', 0):.3%} of slots; "
+      f"final train loss {pt.get('final_train_loss', float('nan')):.4f}")
 
     # -- requirement 5: perplexity + the identity leak -------------------------
     pp = p1.get("perplexity", {})
@@ -223,6 +229,11 @@ def run(check) -> int:
         c("part2: memorization asymmetry — train gap ends below held gap",
           0 < train_gap < held_gap,
           f"train {train_gap:+.4f} < held {held_gap:+.4f}")
+        c("part2: same-head estimator agrees on direction (and over-states, "
+          "as its bias predicts)",
+          p2.get("samehead_gap", -1) > held_gap > 0,
+          f"same-head {p2.get('samehead_gap', float('nan')):+.4f} > "
+          f"two-heads {held_gap:+.4f}")
 
     # -- part 3 ----------------------------------------------------------------
     arms = results.get("part3", {}).get("arms", {})
