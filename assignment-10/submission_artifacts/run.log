@@ -1,70 +1,71 @@
 [     0.0s] assignment-10 run_demo | mode=full
-[     0.2s] executing training_loop.ipynb top to bottom (full budgets) ...
-[   215.4s] notebook executed in 215.2s
-[   215.4s] executed notebook written back to training_loop.ipynb (186 KiB)
-[   215.4s] [PASS] notebook executes top to bottom
-[   215.4s] [PASS] notebook: every code cell executed | counts=[1, 2, 3, 4, 5]...
-[   215.4s] [PASS] notebook: execution order monotone
-[   215.4s] [PASS] notebook: no error outputs
-[   215.4s] [PASS] shapes: tokens/logits/shift/flat relations
-[   215.4s] [PASS] shapes: attention score/q/qkv/mlp relations
-[   215.4s] [PASS] shapes: optimizer holds 2 values per weight
-[   215.4s] [PASS] toy chain: hand == autograd == central == 64
-[   215.4s] [PASS] toy chain: session's nudged loss 16.064 | 16.06406399999999
-[   215.4s] [PASS] toy chain: forward-diff error law err = 64*eps (within 1%)
-[   215.4s] [PASS] finite diff: fp64 probe certifies rel err < 1e-7 | 4.15e-10
-[   215.4s] [PASS] finite diff: best row is the min of the committed sweep
-[   215.4s] [PASS] finite diff: decimals = -log10(abs err), re-derived
-[   215.4s] [PASS] finite diff: every parameter type < 1e-5 rel err
-[   215.4s] [PASS] finite diff: directional derivative over all weights < 1e-6
-[   215.4s] [PASS] finite diff: fp32 probe drowns (>=1 exact-cancellation eps) while fp32 backward matches fp64 to <1e-4
-[   215.4s] [PASS] static mirror: per-token dump re-combines to 2.6 / 3.0 | tw=2.600000 aa=3.000000
-[   215.4s] [PASS] static mirror: error = |3.0-2.6|/2.6 = 15.4%
-[   215.4s] [PASS] accumulation identity: correct==big batch (fp32<1e-5, fp64<1e-12), buggy far away (>1e-2) | f64=1.6e-16 buggy=5.7e-01
-[   215.4s] [PASS] accumulation identity: unequal counts on the shifted targets
-[   215.4s] [PASS] hazard analytics re-derived: floor ln2/18, buggy p 11/12, asymptote
-[   215.4s] [PASS] hazard seed 1337: gap>0.015, probes on their optima, doc-weighted flips | gap=0.0290 pC=0.499 pB=0.916
-[   215.4s] [PASS] hazard seed 1338: gap>0.015, probes on their optima, doc-weighted flips | gap=0.0267 pC=0.452 pB=0.915
-[   215.4s] [PASS] hazard seed 1339: gap>0.015, probes on their optima, doc-weighted flips | gap=0.0290 pC=0.499 pB=0.916
-[   215.4s] [PASS] hazard: final per-token dumps re-combine near the recorded evals | re-derived tw 0.0424/0.0713
-[   215.4s] [PASS] ratio bias: analytic p* re-derived by enumeration | p*=0.6681
-[   215.4s] [PASS] ratio bias: measured probes sit near p*, not near 0.5 | [0.6377256214618683, 0.7395459353923798]
-[   215.4s] [PASS] equal-count control: gradients coincide, curves stay within a quarter of the hazard gap | curve diff 0.00000 vs gap 0.0290
-[   215.4s] [PASS] mixed-text honest negative: relative gap under a quarter of the hazard corpus's (re-derived) | mixed +1.6% vs hazard +68% relative
-[   215.4s] [PASS] grad norm: cap re-derived = 2 x median of placebo settled norms | cap=0.365
-[   215.4s] [PASS] grad norm: spike detected exactly at the injection step; placebo silent
-[   215.4s] [PASS] grad norm: clean-probe damage begins at/just after k; placebo silent
-[   215.4s] [PASS] grad norm: spike ratio > 4x settled median | 16.3x
-[   215.4s] [PASS] grad norm: unclipped damage unmistakable; both caps contain >50% of it | B +0.654 C +0.116 C2 +0.107
-[   215.4s] [PASS] grad norm: loose cap re-derived (1.25 x max settled placebo norm) and binds on few SETTLED steps (the transient and the damage are anomalies) | loose cap 1.096, binds 4/110 settled steps
-[   215.4s] [PASS] grad norm: scale factor at k re-derived = cap / norm
-[   215.4s] [PASS] grad norm: session arithmetic (cap 1.0 / norm 8.4 -> x0.119)
-[   215.4s] [PASS] grad norm: every logged value finite in healthy arms
-[   215.5s] [PASS] grad norm: pre-injection norms bitwise equal across A and B
-[   215.5s] [PASS] MFU: exact FLOPs/token formula re-derived | 2,951,424
-[   215.5s] [PASS] MFU: 6N-convention error table re-derived
-[   215.5s] [PASS] MFU: 6*N_total within 1.5% at T=128 but drifts with T
-[   215.5s] [PASS] MFU: profiler forward count matches analytic (<0.1%)
-[   215.5s] [PASS] MFU: headline arithmetic re-derived from committed raw values
-[   215.5s] [PASS] MFU: 0 < mfu < 1 and achieved <= measured peak
-[   215.5s] [PASS] MFU: tps consistent with committed per-step timings
-[   215.5s] [PASS] MFU: session worked example 648/7912 = 8.1901%
-[   215.5s] [PASS] MFU: sweep rows internally consistent, utilization rises with width
-[   215.5s] [PASS] MFU: matmul ops own a minority of step time (the honest gap story)
-[   215.5s] [PASS] floats: fp32 bits/value/error re-derived by independent encoder | 0|01111011|10011001100110011001101
-[   215.5s] [PASS] floats: bf16 bits/value/error re-derived by independent encoder | 0|01111011|1001101
-[   215.5s] [PASS] floats: fp16 bits/value/error re-derived by independent encoder | 0|01011|1001100110
-[   215.5s] [PASS] floats: fp8 E4M3 bits/value/error re-derived by independent encoder | 0|0011|101
-[   215.5s] [PASS] floats: expected canonical bit strings
-[   215.5s] [PASS] floats: only fp16 rounds down on 0.1
-[   215.5s] [PASS] floats: tie probe 17/256 in fp8 E4M3 -> 0.0625
-[   215.5s] [PASS] floats: tie probe 19/256 in fp8 E4M3 -> 0.078125
-[   215.5s] [PASS] floats: tie probe 257/256 in bf16 -> 1.0
-[   215.5s] [PASS] floats: tie probe 259/256 in bf16 -> 1.015625
-[   215.5s] [PASS] floats: fp16 cliff (1e-8 and 2.9e-8 -> 0; 3e-8 -> min subnormal; bf16 keeps 1e-8)
-[   215.5s] [PASS] floats: loss scaling rescues 1e-8 into the subnormal range, but 1e-11 still dies
-[   215.5s] [PASS] memory: measured training state = exactly 16 bytes/weight
-[   215.5s] [PASS] memory: scale table re-derived (2B->29.8GiB ... 120B->1788GiB)
-[   215.5s] [PASS] memory: 80GB ceiling ~ 5.4B params
-[   215.5s] audit: PASS
-[   215.5s] verdict: PASS
+[     0.6s] executing training_loop.ipynb top to bottom (full budgets) ...
+[   170.8s] notebook executed in 170.2s
+[   170.8s] executed notebook written back to training_loop.ipynb (839 KiB)
+[   170.8s] [PASS] notebook executes top to bottom
+[   170.8s] [PASS] notebook: every code cell executed | counts=[1, 2, 3, 4, 5]...
+[   170.8s] [PASS] notebook: execution order monotone
+[   170.8s] [PASS] notebook: no error outputs
+[   170.8s] [PASS] shapes: tokens/logits/shift/flat relations
+[   170.8s] [PASS] shapes: attention score/q/qkv/mlp relations
+[   170.8s] [PASS] shapes: optimizer holds 2 values per weight
+[   170.8s] [PASS] toy chain: hand == autograd == central == 64
+[   170.8s] [PASS] toy chain: session's nudged loss 16.064 | 16.06406399999999
+[   170.8s] [PASS] toy chain: forward-diff error law err = 64*eps (within 1%)
+[   170.8s] [PASS] finite diff: fp64 probe certifies rel err < 1e-7 | 4.15e-10
+[   170.8s] [PASS] finite diff: best row is the min of the committed sweep
+[   170.8s] [PASS] finite diff: decimals = -log10(abs err), re-derived
+[   170.8s] [PASS] finite diff: every parameter type < 1e-5 rel err
+[   170.8s] [PASS] finite diff: directional derivative over all weights < 1e-6
+[   170.8s] [PASS] finite diff: fp32 probe drowns (>=1 exact-cancellation eps) while fp32 backward matches fp64 to <1e-4
+[   170.8s] [PASS] static mirror: per-token dump re-combines to 2.6 / 3.0 | tw=2.600000 aa=3.000000
+[   170.8s] [PASS] static mirror: error = |3.0-2.6|/2.6 = 15.4%
+[   170.8s] [PASS] accumulation identity: correct==big batch (fp32<1e-5, fp64<1e-12), buggy far away (>1e-2) | f64=1.6e-16 buggy=5.7e-01
+[   170.8s] [PASS] accumulation identity: unequal counts on the shifted targets
+[   170.8s] [PASS] hazard analytics re-derived: floor ln2/18, buggy p 11/12, asymptote
+[   170.8s] [PASS] hazard seed 1337: gap>0.015, probes on their optima, doc-weighted flips | gap=0.0290 pC=0.499 pB=0.916
+[   170.8s] [PASS] hazard seed 1338: gap>0.015, probes on their optima, doc-weighted flips | gap=0.0267 pC=0.452 pB=0.915
+[   170.8s] [PASS] hazard seed 1339: gap>0.015, probes on their optima, doc-weighted flips | gap=0.0290 pC=0.499 pB=0.916
+[   170.8s] [PASS] hazard: final per-token dumps re-combine near the recorded evals | re-derived tw 0.0424/0.0713
+[   170.8s] [PASS] ratio bias: analytic p* re-derived by enumeration | p*=0.6681
+[   170.8s] [PASS] ratio bias: measured probes sit near p*, not near 0.5 | [0.6377256214618683, 0.7395459353923798]
+[   170.8s] [PASS] equal-count control: gradients coincide, curves stay within a quarter of the hazard gap | curve diff 0.00000 vs gap 0.0290
+[   170.8s] [PASS] mixed-text honest negative: relative gap under a quarter of the hazard corpus's (re-derived) | mixed +1.6% vs hazard +68% relative
+[   170.8s] [PASS] grad norm: cap re-derived = 2 x median of placebo settled norms | cap=0.365
+[   170.8s] [PASS] grad norm: spike detected exactly at the injection step; placebo silent
+[   170.8s] [PASS] grad norm: clean-probe damage begins at/just after k; placebo silent
+[   170.8s] [PASS] grad norm: spike ratio > 4x settled median | 16.3x
+[   170.8s] [PASS] grad norm: unclipped damage unmistakable; both caps contain >50% of it | B +0.654 C +0.116 C2 +0.107
+[   170.8s] [PASS] grad norm: loose cap re-derived (1.25 x max settled placebo norm) and binds on few SETTLED steps (the transient and the damage are anomalies) | loose cap 1.096, binds 4/110 settled steps
+[   170.8s] [PASS] grad norm: scale factor at k re-derived = cap / norm
+[   170.8s] [PASS] grad norm: session arithmetic (cap 1.0 / norm 8.4 -> x0.119)
+[   170.8s] [PASS] grad norm: every logged value finite in healthy arms
+[   170.8s] [PASS] grad norm: pre-injection norms bitwise equal across A and B
+[   170.8s] [PASS] MFU: exact FLOPs/token formula re-derived | 2,951,424
+[   170.8s] [PASS] MFU: 6N-convention error table re-derived
+[   170.8s] [PASS] MFU: cancellation identity 6*zero_flop - 12LTd == 6N - exact, with zero_flop = tok_emb + pos_emb + LayerNorms | zero_flop=67,200
+[   170.8s] [PASS] MFU: 6*N_total within 1.5% at T=128 but drifts with T
+[   170.8s] [PASS] MFU: profiler forward count matches analytic (<0.1%)
+[   170.8s] [PASS] MFU: headline arithmetic re-derived from committed raw values
+[   170.8s] [PASS] MFU: 0 < mfu < 1 and achieved <= measured peak
+[   170.8s] [PASS] MFU: tps consistent with committed per-step timings
+[   170.8s] [PASS] MFU: session worked example 648/7912 = 8.1901%
+[   170.8s] [PASS] MFU: sweep rows internally consistent, utilization rises with width
+[   170.8s] [PASS] MFU: matmul ops own a minority of step time (the honest gap story)
+[   170.8s] [PASS] floats: fp32 bits/value/error re-derived by independent encoder | 0|01111011|10011001100110011001101
+[   170.8s] [PASS] floats: bf16 bits/value/error re-derived by independent encoder | 0|01111011|1001101
+[   170.8s] [PASS] floats: fp16 bits/value/error re-derived by independent encoder | 0|01011|1001100110
+[   170.8s] [PASS] floats: fp8 E4M3 bits/value/error re-derived by independent encoder | 0|0011|101
+[   170.8s] [PASS] floats: expected canonical bit strings
+[   170.8s] [PASS] floats: only fp16 rounds down on 0.1
+[   170.8s] [PASS] floats: tie probe 17/256 in fp8 E4M3 -> 0.0625
+[   170.8s] [PASS] floats: tie probe 19/256 in fp8 E4M3 -> 0.078125
+[   170.8s] [PASS] floats: tie probe 257/256 in bf16 -> 1.0
+[   170.8s] [PASS] floats: tie probe 259/256 in bf16 -> 1.015625
+[   170.8s] [PASS] floats: fp16 cliff (1e-8 and 2.9e-8 -> 0; 3e-8 -> min subnormal; bf16 keeps 1e-8)
+[   170.8s] [PASS] floats: loss scaling rescues 1e-8 into the subnormal range, but 1e-11 still dies
+[   170.8s] [PASS] memory: measured training state = exactly 16 bytes/weight
+[   170.8s] [PASS] memory: scale table re-derived (2B->29.8GiB ... 120B->1788GiB)
+[   170.8s] [PASS] memory: 80GB ceiling ~ 5.4B params
+[   170.8s] audit: PASS
+[   170.8s] verdict: PASS

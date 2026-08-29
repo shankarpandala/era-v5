@@ -46,13 +46,13 @@ claimed number below is re-derived from the committed artifacts by an independen
 > binding on just 4 of 110 settled steps) — the realized scale factor at the spike,
 > **×0.119**, is coincidentally the session's own worked number.
 >
-> **Task 5 in one line:** this container does **39,074 tokens/s** at d = 128 → achieved
-> 115.3 GFLOP/s against a measured 471 GFLOP/s attainable-GEMM peak = **24.5%
+> **Task 5 in one line:** this container does **54,591 tokens/s** at d = 128 → achieved
+> 161.1 GFLOP/s against a measured 528 GFLOP/s attainable-GEMM peak = **30.5%
 > utilization** (a *flattering* denominator, and the README says so); the famous 6N is
 > within **+0.34%** of the exact 2,951,424 FLOPs/token *only by accidental
 > cancellation* (at T = 32 it is +11.5% off, at T = 512, −28.3%); and the distance to
-> 40% is not mystery overhead — matmuls own only **45%** of step time, and widening the
-> model to d = 512 lifts the same loop to **50.2%**.
+> 40% is not mystery overhead — matmuls own only **47%** of step time, and widening the
+> model to d = 512 lifts the same loop to **57.1%**.
 >
 > **Task 6 in one line:** 0.1 by hand is `0|01111011|10011001100110011001101` (fp32,
 > rel err 1.5 × 10⁻⁸), `0|01111011|1001101` (bf16, 9.8 × 10⁻⁴), `0|0011|101` (fp8
@@ -74,7 +74,7 @@ python -m pytest tests -q          # 36 invariant tests (they exec the notebook'
 ```
 
 **Definition of done** (all three green): `pytest` passes, `--verify-only` prints
-`verdict: PASS` (63 checks), and every deterministic number in this README is
+`verdict: PASS` (64 checks), and every deterministic number in this README is
 re-derived from [`submission_artifacts/results.json`](submission_artifacts/results.json)
 by the audit — machine-specific *timings* (tokens/s, GFLOP/s, MFU) are quoted from the
 committed run and audited only for arithmetic consistency, never verbatim (the
@@ -86,11 +86,11 @@ Session-9 convention for measured-vs-analytic claims).
 
 | # | requirement | where | the number |
 |---|---|---|---|
-| 1 | every tensor shape in one step, one line per dimension | notebook §3 | **31** tensors traced fwd+loss, every parameter's grad (same shape), Adam's 2×493,568 state values |
+| 1 | every tensor shape in one step, one line per dimension | notebook §3 | **39** tensors traced fwd+loss, every parameter's grad (same shape), Adam's 2×493,568 state values |
 | 2 | verify one gradient by hand | §4 | toy chain **64** three ways; real model fd vs `backward()` rel err **4.2e-10**; whole gradient via directional derivative **1.3e-8** |
 | 3 | break gradient accumulation on purpose, plot both curves | §5 | mirror **2.6000** vs **3.0000** (15.4%); trained arms **0.0424** vs **0.0714**, 3 seeds, both curves + analytic asymptotes on one plot |
 | 4 | grad norm every step; one step where it moved before the loss | §6 | spike **16.3×** at step 150, known pre-update; clean-probe damage (+0.654) exists only post-update; EMA wiggle +3.9% |
-| 5 | my own MFU, honestly, and the distance to 40% | §7 | **24.5%** of measured attainable GEMM (bias direction stated); matmul time share 45%; d-sweep 11.4 → 50.2% |
+| 5 | my own MFU, honestly, and the distance to 40% | §7 | **30.5%** of measured attainable GEMM (bias direction stated); matmul time share 47%; d-sweep 16.5 → 57.1% |
 | 6 | 0.1 in fp32/bf16/fp8 E4M3 bits, by hand; pick a precision | §8 | three bit strings above + fp16 for contrast; torch agrees bit-for-bit; choice: **bf16**, from the measured cliff |
 | + | the session's 16 bytes/weight, measured | §9 | **7,897,088** bytes = exactly 16 × 493,568; 2B → 29.8 GiB … 120B → 1,788 GiB; 80 GB ⇒ ~5.4B ceiling |
 
@@ -100,7 +100,7 @@ best sections exist because a reviewer or a measurement destroyed the first desi
 
 ## 1. One step, every tensor (§3)
 
-The traced step prints 31 tensors in creation order — `tokens (8, 128)` [batch
+The traced step prints 39 tensors in creation order — `tokens (8, 128)` [batch
 sequences × positions] through `block0.attn.scores (8, 4, 128, 128)` [… query position
 × key position] to `logits (8, 128, 259)` [one score per vocabulary id], the shifted
 pair `(8, 127, 259)`/`(8, 127)`, and the flattened views `(1016, 259)`/`(1016,)` where
@@ -136,7 +136,9 @@ head) all agree < 10⁻⁵; a random-unit-vector directional derivative certifie
 and returns exactly 0.0 at five of ten ε values (complete cancellation: the loss
 difference falls under one fp32 ulp) — while fp32 `backward()` itself matches the fp64
 reference to **3.9 × 10⁻⁷**. The precision limit is in the measuring stick, not the
-gradient. Both sweeps share one figure (`plots/fd_ucurve.png`).
+gradient. Both sweeps share one figure:
+
+![the nudge, done live](submission_artifacts/plots/fd_ucurve.png)
 
 ## 3. Gradient accumulation, broken on purpose (§5)
 
@@ -169,7 +171,9 @@ the buggy arm parks *on* its analytic asymptote; probes read **0.499/0.452/0.499
 the truth is 50%. And on the doc-weighted metric the sign **flips** (buggy 0.051 beats
 correct 0.137): the bug is not damage, it is a *substituted objective* — which is
 exactly why no exception fires. Both curves, the per-seed gap, and the belief probe
-share one figure (`plots/accum_gap.png`) with the analytic lines drawn in.
+share one figure, with the analytic lines drawn in:
+
+![both curves, together](submission_artifacts/plots/accum_gap.png)
 
 **5c″ — found while building this, kept because it is real:** the first version of 5c
 drew each step's documents 50/50 and the *correct* arm converged to p ≈ 0.67, not 0.5.
@@ -241,9 +245,10 @@ guard's uniform (disclosed, and it *helps* here: C's pre-incident probe 2.879 be
 B's 3.043) — while the loose cap binds on **4/110** settled steps and still contains
 the incident: the session's safety valve. Both also clip the init transient (step-0
 gradients are every run's first anomaly). A gentler incident (corpus bytes with order
-shuffled) is run too: norm ratio 1.07×, damage +0.007 — incidents come in sizes, and
-the norm ranks them before any loss can. Figure: `plots/gradnorm_lead.png` (norm / 
-dashboard view / clean probe, all arms).
+shuffled) is run too: norm ratio 1.07×, damage +0.0065 — incidents come in sizes, and
+the norm ranks them before any loss can.
+
+![the alarm, the dashboard, the damage](submission_artifacts/plots/gradnorm_lead.png)
 
 ## 5. MFU, computed honestly (§7)
 
@@ -251,19 +256,20 @@ dashboard view / clean probe, all arms).
 6·(12·L·d² + V·d) + 12·L·T·d = **2,951,424** per token (fwd+bwd), cross-checked
 against `torch.profiler`'s own per-op 2mnk count on a real forward pass (984,448 vs
 983,808 per token, 0.07%). Against it, four 6N conventions: 6·N_total **+0.34%** — but
-*only by accidental cancellation* (13.4% of parameters — position table + LayerNorms —
-do zero matmul FLOPs, offsetting the ignored attention term at this T; at T=32 the same
-convention is **+11.5%** off, at T=512 **−28.3%**); 6·(N−tok_emb) −6.4%;
-6·(N−both embeddings) −13.1%; 6·N_matmul −13.3%. Pick a convention silently and two
-people "measuring MFU" on the same run disagree by a quarter.
+*only by accidental cancellation*: 13.6% of parameters (67,200 — the untied token
+embedding, the position table, and the LayerNorms) do zero matmul FLOPs, and
+6 × 67,200 − 12·L·T·d = 6·N_total − exact is asserted as an *identity*; at T=32 the
+same convention is **+11.5%** off, at T=512 **−28.3%**; 6·(N−tok_emb) −6.4%;
+6·(N−both embeddings) −13.1%; 6·N_matmul −13.3%. Pick a convention silently and two people "measuring MFU" on the same run disagree by
+a seventh at this T — and by more than a quarter at T = 512.
 
 **The measurement.** tokens/s = total processed tokens (B·T = 1,024/step; 1,016
-scored — both printed) over the wall-clock of a post-warmup window: **39,074 tok/s**
-(median step 25.5 ms, IQR 1.4 ms). Peak = best sustained fp32 GEMM this container will
+scored — both printed) over the wall-clock of a post-warmup window: **54,591 tok/s**
+(median step 18.8 ms, IQR 0.4 ms). Peak = best sustained fp32 GEMM this container will
 do (n ∈ {1024, 2048, 4096}, best-of-repeats, preallocated out, measured before *and*
-after the training window): **471 GFLOP/s**. Achieved 115.3 GFLOP/s →
+after the training window): **528 GFLOP/s**. Achieved 161.1 GFLOP/s →
 
-**utilization vs attainable GEMM = 24.5%** (6N convention: 24.6%)
+**utilization vs attainable GEMM = 30.5%** (6N convention: 30.6%)
 
 — named that way because the denominator *flatters*: a good GEMM reaches only ~70–90%
 of silicon peak, so true MFU against the industry's theoretical-peak convention is
@@ -275,17 +281,17 @@ is half of any MFU claim.
 
 **The distance to 40%, measured rather than folklored.** The GPU explanations (kernel
 launches, fusion) mostly do not apply on CPU; the op-level profile does: FLOP-counted
-matmul ops (`aten::mm` 38.4%, `aten::bmm` 6.4%) own **45%** of step time — softmax,
-LayerNorm, GELU, AdamW (4.3%) and glue own the rest — so 45% × (small-matmul
+matmul ops (`aten::mm` 39.5%, `aten::bmm` 7.0%) own **47%** of step time — copies,
+softmax, LayerNorm, GELU, AdamW (4.0%) and glue own the rest — so 47% × (small-matmul
 efficiency) bounds the utilization before a single FLOP is "wasted"; the measured
-24.5% implies the matmuls themselves run at ~54% of the 4096² GEMM rate. And the
+30.5% implies the matmuls themselves run at ~65% of the 4096² GEMM rate. And the
 diagnosis is confirmed by turning one knob: same loop, same T, same B, d = 64 → 512
-gives **11.4% → 24.5% → 32.5% → 50.2%**, straight into the session's healthy band. The
+gives **16.5% → 29.9% → 47.0% → 57.1%**, straight into the session's healthy band. The
 distance to 40% is not mystery overhead; it is matrices that are too small
 (`plots/mfu.png`). The four session traces — loss, grad norm, tokens/s, MFU — are
 logged per-step on one instrumented run (`plots/four_traces.png`); instrumentation
-itself costs ~5% throughput (37,216 vs 39,074 tok/s), which is why the headline came
-from the uninstrumented loop.
+itself cost ~2% throughput on this run (53,379 vs 54,591 tok/s), which is why the
+headline came from the uninstrumented loop.
 
 ## 6. 0.1, written out by hand (§8)
 
@@ -355,7 +361,7 @@ section above contains their fingerprints; the load-bearing changes:
    instead of a silent optimizer swap.
 3. **6N was exposed as accidental cancellation** (+0.34% at T=128 masking ±11–28%
    elsewhere); "expect low single digits of MFU on CPU" was deleted as empirically
-   false *before* being committed (measured: 24.5%, rising to 50.2% at d=512), and the
+   false *before* being committed (measured: 30.5%, rising to 57.1% at d=512), and the
    gap explanation was rebuilt from the op-level profile instead of GPU folklore.
 4. **Two wrong numbers in the planned float table** (fp32's rel/abs confusion, fp16's
    error attributed to bf16) were corrected pre-commit; the fp16 flush-to-zero
@@ -389,8 +395,8 @@ assignment-10/
 
 ## 10. Reproduce
 
-`python run_demo.py` re-executes the notebook headlessly and re-audits (~3.5 min CPU;
-the committed run: 210 s on a 4-thread container). `--fast` shrinks every budget
+`python run_demo.py` re-executes the notebook headlessly and re-audits (~2.5–4 min
+CPU; the committed run: 144 s on a 4-thread container). `--fast` shrinks every budget
 (training-outcome assertions downgrade to loud warnings; the audit is calibrated for
 full budgets). `--verify-only` audits the committed artifacts in ~5 s. In Colab: open
 the badge, `Runtime → Run all`. Every *deterministic* number reproduces bit-identically

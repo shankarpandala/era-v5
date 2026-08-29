@@ -38,5 +38,5 @@
  "torch": "2.13.0+cpu",
  "threads": 4,
  "cpu_count": 4,
- "cpu_name": "Intel(R) Xeon(R) Processor @ 2.80GHz"
+ "cpu_name": "Intel(R) Xeon(R) Processor @ 2.10GHz"
 }

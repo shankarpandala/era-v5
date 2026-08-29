@@ -280,6 +280,12 @@ def run(check) -> int:
        all(_close(v["err_pct"],
                   (v["flops"] - exact) / exact * 100, rel=1e-6)
            for v in mf["conventions"].values()))
+    n_all = R["model"]["n_params"]
+    ck("MFU: cancellation identity 6*zero_flop - 12LTd == 6N - exact, "
+       "with zero_flop = tok_emb + pos_emb + LayerNorms",
+       mf["zero_flop_params"] == V * d + cfg["max_pos"] * d + (2 * 2 * L + 2) * d
+       and 6 * n_all - exact == 6 * mf["zero_flop_params"] - 12 * L * T * d,
+       f"zero_flop={mf['zero_flop_params']:,}")
     ck("MFU: 6*N_total within 1.5% at T=128 but drifts with T",
        abs(mf["conventions"]["6 x N_total"]["err_pct"]) < 1.5
        and abs(mf["t_dependence"]["32"]) > 5

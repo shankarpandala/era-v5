@@ -89,7 +89,8 @@ def main() -> int:
                     help="skip execution; audit the committed artifacts")
     args = ap.parse_args()
 
-    log = RunLog(ART / "run.log")
+    # --verify-only must not clobber the committed full-run evidence it audits
+    log = RunLog(ART / "run.log", to_file=not args.verify_only)
     log.say(f"assignment-10 run_demo | mode="
             f"{'verify-only' if args.verify_only else 'fast' if args.fast else 'full'}")
 
