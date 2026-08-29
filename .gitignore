@@ -1,10 +1,11 @@
 # Logs
 logs
 *.log
-# ...except the assignment-6/7/9 execution logs, which are required deliverables
+# ...except the assignment-6/7/9/10 execution logs, which are required deliverables
 !assignment-6/submission_artifacts/run.log
 !assignment-7/submission_artifacts/run.log
 !assignment-9/submission_artifacts/run.log
+!assignment-10/submission_artifacts/run.log
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*

@@ -1,0 +1,42 @@
+{
+ "vocab": 259,
+ "d_model": 128,
+ "n_layer": 2,
+ "n_head": 4,
+ "max_pos": 256,
+ "T": 128,
+ "B": 8,
+ "lr": 0.003,
+ "hz_d": 64,
+ "hz_T": 40,
+ "steps_accum": 400,
+ "accum_K": 4,
+ "accum_seeds": [
+  1337,
+  1338,
+  1339
+ ],
+ "steps_norm": 300,
+ "inj_step": 150,
+ "eval_every": 10,
+ "mfu_warmup": 8,
+ "mfu_steps": 30,
+ "gemm_sizes": [
+  1024,
+  2048,
+  4096
+ ],
+ "widths": [
+  64,
+  128,
+  256,
+  512
+ ],
+ "seed": 1337,
+ "device": "cpu",
+ "fast": false,
+ "torch": "2.13.0+cpu",
+ "threads": 4,
+ "cpu_count": 4,
+ "cpu_name": "Intel(R) Xeon(R) Processor @ 2.10GHz"
+}
