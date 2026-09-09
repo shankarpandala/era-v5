@@ -22,6 +22,7 @@ export const ASSIGNMENTS = [
   { n: 8, text: 'Assignment 8', desc: 'Attention timeline', page: 'assignment-8/' },
   { n: 9, text: 'Assignment 9', desc: 'Loss harness notebook (README)', href: `${GITHUB_TREE}/assignment-9` },
   { n: 10, text: 'Assignment 10', desc: 'Training loop notebook (README)', href: `${GITHUB_TREE}/assignment-10` },
+  { n: 11, text: 'Assignment 11', desc: 'Optimizers & LR schedules notebook (README)', href: `${GITHUB_TREE}/assignment-11` },
 ]
 
 function ChevronIcon({ open }) {

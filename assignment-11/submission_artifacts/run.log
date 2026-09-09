@@ -1,0 +1,129 @@
+[     0.0s] assignment-11 run_demo | mode=full
+[     0.1s] executing optimizers.ipynb top to bottom (full budgets) ...
+[  3489.1s] notebook executed in 3488.9s
+[  3489.1s] executed notebook written back to optimizers.ipynb (1331 KiB)
+[  3489.1s] [PASS] notebook executes top to bottom
+[  3489.1s] [PASS] notebook: every code cell executed
+[  3489.1s] [PASS] notebook: execution counts monotone (one top-to-bottom run)
+[  3489.1s] [PASS] notebook: no error outputs
+[  3489.1s] [PASS] config: committed run is a full run (not FAST)
+[  3489.1s] [PASS] config: an accelerator trained the sweeps, the CPU did the checks | device=mps
+[  3489.1s] [PASS] notebook: every recorded outcome check passed, or failed and is acknowledged in the README | 10 checks; failed: ['the per-tensor-median detector should track W within 25% in every arm']
+[  3489.1s] [PASS] data: corpus files pinned by sha256 and every language holds out blocks
+[  3489.1s] [PASS] data: held-out share 8.3% by construction (every 12th block)
+[  3489.1s] [PASS] data: eval targets = blocks x 32 windows x (T-1), every byte once
+[  3489.1s] [PASS] data: a 300-step run is under one epoch (no memorization regime) | 0.52
+[  3489.1s] [PASS] data: verbatim overlap falls with window length (boilerplate, not leakage)
+[  3489.1s] [PASS] devices: 20-step cpu-vs-accelerator per-step loss agreement at fp32 rounding (< 1e-5) | 1.7e-07
+[  3489.1s] [PASS] devices: same-seed replicate on the accelerator is bitwise
+[  3489.1s] [PASS] devices: long-horizon cpu-vs-accelerator difference inside the seed spread | 0.0041 vs spread 0.0419
+[  3489.1s] [PASS] adam: the five-step table re-derived by an independent implementation
+[  3489.1s] [PASS] adam: torch agrees to rounding in float64 and to >= 5 decimals in float32 | fp64 3e-16, fp32 6 decimals
+[  3489.1s] [PASS] adam: first step is lr to eps/|g1|; uncorrected first step = (1-b1)/sqrt(1-b2)
+[  3489.1s] [PASS] adam: v_hat_5 tracks the plain mean of g^2 (beta2 = 0.999)
+[  3489.1s] [PASS] adam: scale ladder — invariance intact at x1000, broken at x1e-8, step-1 |u| = |g|/(|g|+eps)
+[  3489.1s] [PASS] adam: Keras eps-hat differs above the fp32 floor, optax eps_root below it
+[  3489.1s] [PASS] adam: AdamW and Adam+L2 by hand match their torch classes; L2 delivers MORE decay
+[  3489.1s] [PASS] adam: on the real model L2-in-Adam shrinks ||W|| far more than AdamW at the same lambda
+[  3489.1s] [PASS] bias: r(t) table for beta2=0.999 re-derived (peak, 10%/1% bands)
+[  3489.1s] [PASS] bias: r(t) table for beta2=0.95 re-derived (peak, 10%/1% bands)
+[  3489.1s] [PASS] bias: crossover beta2 = 1-(1-b1)^2 gives r(1) = 1 exactly
+[  3489.1s] [PASS] bias: HandAdamW == torch.optim.AdamW bitwise on cpu fp32 and to rounding in fp64
+[  3489.1s] [PASS] bias: same-state uncorrected/corrected update ratio == r(t) (beta2=0.999, re-derived from curves) | max rel dev 1.2e-02
+[  3489.1s] [PASS] bias: step-1 multipliers of the two arms are in ratio r(1) (beta2=0.999)
+[  3489.1s] [PASS] bias: paired-gap t_star re-derived from committed evals (beta2=0.999) | t_star=None
+[  3489.1s] [PASS] bias: paired-gap t_star_warmup re-derived from committed evals (beta2=0.999) | t_star_warmup=None
+[  3489.1s] [PASS] bias: same-state uncorrected/corrected update ratio == r(t) (beta2=0.95, re-derived from curves) | max rel dev 2.1e-03
+[  3489.1s] [PASS] bias: step-1 multipliers of the two arms are in ratio r(1) (beta2=0.95)
+[  3489.1s] [PASS] bias: paired-gap t_star re-derived from committed evals (beta2=0.95) | t_star=None
+[  3489.1s] [PASS] bias: paired-gap t_star_warmup re-derived from committed evals (beta2=0.95) | t_star_warmup=50
+[  3489.1s] [PASS] bias: after t* the residual gap's sign is NOT unanimous across seeds (indistinguishable from zero), and stays under the tolerance | max |gap| after t* 0.0180
+[  3489.1s] [PASS] bias: the 'hot for 30 steps' counterfactual reproduces the uncorrected damage, paired over seeds (|C-hot - U| < 0.1 nats on the mean) | per seed [-0.01, -0.084, 0.101]
+[  3489.1s] [PASS] bias: the beta2 = 0.999 gap plateaus (its peak is not the last eval) and never falls below 0.5 nats after step 100 | peak +1.279 @ 2
+[  3489.1s] [PASS] bias: measured-multiplier criterion re-derived (within 10% for 20 steps: 0.95 yes, 0.999 never)
+[  3489.1s] [PASS] bias: at beta2 = 0.95 with warmup the loss stops caring within 100 steps; at 0.999 it never does inside the run
+[  3489.1s] [PASS] bias: at beta2 = 0.95 WITHOUT warmup the uncorrected arm leads (its r(t) < 1 start is a warmup) | late gap -0.154
+[  3489.1s] [PASS] bias: at beta2 = 0.999 the uncorrected arm inflates the weight norm > 1.2x and ends far behind
+[  3489.1s] [PASS] bias: the 'hot for 30 steps' counterfactual reproduces the damage (same offset within 0.3 nats of U)
+[  3489.1s] [PASS] bias: pre-divergence train losses of C and U identical at step 1 (same init, same stream)
+[  3489.1s] [PASS] ratio: both blind detectors re-derived from the committed curves (W50-s1337) | W=50: global 51, per-tensor 63
+[  3489.1s] [PASS] ratio: per-tensor-median detector within the pre-registered 25% of W (W50-s1337) [ACKNOWLEDGED FAILURE, reported in README §3] | +26%
+[  3489.1s] [PASS] ratio: both blind detectors re-derived from the committed curves (W100-s1337) | W=100: global 177, per-tensor 102
+[  3489.1s] [PASS] ratio: per-tensor-median detector within the pre-registered 25% of W (W100-s1337) | +2%
+[  3489.1s] [PASS] ratio: both blind detectors re-derived from the committed curves (W100-s1338) | W=100: global 241, per-tensor 106
+[  3489.1s] [PASS] ratio: per-tensor-median detector within the pre-registered 25% of W (W100-s1338) | +6%
+[  3489.1s] [PASS] ratio: both blind detectors re-derived from the committed curves (W100-s1339) | W=100: global 210, per-tensor 103
+[  3489.1s] [PASS] ratio: per-tensor-median detector within the pre-registered 25% of W (W100-s1339) | +3%
+[  3489.1s] [PASS] ratio: both blind detectors re-derived from the committed curves (W200-s1337) | W=200: global 223, per-tensor 223
+[  3489.1s] [PASS] ratio: per-tensor-median detector within the pre-registered 25% of W (W200-s1337) | +12%
+[  3489.1s] [PASS] ratio: the per-tensor-median detected step moves with W | {50: 63, 100: 102, 200: 223}
+[  3489.1s] [PASS] ratio: detector returns exactly W on a synthetic ramp-then-flat series (W=50)
+[  3489.1s] [PASS] ratio: detector returns exactly W on a synthetic ramp-then-flat series (W=100)
+[  3489.1s] [PASS] ratio: detector returns exactly W on a synthetic ramp-then-flat series (W=200)
+[  3489.1s] [PASS] ratio: S_lr at W re-derived from the committed lr trace (about 1/W)
+[  3489.1s] [PASS] ratio: S_r and S_rho re-derived per layer from the committed decomposition
+[  3489.1s] [PASS] ratio: at the workhorse configuration the warmup kink is visible in the embeddings/ln_f AND in every block matrix | hidden 0.89..2.97, emb/ln_f 2.29
+[  3489.1s] [PASS] ratio: decoupled decay is a small, separated correction (|wd share of |dw|| < 1% for every tensor at W)
+[  3489.1s] [PASS] ratio: the tok_emb step-1 coherence equals sqrt(rows touched by batch 1 / V)
+[  3489.1s] [PASS] ratio: per-seed attribution re-derived for every W=100 seed (S_rho from the committed curves)
+[  3489.1s] [PASS] ratio: the block matrices show the kink in every seed as a group (seed means > 0.5) and 7+ of 8 exceed 0.5 in every seed | seed means [1.48, 1.64, 2.27], 7/8
+[  3489.1s] [PASS] ratio: counterfactual (width 128, lr 1e-3) attribution re-derived from its committed curves | visible hidden mean 0.09 vs workhorse 1.48
+[  3489.1s] [PASS] ratio: step-1 identities — rho(1)*sigma/lr(1) = 1 for dense matrices, coherence(1) = 1, |dw_adam| = lr*u
+[  3489.1s] [PASS] ratio: rho re-derived = dn/wn from the committed parts, for every layer and step
+[  3489.1s] [PASS] schedules: committed lr traces re-derived (cosine to 10%, WSD with 20% linear decay)
+[  3489.1s] [PASS] schedules: at the stop step cosine is at 0.372 x peak and WSD at the peak
+[  3489.1s] [PASS] schedules: WSD has more lr-area to the stop step than cosine
+[  3489.1s] [PASS] schedules: per-seed paired differences re-derived from the committed per-seed losses
+[  3489.1s] [PASS] schedules: the 'stop now' decision names the lower mean loss at the stop step
+[  3489.1s] [PASS] schedules: the stop-step gap moves toward cosine as the peak lr rises (regime rule) | ['+0.033', '-0.017', '-0.072', '-0.096', '-0.133']
+[  3489.1s] [PASS] schedules: extension decision consistent with the committed extension losses; the WSD trunk's extension reproduces the planned run (same seed) to 1e-4 | wsd ext - planned = +0.00e+00
+[  3489.1s] [PASS] schedules: each schedule's own best peak lr at the stop step re-derived from the ladder means
+[  3489.1s] [PASS] schedules: the +30 / +60 cooldown decisions and margins re-derived from the committed table | +30 +0.0241, +60 +0.0078
+[  3489.1s] [PASS] schedules: the cosine-to-zero control is worse than cosine-to-10% at the horizon (progress-limited run)
+[  3489.1s] [PASS] schedules: every cooldown improves on its own checkpoint (the anneal always pays)
+[  3489.1s] [PASS] sweep: width 256 seed 1337 vertex re-derived (argmin 2^-9, interior) | vertex -8.778749853672286
+[  3489.1s] [PASS] sweep: width 256 seed 1338 vertex re-derived (argmin 2^-8.5, interior) | vertex -8.646562035599086
+[  3489.1s] [PASS] sweep: width 256 seed 1339 vertex re-derived (argmin 2^-9, interior) | vertex -9.028893277856312
+[  3489.1s] [PASS] sweep: width 256 argmin at 75% of the run within half an octave of the final one, optimum interior | {'150': -9.5, '225': -8.5, '300': -9.0}
+[  3489.1s] [PASS] sweep: width 512 seed 1337 vertex re-derived (argmin 2^-10, interior) | vertex -10.004635648567772
+[  3489.1s] [PASS] sweep: width 512 seed 1338 vertex re-derived (argmin 2^-9.5, interior) | vertex -9.724270833703796
+[  3489.1s] [PASS] sweep: width 512 seed 1339 vertex re-derived (argmin 2^-10, interior) | vertex -9.875990722682443
+[  3489.1s] [PASS] sweep: width 512 argmin at 75% of the run within half an octave of the final one, optimum interior | {'150': -10.0, '225': -10.0, '300': -10.0}
+[  3489.1s] [PASS] sweep: width 1024 seed 1337 vertex re-derived (argmin 2^-10.5, interior) | vertex -10.508654004651758
+[  3489.1s] [PASS] sweep: width 1024 seed 1338 vertex re-derived (argmin 2^-10, interior) | vertex -10.249459295713425
+[  3489.1s] [PASS] sweep: width 1024 seed 1339 vertex re-derived (argmin 2^-10, interior) | vertex -10.460257903724122
+[  3489.1s] [PASS] sweep: width 1024 argmin at 75% of the run within half an octave of the final one, optimum interior | {'150': -10.5, '225': -10.5, '300': -10.5}
+[  3489.1s] [PASS] sweep: regression slope, intercept, sigma and the 4096 prediction re-derived from the committed (width, seed) vertices | slope -0.794, n=9
+[  3489.1s] [PASS] sweep: prediction-interval half-width and the total band re-derived
+[  3489.1s] [PASS] sweep: the optimum falls with width and the slope's 95% CI meets the theory bracket [-1, -0.5] | CI [-0.99, -0.60]
+[  3489.1s] [PASS] sweep: theory bracket re-derived from the widest measured vertex
+[  3489.1s] [PASS] sweep: the pre-registered workhorse lr sits within one grid step of the width-256 optimum
+[  3489.1s] [PASS] sweep: width 256 basin penalties centred on the argmin and re-derived from the mean curve | centre 2^-9: {'centre_log2': -9.0, 'div2': 4.23877474414085, 'x2': 3.606016357584574}
+[  3489.1s] [PASS] sweep: width 256: no run diverged
+[  3489.1s] [PASS] sweep: width 512 basin penalties centred on the argmin and re-derived from the mean curve | centre 2^-10: {'centre_log2': -10.0, 'div2': 5.892630067080917, 'x2': 4.462319621968214}
+[  3489.1s] [PASS] sweep: width 512: no run diverged
+[  3489.1s] [PASS] sweep: width 1024 basin penalties centred on the argmin and re-derived from the mean curve | centre 2^-10.5: {'centre_log2': -10.5, 'div2': 4.423378032215952, 'x2': 9.91873862196664}
+[  3489.1s] [PASS] sweep: width 1024: no run diverged
+[  3489.1s] [PASS] sweep: at the widest width x2 costs more than /2, and the recommended value is below the point estimate | {'centre_log2': -10.5, 'div2': 4.423378032215952, 'x2': 9.91873862196664}
+[  3489.1s] [PASS] sweep: the slope's 95% CI is stated as it is (between the two exponents; the flag says whether it excludes both)
+[  3489.1s] [PASS] sweep: width 2048 spot check (five half-octave points) re-derived against its pre-registered criterion | vertex -11.317953079907372, pre-registered -11.29 ± 0.68 -> holds
+[  3489.1s] [PASS] sweep: the pre-registered 2048 prediction is the 3-width regression evaluated at log2(2048)
+[  3489.1s] [PASS] sweep: the four-width refit re-derived
+[  3489.1s] [PASS] sweep: horizon counterfactual drift per doubling re-derived
+[  3489.1s] [PASS] fair: HandLion matches Algorithm 2 to 1e-12 and the mis-ordered port does not
+[  3489.1s] [PASS] fair: adamw argmin re-derived from its 10-point grid, interior
+[  3489.1s] [PASS] fair: sgd argmin re-derived from its 11-point grid, interior
+[  3489.1s] [PASS] fair: lion argmin re-derived from its 11-point grid, interior
+[  3489.1s] [PASS] fair: the three verdicts re-derived through a pure-python fair_compare (same refusal rules) | {'fair_sgd': 'A', 'fair_lion': 'A', 'fair_sgd_vs_lion': 'B'}
+[  3489.1s] [PASS] fair: confirmation seeds are disjoint from the selection seed
+[  3489.1s] [PASS] fair: naive A exaggerates each challenger's deficit (gap at AdamW's lr > fair gap + 0.05)
+[  3489.1s] [PASS] fair: naive B — at the 3e-4 default AdamW loses to both tuned challengers (the false-positive direction)
+[  3489.1s] [PASS] fair: naive B at the 1e-3 default re-derived from the committed means
+[  3489.1s] [PASS] fair: unclipped deltas are same-seed comparisons, and SGD re-tuned WITHOUT clipping is recorded with an interior optimum | unclipped-tuned SGD 1.7950 at 2^-4.5
+[  3489.1s] [PASS] fair: Lion's paper-rule ports and its decay robustness are committed (3x end near the tuned optimum, 10x end far off)
+[  3489.1s] [PASS] fair: the refusal paths fire (edge, config mismatch, inside the noise)
+[  3489.1s] [PASS] fair: clipping binds on a substantial share of steps in every arm, and unclipped SGD at its clipped optimum diverges or falls far behind
+[  3489.1s] [PASS] fair: weight decay copied verbatim into SGD's units hurts; the matched convention does not
+[  3489.1s] [PASS] fair: both challengers' best lr differ from AdamW's by >= 2x (the units really differ)
+[  3489.1s] audit: PASS
+[  3489.1s] verdict: PASS
