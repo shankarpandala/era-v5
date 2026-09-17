@@ -1,0 +1,1033 @@
+{
+  "config": {
+    "world_size": 32,
+    "dims": [
+      32,
+      64,
+      64,
+      16
+    ],
+    "local_batch": 8,
+    "steps": 40,
+    "learning_rate": 0.01,
+    "seed": 12,
+    "workers": 32
+  },
+  "model": {
+    "parameters": 7312,
+    "padded_parameters": 7328,
+    "padding_parameters": 16,
+    "layers": [
+      {
+        "input_size": 32,
+        "output_size": 64,
+        "parameter_count": 2112,
+        "padded_count": 2112,
+        "shard_count": 66
+      },
+      {
+        "input_size": 64,
+        "output_size": 64,
+        "parameter_count": 4160,
+        "padded_count": 4160,
+        "shard_count": 130
+      },
+      {
+        "input_size": 64,
+        "output_size": 16,
+        "parameter_count": 1040,
+        "padded_count": 1056,
+        "shard_count": 33
+      }
+    ],
+    "dtype": "float64",
+    "itemsize": 8,
+    "global_batch": 256
+  },
+  "accounting": {
+    "memory": "Exact ndarray.nbytes of rank-owned persistent arrays and explicitly tracked transient semantic buffers; reported rank peak is maximum across ranks.",
+    "excluded_from_peak": "Input/target datasets, coordinator collective scratch, verification snapshots, Python objects, NumPy/BLAS internal workspaces, allocator overhead and process RSS.",
+    "transient_components": "Activation outputs (all layers cached until backward finishes), gathered layer, local layer gradient, old/new backprop signals, tanh derivative workspace, two Adam work buffers. Component peaks need not occur simultaneously.",
+    "dtype": "All actual training arrays are float64: parameter 8, gradient 8, Adam first+second moments 16 bytes per element. There is no separate master parameter copy.",
+    "padding": "Each packed layer [weights,bias] is padded to a multiple of world_size. Padding is included in storage, communication and Adam element updates; dense GEMM FLOPs exclude padding.",
+    "communication": "Central in-process numerical collectives; ideal-ring sent bytes are an analytic counter. No NCCL, MPI, real distributed workers or physical GPU allocations.",
+    "stage3_schedule": "Gather one layer for forward, release; gather it again for backward, reduce-scatter its gradient, release. No prefetch, communication overlap or activation checkpointing.",
+    "timing": "Measured CPU wall time includes Python/thread/collective coordination. Does not predict hardware GPU speedup; phases exclude small bookkeeping and executor startup/shutdown overhead.",
+    "loss": "Each loss_curve entry is pre-update MSE over the fixed global batch; final_loss is post-final-update MSE, evaluated outside timing.",
+    "threads": "Virtual ranks are state objects scheduled on ThreadPoolExecutor, not a guarantee of one OS thread per rank. BLAS may use its own threads; set BLAS thread limits before importing NumPy for repeatable demos."
+  },
+  "environment": {
+    "python": "3.13.13",
+    "numpy": "2.4.4",
+    "matplotlib": "3.11.1",
+    "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+    "host_logical_cpus": 15
+  },
+  "reference": {
+    "loss_curve": [
+      0.516604368292318,
+      0.3053546973858158,
+      0.19254680934556428,
+      0.1356697337278649,
+      0.10632236796713862,
+      0.08909599340984228,
+      0.07724303938880261,
+      0.06810075115197506,
+      0.060677264056938296,
+      0.05483436652003108,
+      0.05066750015100191,
+      0.04788938303748035,
+      0.045791089277013586,
+      0.04369539403434702,
+      0.041303532872297224,
+      0.038680281830623234,
+      0.03606785237129702,
+      0.033704014421590336,
+      0.03170334459311713,
+      0.030038466720359917,
+      0.028608499132274652,
+      0.0273157369183259,
+      0.02609886089485316,
+      0.02493708419526567,
+      0.02384027604174988,
+      0.022825731107398942,
+      0.021891374532410107,
+      0.021006749252582953,
+      0.020136153382316217,
+      0.01927495047814761,
+      0.018455909466948542,
+      0.017713834157665382,
+      0.017051698269506685,
+      0.01644740530408694,
+      0.015882417553004798,
+      0.015350835459143208,
+      0.014847705065904448,
+      0.01436495396572151,
+      0.013900200539075265,
+      0.013459250420036671
+    ],
+    "final_loss": 0.01304721693812243
+  },
+  "stages": [
+    {
+      "stage": 0,
+      "name": "DDP baseline",
+      "loss_curve": [
+        0.516604368292318,
+        0.3053546973858158,
+        0.19254680934556423,
+        0.13566973372786492,
+        0.10632236796713862,
+        0.08909599340984228,
+        0.07724303938880263,
+        0.06810075115197506,
+        0.06067726405693829,
+        0.05483436652003109,
+        0.05066750015100191,
+        0.04788938303748035,
+        0.045791089277013586,
+        0.04369539403434702,
+        0.041303532872297224,
+        0.038680281830623234,
+        0.036067852371297025,
+        0.03370401442159033,
+        0.031703344593117126,
+        0.030038466720359917,
+        0.028608499132274652,
+        0.0273157369183259,
+        0.02609886089485316,
+        0.02493708419526567,
+        0.02384027604174988,
+        0.022825731107398942,
+        0.021891374532410107,
+        0.021006749252582956,
+        0.020136153382316217,
+        0.01927495047814761,
+        0.018455909466948542,
+        0.01771383415766538,
+        0.017051698269506685,
+        0.01644740530408694,
+        0.015882417553004798,
+        0.015350835459143206,
+        0.014847705065904446,
+        0.01436495396572151,
+        0.013900200539075265,
+        0.013459250420036671
+      ],
+      "final_loss": 0.013047216938122433,
+      "seconds_total": 0.4885505419999845,
+      "seconds_per_step": 0.012201281324985302,
+      "step_seconds": [
+        0.01487425000004805,
+        0.012655374999894775,
+        0.012246582999978273,
+        0.012198625000110042,
+        0.012288540999861652,
+        0.01207758400005332,
+        0.012170959000059156,
+        0.012403374999848893,
+        0.01196574999994482,
+        0.012031083000010767,
+        0.011921334000135175,
+        0.0124241250000523,
+        0.011887874999956694,
+        0.011869625000144879,
+        0.012310333000186802,
+        0.01220637500000521,
+        0.012087707999853592,
+        0.011707166999940455,
+        0.012476749999905223,
+        0.011873458999843933,
+        0.012010459000066476,
+        0.012036207999926773,
+        0.012228708000066035,
+        0.011864291999927445,
+        0.011801791999914713,
+        0.012123875000042972,
+        0.012182499999880747,
+        0.012069417000020621,
+        0.012000499999885506,
+        0.012270416999854206,
+        0.012031499999920925,
+        0.012325667000141038,
+        0.012038458999995783,
+        0.012373999999908847,
+        0.012130374999969717,
+        0.012406917000134854,
+        0.01218808299995544,
+        0.011757666999983485,
+        0.012528208000048835,
+        0.012005332999933671
+      ],
+      "phase_seconds": {
+        "forward": 0.07404033199964033,
+        "backward": 0.14660204400161092,
+        "communication": 0.011262378998480926,
+        "optimizer": 0.2527497930000209
+      },
+      "state_bytes_per_rank": {
+        "parameters": 58624,
+        "gradients": 58624,
+        "first_moment": 58624,
+        "second_moment": 58624,
+        "total": 234496
+      },
+      "peak_tracked_bytes_per_rank": 301056,
+      "transient_peak_bytes_per_rank": 66560,
+      "transient_component_peaks_per_rank": {
+        "activation_cache": 9216,
+        "materialized_layer": 0,
+        "local_gradient": 0,
+        "backprop_signals": 8192,
+        "derivative_workspace": 4096,
+        "optimizer_workspace": 66560
+      },
+      "communication": {
+        "events_first_step": [
+          {
+            "kind": "all_reduce",
+            "phase": "backward",
+            "layer": 2,
+            "payload_elements": 1056,
+            "payload_bytes": 8448,
+            "analytic_bytes_sent_per_rank": 16368
+          },
+          {
+            "kind": "all_reduce",
+            "phase": "backward",
+            "layer": 1,
+            "payload_elements": 4160,
+            "payload_bytes": 33280,
+            "analytic_bytes_sent_per_rank": 64480
+          },
+          {
+            "kind": "all_reduce",
+            "phase": "backward",
+            "layer": 0,
+            "payload_elements": 2112,
+            "payload_bytes": 16896,
+            "analytic_bytes_sent_per_rank": 32736
+          }
+        ],
+        "bytes_sent_per_rank_per_step": 113584,
+        "collective_counts_per_step": {
+          "all_reduce": 3
+        },
+        "model": "Ideal ring, bytes SENT per rank; received bytes equal sent bytes. Not measured network traffic."
+      },
+      "computation": {
+        "forward_matmul_flops_per_rank_per_step": 114688,
+        "backward_matmul_flops_per_rank_per_step": 196608,
+        "optimizer_element_updates_per_rank_per_step": 7328,
+        "matmul_note": "Analytic dense GEMM count: multiply+add=2 FLOPs; no input-gradient GEMM for first layer. Excludes bias, tanh, MSE, Adam arithmetic and collective reductions.",
+        "optimizer_note": "Element updates, not FLOPs; includes zero padding. DDP repeats full Adam update on every rank; ZeRO updates disjoint shards."
+      },
+      "thread_worker_count": 32,
+      "executor_max_workers": 32,
+      "max_parameter_difference_vs_ddp": 0.0,
+      "max_parameter_difference_vs_reference": 3.3306690738754696e-16,
+      "max_loss_curve_difference_vs_reference": 5.551115123125783e-17
+    },
+    {
+      "stage": 1,
+      "name": "ZeRO-1",
+      "loss_curve": [
+        0.516604368292318,
+        0.3053546973858158,
+        0.19254680934556423,
+        0.13566973372786492,
+        0.10632236796713862,
+        0.08909599340984228,
+        0.07724303938880263,
+        0.06810075115197506,
+        0.06067726405693829,
+        0.05483436652003109,
+        0.05066750015100191,
+        0.04788938303748035,
+        0.045791089277013586,
+        0.04369539403434702,
+        0.041303532872297224,
+        0.038680281830623234,
+        0.036067852371297025,
+        0.03370401442159033,
+        0.031703344593117126,
+        0.030038466720359917,
+        0.028608499132274652,
+        0.0273157369183259,
+        0.02609886089485316,
+        0.02493708419526567,
+        0.02384027604174988,
+        0.022825731107398942,
+        0.021891374532410107,
+        0.021006749252582956,
+        0.020136153382316217,
+        0.01927495047814761,
+        0.018455909466948542,
+        0.01771383415766538,
+        0.017051698269506685,
+        0.01644740530408694,
+        0.015882417553004798,
+        0.015350835459143206,
+        0.014847705065904446,
+        0.01436495396572151,
+        0.013900200539075265,
+        0.013459250420036671
+      ],
+      "final_loss": 0.013047216938122433,
+      "seconds_total": 0.27532366700006605,
+      "seconds_per_step": 0.006872637499969869,
+      "step_seconds": [
+        0.007645624999895517,
+        0.007152292000000671,
+        0.006893500000160202,
+        0.007090332999950988,
+        0.006849375000001601,
+        0.006816792000108762,
+        0.006624999999985448,
+        0.006742875000099957,
+        0.006905749999987165,
+        0.006912541000019701,
+        0.007152541999857931,
+        0.006679207999923165,
+        0.006666167000048517,
+        0.006735082999966835,
+        0.007078666999859706,
+        0.007035083999880953,
+        0.006743624999899112,
+        0.006806707999885475,
+        0.006726708000087456,
+        0.006798082999921462,
+        0.006796666999889567,
+        0.006990915999949721,
+        0.006779957999924591,
+        0.006690958999797658,
+        0.006809083999996801,
+        0.006784708999930444,
+        0.006859915999939403,
+        0.006956375000072512,
+        0.006981792000033238,
+        0.006865542000014102,
+        0.006707375000132743,
+        0.0067863749998196,
+        0.0068983749999915744,
+        0.006845458000043436,
+        0.006804375000001528,
+        0.006866749999971944,
+        0.006940541999938432,
+        0.006783915999903911,
+        0.0068812499998784915,
+        0.006819208000024446
+      ],
+      "phase_seconds": {
+        "forward": 0.07115920799969899,
+        "backward": 0.1468804590003856,
+        "communication": 0.013133876000210876,
+        "optimizer": 0.04072541799996543
+      },
+      "state_bytes_per_rank": {
+        "parameters": 58624,
+        "gradients": 58624,
+        "first_moment": 1832,
+        "second_moment": 1832,
+        "total": 120912
+      },
+      "peak_tracked_bytes_per_rank": 142416,
+      "transient_peak_bytes_per_rank": 21504,
+      "transient_component_peaks_per_rank": {
+        "activation_cache": 9216,
+        "materialized_layer": 0,
+        "local_gradient": 0,
+        "backprop_signals": 8192,
+        "derivative_workspace": 4096,
+        "optimizer_workspace": 2080
+      },
+      "communication": {
+        "events_first_step": [
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 2,
+            "payload_elements": 1056,
+            "payload_bytes": 8448,
+            "analytic_bytes_sent_per_rank": 8184
+          },
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 1,
+            "payload_elements": 4160,
+            "payload_bytes": 33280,
+            "analytic_bytes_sent_per_rank": 32240
+          },
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 0,
+            "payload_elements": 2112,
+            "payload_bytes": 16896,
+            "analytic_bytes_sent_per_rank": 16368
+          },
+          {
+            "kind": "all_gather",
+            "phase": "optimizer",
+            "layer": 0,
+            "payload_elements": 2112,
+            "payload_bytes": 16896,
+            "analytic_bytes_sent_per_rank": 16368
+          },
+          {
+            "kind": "all_gather",
+            "phase": "optimizer",
+            "layer": 1,
+            "payload_elements": 4160,
+            "payload_bytes": 33280,
+            "analytic_bytes_sent_per_rank": 32240
+          },
+          {
+            "kind": "all_gather",
+            "phase": "optimizer",
+            "layer": 2,
+            "payload_elements": 1056,
+            "payload_bytes": 8448,
+            "analytic_bytes_sent_per_rank": 8184
+          }
+        ],
+        "bytes_sent_per_rank_per_step": 113584,
+        "collective_counts_per_step": {
+          "reduce_scatter": 3,
+          "all_gather": 3
+        },
+        "model": "Ideal ring, bytes SENT per rank; received bytes equal sent bytes. Not measured network traffic."
+      },
+      "computation": {
+        "forward_matmul_flops_per_rank_per_step": 114688,
+        "backward_matmul_flops_per_rank_per_step": 196608,
+        "optimizer_element_updates_per_rank_per_step": 229,
+        "matmul_note": "Analytic dense GEMM count: multiply+add=2 FLOPs; no input-gradient GEMM for first layer. Excludes bias, tanh, MSE, Adam arithmetic and collective reductions.",
+        "optimizer_note": "Element updates, not FLOPs; includes zero padding. DDP repeats full Adam update on every rank; ZeRO updates disjoint shards."
+      },
+      "thread_worker_count": 32,
+      "executor_max_workers": 32,
+      "max_parameter_difference_vs_ddp": 0.0,
+      "max_parameter_difference_vs_reference": 3.3306690738754696e-16,
+      "max_loss_curve_difference_vs_reference": 5.551115123125783e-17
+    },
+    {
+      "stage": 2,
+      "name": "ZeRO-2",
+      "loss_curve": [
+        0.516604368292318,
+        0.3053546973858158,
+        0.19254680934556423,
+        0.13566973372786492,
+        0.10632236796713862,
+        0.08909599340984228,
+        0.07724303938880263,
+        0.06810075115197506,
+        0.06067726405693829,
+        0.05483436652003109,
+        0.05066750015100191,
+        0.04788938303748035,
+        0.045791089277013586,
+        0.04369539403434702,
+        0.041303532872297224,
+        0.038680281830623234,
+        0.036067852371297025,
+        0.03370401442159033,
+        0.031703344593117126,
+        0.030038466720359917,
+        0.028608499132274652,
+        0.0273157369183259,
+        0.02609886089485316,
+        0.02493708419526567,
+        0.02384027604174988,
+        0.022825731107398942,
+        0.021891374532410107,
+        0.021006749252582956,
+        0.020136153382316217,
+        0.01927495047814761,
+        0.018455909466948542,
+        0.01771383415766538,
+        0.017051698269506685,
+        0.01644740530408694,
+        0.015882417553004798,
+        0.015350835459143206,
+        0.014847705065904446,
+        0.01436495396572151,
+        0.013900200539075265,
+        0.013459250420036671
+      ],
+      "final_loss": 0.013047216938122433,
+      "seconds_total": 0.276681415999974,
+      "seconds_per_step": 0.0069068833250128135,
+      "step_seconds": [
+        0.00777554199999031,
+        0.007098249999899053,
+        0.00690966699994533,
+        0.006860208000034618,
+        0.006798457999821039,
+        0.0071060420000321756,
+        0.006693541999993613,
+        0.006703499999957785,
+        0.006960292000030677,
+        0.006945542000039495,
+        0.006717665999985911,
+        0.007163958000091952,
+        0.0067942499999844586,
+        0.0068717920000835875,
+        0.007202667000001384,
+        0.006894291000207886,
+        0.0068785000000843866,
+        0.007037999999965905,
+        0.00689108300002772,
+        0.006696957999793085,
+        0.006746417000158544,
+        0.006898042000102578,
+        0.006892249999964406,
+        0.007040582999934486,
+        0.006939207999948849,
+        0.007006584000009752,
+        0.0069030409999868425,
+        0.0068242910001572454,
+        0.00678250000009939,
+        0.006810500000028696,
+        0.006751207999968756,
+        0.006861249999928987,
+        0.0068174170000929735,
+        0.0068190409999715484,
+        0.006835875000206215,
+        0.006827708000173516,
+        0.006874292000020432,
+        0.006896208999933151,
+        0.007064583999863316,
+        0.006684124999992491
+      ],
+      "phase_seconds": {
+        "forward": 0.07152879000136636,
+        "backward": 0.14838191599983475,
+        "communication": 0.01314850100015974,
+        "optimizer": 0.04023783500110767
+      },
+      "state_bytes_per_rank": {
+        "parameters": 58624,
+        "gradients": 1832,
+        "first_moment": 1832,
+        "second_moment": 1832,
+        "total": 64120
+      },
+      "peak_tracked_bytes_per_rank": 118904,
+      "transient_peak_bytes_per_rank": 54784,
+      "transient_component_peaks_per_rank": {
+        "activation_cache": 9216,
+        "materialized_layer": 0,
+        "local_gradient": 33280,
+        "backprop_signals": 8192,
+        "derivative_workspace": 4096,
+        "optimizer_workspace": 2080
+      },
+      "communication": {
+        "events_first_step": [
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 2,
+            "payload_elements": 1056,
+            "payload_bytes": 8448,
+            "analytic_bytes_sent_per_rank": 8184
+          },
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 1,
+            "payload_elements": 4160,
+            "payload_bytes": 33280,
+            "analytic_bytes_sent_per_rank": 32240
+          },
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 0,
+            "payload_elements": 2112,
+            "payload_bytes": 16896,
+            "analytic_bytes_sent_per_rank": 16368
+          },
+          {
+            "kind": "all_gather",
+            "phase": "optimizer",
+            "layer": 0,
+            "payload_elements": 2112,
+            "payload_bytes": 16896,
+            "analytic_bytes_sent_per_rank": 16368
+          },
+          {
+            "kind": "all_gather",
+            "phase": "optimizer",
+            "layer": 1,
+            "payload_elements": 4160,
+            "payload_bytes": 33280,
+            "analytic_bytes_sent_per_rank": 32240
+          },
+          {
+            "kind": "all_gather",
+            "phase": "optimizer",
+            "layer": 2,
+            "payload_elements": 1056,
+            "payload_bytes": 8448,
+            "analytic_bytes_sent_per_rank": 8184
+          }
+        ],
+        "bytes_sent_per_rank_per_step": 113584,
+        "collective_counts_per_step": {
+          "reduce_scatter": 3,
+          "all_gather": 3
+        },
+        "model": "Ideal ring, bytes SENT per rank; received bytes equal sent bytes. Not measured network traffic."
+      },
+      "computation": {
+        "forward_matmul_flops_per_rank_per_step": 114688,
+        "backward_matmul_flops_per_rank_per_step": 196608,
+        "optimizer_element_updates_per_rank_per_step": 229,
+        "matmul_note": "Analytic dense GEMM count: multiply+add=2 FLOPs; no input-gradient GEMM for first layer. Excludes bias, tanh, MSE, Adam arithmetic and collective reductions.",
+        "optimizer_note": "Element updates, not FLOPs; includes zero padding. DDP repeats full Adam update on every rank; ZeRO updates disjoint shards."
+      },
+      "thread_worker_count": 32,
+      "executor_max_workers": 32,
+      "max_parameter_difference_vs_ddp": 0.0,
+      "max_parameter_difference_vs_reference": 3.3306690738754696e-16,
+      "max_loss_curve_difference_vs_reference": 5.551115123125783e-17
+    },
+    {
+      "stage": 3,
+      "name": "ZeRO-3",
+      "loss_curve": [
+        0.516604368292318,
+        0.3053546973858158,
+        0.19254680934556423,
+        0.13566973372786492,
+        0.10632236796713862,
+        0.08909599340984228,
+        0.07724303938880263,
+        0.06810075115197506,
+        0.06067726405693829,
+        0.05483436652003109,
+        0.05066750015100191,
+        0.04788938303748035,
+        0.045791089277013586,
+        0.04369539403434702,
+        0.041303532872297224,
+        0.038680281830623234,
+        0.036067852371297025,
+        0.03370401442159033,
+        0.031703344593117126,
+        0.030038466720359917,
+        0.028608499132274652,
+        0.0273157369183259,
+        0.02609886089485316,
+        0.02493708419526567,
+        0.02384027604174988,
+        0.022825731107398942,
+        0.021891374532410107,
+        0.021006749252582956,
+        0.020136153382316217,
+        0.01927495047814761,
+        0.018455909466948542,
+        0.01771383415766538,
+        0.017051698269506685,
+        0.01644740530408694,
+        0.015882417553004798,
+        0.015350835459143206,
+        0.014847705065904446,
+        0.01436495396572151,
+        0.013900200539075265,
+        0.013459250420036671
+      ],
+      "final_loss": 0.013047216938122433,
+      "seconds_total": 0.30680166599995573,
+      "seconds_per_step": 0.00766015307502812,
+      "step_seconds": [
+        0.008467249999966953,
+        0.007969041000023935,
+        0.007785999999896376,
+        0.007687083000064376,
+        0.007450417000200105,
+        0.007573833000151353,
+        0.007692084000154864,
+        0.007556000000022323,
+        0.007669374999977663,
+        0.007712041999866415,
+        0.007482208000055834,
+        0.008107375000008687,
+        0.007721790999994482,
+        0.007685083000069426,
+        0.007491000000072745,
+        0.007611834000044837,
+        0.007511250000106884,
+        0.0077719580001485156,
+        0.007577791000130674,
+        0.007524208000177168,
+        0.00744870800008357,
+        0.007574959000066883,
+        0.007527292000077068,
+        0.008031332999962615,
+        0.007613541999944573,
+        0.007524125000145432,
+        0.007528625000077227,
+        0.0076382499998999265,
+        0.007794625000087763,
+        0.00760204099992734,
+        0.007599083000059181,
+        0.007530582999834223,
+        0.007348000000092725,
+        0.0077896249999866995,
+        0.007634625000036976,
+        0.0078093749998515705,
+        0.007524041999886322,
+        0.007530999999971755,
+        0.007599000000027445,
+        0.007709666999971887
+      ],
+      "phase_seconds": {
+        "forward": 0.07135646000028828,
+        "backward": 0.14902733299959436,
+        "communication": 0.028632921999133032,
+        "optimizer": 0.0400680839998131
+      },
+      "state_bytes_per_rank": {
+        "parameters": 1832,
+        "gradients": 1832,
+        "first_moment": 1832,
+        "second_moment": 1832,
+        "total": 7328
+      },
+      "peak_tracked_bytes_per_rank": 95392,
+      "transient_peak_bytes_per_rank": 88064,
+      "transient_component_peaks_per_rank": {
+        "activation_cache": 9216,
+        "materialized_layer": 33280,
+        "local_gradient": 33280,
+        "backprop_signals": 8192,
+        "derivative_workspace": 4096,
+        "optimizer_workspace": 2080
+      },
+      "communication": {
+        "events_first_step": [
+          {
+            "kind": "all_gather",
+            "phase": "forward",
+            "layer": 0,
+            "payload_elements": 2112,
+            "payload_bytes": 16896,
+            "analytic_bytes_sent_per_rank": 16368
+          },
+          {
+            "kind": "all_gather",
+            "phase": "forward",
+            "layer": 1,
+            "payload_elements": 4160,
+            "payload_bytes": 33280,
+            "analytic_bytes_sent_per_rank": 32240
+          },
+          {
+            "kind": "all_gather",
+            "phase": "forward",
+            "layer": 2,
+            "payload_elements": 1056,
+            "payload_bytes": 8448,
+            "analytic_bytes_sent_per_rank": 8184
+          },
+          {
+            "kind": "all_gather",
+            "phase": "backward",
+            "layer": 2,
+            "payload_elements": 1056,
+            "payload_bytes": 8448,
+            "analytic_bytes_sent_per_rank": 8184
+          },
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 2,
+            "payload_elements": 1056,
+            "payload_bytes": 8448,
+            "analytic_bytes_sent_per_rank": 8184
+          },
+          {
+            "kind": "all_gather",
+            "phase": "backward",
+            "layer": 1,
+            "payload_elements": 4160,
+            "payload_bytes": 33280,
+            "analytic_bytes_sent_per_rank": 32240
+          },
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 1,
+            "payload_elements": 4160,
+            "payload_bytes": 33280,
+            "analytic_bytes_sent_per_rank": 32240
+          },
+          {
+            "kind": "all_gather",
+            "phase": "backward",
+            "layer": 0,
+            "payload_elements": 2112,
+            "payload_bytes": 16896,
+            "analytic_bytes_sent_per_rank": 16368
+          },
+          {
+            "kind": "reduce_scatter",
+            "phase": "backward",
+            "layer": 0,
+            "payload_elements": 2112,
+            "payload_bytes": 16896,
+            "analytic_bytes_sent_per_rank": 16368
+          }
+        ],
+        "bytes_sent_per_rank_per_step": 170376,
+        "collective_counts_per_step": {
+          "all_gather": 6,
+          "reduce_scatter": 3
+        },
+        "model": "Ideal ring, bytes SENT per rank; received bytes equal sent bytes. Not measured network traffic."
+      },
+      "computation": {
+        "forward_matmul_flops_per_rank_per_step": 114688,
+        "backward_matmul_flops_per_rank_per_step": 196608,
+        "optimizer_element_updates_per_rank_per_step": 229,
+        "matmul_note": "Analytic dense GEMM count: multiply+add=2 FLOPs; no input-gradient GEMM for first layer. Excludes bias, tanh, MSE, Adam arithmetic and collective reductions.",
+        "optimizer_note": "Element updates, not FLOPs; includes zero padding. DDP repeats full Adam update on every rank; ZeRO updates disjoint shards."
+      },
+      "thread_worker_count": 32,
+      "executor_max_workers": 32,
+      "max_parameter_difference_vs_ddp": 0.0,
+      "max_parameter_difference_vs_reference": 3.3306690738754696e-16,
+      "max_loss_curve_difference_vs_reference": 5.551115123125783e-17
+    }
+  ],
+  "theory": {
+    "parameter_count": 1000000000,
+    "world_size": 32,
+    "bytes_per_parameter": {
+      "parameters": 2,
+      "gradients": 2,
+      "optimizer": 12
+    },
+    "stages": [
+      {
+        "stage": 0,
+        "name": "DDP baseline",
+        "parameters": 2000000000.0,
+        "gradients": 2000000000.0,
+        "optimizer": 12000000000.0,
+        "total": 16000000000.0
+      },
+      {
+        "stage": 1,
+        "name": "ZeRO-1",
+        "parameters": 2000000000.0,
+        "gradients": 2000000000.0,
+        "optimizer": 375000000.0,
+        "total": 4375000000.0
+      },
+      {
+        "stage": 2,
+        "name": "ZeRO-2",
+        "parameters": 2000000000.0,
+        "gradients": 62500000.0,
+        "optimizer": 375000000.0,
+        "total": 2437500000.0
+      },
+      {
+        "stage": 3,
+        "name": "ZeRO-3",
+        "parameters": 62500000.0,
+        "gradients": 62500000.0,
+        "optimizer": 375000000.0,
+        "total": 500000000.0
+      }
+    ]
+  },
+  "scaling": [
+    {
+      "world_size": 1,
+      "stage": 0,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 2,
+      "stage": 0,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 4,
+      "stage": 0,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 8,
+      "stage": 0,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 16,
+      "stage": 0,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 32,
+      "stage": 0,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 64,
+      "stage": 0,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 1,
+      "stage": 1,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 2,
+      "stage": 1,
+      "bytes_per_rank": 10000000000.0
+    },
+    {
+      "world_size": 4,
+      "stage": 1,
+      "bytes_per_rank": 7000000000.0
+    },
+    {
+      "world_size": 8,
+      "stage": 1,
+      "bytes_per_rank": 5500000000.0
+    },
+    {
+      "world_size": 16,
+      "stage": 1,
+      "bytes_per_rank": 4750000000.0
+    },
+    {
+      "world_size": 32,
+      "stage": 1,
+      "bytes_per_rank": 4375000000.0
+    },
+    {
+      "world_size": 64,
+      "stage": 1,
+      "bytes_per_rank": 4187500000.0
+    },
+    {
+      "world_size": 1,
+      "stage": 2,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 2,
+      "stage": 2,
+      "bytes_per_rank": 9000000000.0
+    },
+    {
+      "world_size": 4,
+      "stage": 2,
+      "bytes_per_rank": 5500000000.0
+    },
+    {
+      "world_size": 8,
+      "stage": 2,
+      "bytes_per_rank": 3750000000.0
+    },
+    {
+      "world_size": 16,
+      "stage": 2,
+      "bytes_per_rank": 2875000000.0
+    },
+    {
+      "world_size": 32,
+      "stage": 2,
+      "bytes_per_rank": 2437500000.0
+    },
+    {
+      "world_size": 64,
+      "stage": 2,
+      "bytes_per_rank": 2218750000.0
+    },
+    {
+      "world_size": 1,
+      "stage": 3,
+      "bytes_per_rank": 16000000000.0
+    },
+    {
+      "world_size": 2,
+      "stage": 3,
+      "bytes_per_rank": 8000000000.0
+    },
+    {
+      "world_size": 4,
+      "stage": 3,
+      "bytes_per_rank": 4000000000.0
+    },
+    {
+      "world_size": 8,
+      "stage": 3,
+      "bytes_per_rank": 2000000000.0
+    },
+    {
+      "world_size": 16,
+      "stage": 3,
+      "bytes_per_rank": 1000000000.0
+    },
+    {
+      "world_size": 32,
+      "stage": 3,
+      "bytes_per_rank": 500000000.0
+    },
+    {
+      "world_size": 64,
+      "stage": 3,
+      "bytes_per_rank": 250000000.0
+    }
+  ]
+}

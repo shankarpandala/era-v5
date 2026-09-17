@@ -1,0 +1,14 @@
+{
+  "world_size": 32,
+  "dims": [
+    32,
+    64,
+    64,
+    16
+  ],
+  "local_batch": 8,
+  "steps": 40,
+  "learning_rate": 0.01,
+  "seed": 12,
+  "workers": 32
+}

@@ -7,6 +7,7 @@ logs
 !assignment-9/submission_artifacts/run.log
 !assignment-10/submission_artifacts/run.log
 !assignment-11/submission_artifacts/run.log
+!assignment-12/submission_artifacts/run.log
 npm-debug.log*
 yarn-debug.log*
 pnpm-debug.log*

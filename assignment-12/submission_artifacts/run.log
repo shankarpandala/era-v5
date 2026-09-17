@@ -1,0 +1,152 @@
+Executed zero_simulation.ipynb top to bottom in 2.80s.
+Mode: full; CPU simulation.
+[PASS] all saved numeric metrics are finite
+[PASS] run_config is the exact recorded experiment configuration
+[PASS] experiment ran on 32 virtual ranks
+[PASS] experiment contains at least eight optimizer steps (full or smoke run)
+[PASS] configuration dimensions and minibatches are positive
+[PASS] live model parameters re-derived from every weight and bias
+[PASS] layer-wise padded capacity re-derived
+[PASS] padding overhead re-derived
+[PASS] notebook contains executed code cells
+[PASS] notebook execution order is unique and increasing
+[PASS] notebook contains no execution errors
+[PASS] standalone notebook embeds exact simulator source
+[PASS] notebook retains visible execution output
+[PASS] plot memory_comparison is a nonempty PNG
+[PASS] plot training_parity is a nonempty PNG
+[PASS] plot compute_communication is a nonempty PNG
+[PASS] plot scaling is a nonempty PNG
+[PASS] run log exists and records output
+[PASS] single-batch reference has a full loss curve
+[PASS] single-batch reference genuinely learns
+[PASS] all four stages were executed exactly once
+[PASS] stage 0: actual FP64 persistent memory follows ownership
+[PASS] stage 0: persistent total sums components
+[PASS] stage 0: tracked peak includes transient live arrays
+[PASS] stage 0: full finite training curve
+[PASS] stage 0: every training loss matches independent batch grouping
+[PASS] stage 0: final evaluation matches reference
+[PASS] stage 0: parameters match DDP and single-batch reference
+[PASS] stage 0: actual thread workers recorded
+[PASS] stage 0: positive machine-specific step measurements
+[PASS] stage 0: timing average is internally consistent
+[PASS] stage 0: total includes measured steps and executor overhead
+[PASS] stage 0: ring send bytes re-derived for its collective schedule
+[PASS] stage 0: collective events sum to reported traffic
+[PASS] stage 0: collective count matches layer schedule
+[PASS] stage 0: collective counters agree with event log
+[PASS] stage 0: collective 0 counts payload and ring sends
+[PASS] stage 0: collective 1 counts payload and ring sends
+[PASS] stage 0: collective 2 counts payload and ring sends
+[PASS] stage 0: dense forward and backward FLOPs independently re-derived
+[PASS] stage 0: optimizer work follows actual padded ownership
+[PASS] stage 1: actual FP64 persistent memory follows ownership
+[PASS] stage 1: persistent total sums components
+[PASS] stage 1: tracked peak includes transient live arrays
+[PASS] stage 1: full finite training curve
+[PASS] stage 1: every training loss matches independent batch grouping
+[PASS] stage 1: final evaluation matches reference
+[PASS] stage 1: parameters match DDP and single-batch reference
+[PASS] stage 1: actual thread workers recorded
+[PASS] stage 1: positive machine-specific step measurements
+[PASS] stage 1: timing average is internally consistent
+[PASS] stage 1: total includes measured steps and executor overhead
+[PASS] stage 1: ring send bytes re-derived for its collective schedule
+[PASS] stage 1: collective events sum to reported traffic
+[PASS] stage 1: collective count matches layer schedule
+[PASS] stage 1: collective counters agree with event log
+[PASS] stage 1: collective 0 counts payload and ring sends
+[PASS] stage 1: collective 1 counts payload and ring sends
+[PASS] stage 1: collective 2 counts payload and ring sends
+[PASS] stage 1: collective 3 counts payload and ring sends
+[PASS] stage 1: collective 4 counts payload and ring sends
+[PASS] stage 1: collective 5 counts payload and ring sends
+[PASS] stage 1: dense forward and backward FLOPs independently re-derived
+[PASS] stage 1: optimizer work follows actual padded ownership
+[PASS] stage 2: actual FP64 persistent memory follows ownership
+[PASS] stage 2: persistent total sums components
+[PASS] stage 2: tracked peak includes transient live arrays
+[PASS] stage 2: full finite training curve
+[PASS] stage 2: every training loss matches independent batch grouping
+[PASS] stage 2: final evaluation matches reference
+[PASS] stage 2: parameters match DDP and single-batch reference
+[PASS] stage 2: actual thread workers recorded
+[PASS] stage 2: positive machine-specific step measurements
+[PASS] stage 2: timing average is internally consistent
+[PASS] stage 2: total includes measured steps and executor overhead
+[PASS] stage 2: ring send bytes re-derived for its collective schedule
+[PASS] stage 2: collective events sum to reported traffic
+[PASS] stage 2: collective count matches layer schedule
+[PASS] stage 2: collective counters agree with event log
+[PASS] stage 2: collective 0 counts payload and ring sends
+[PASS] stage 2: collective 1 counts payload and ring sends
+[PASS] stage 2: collective 2 counts payload and ring sends
+[PASS] stage 2: collective 3 counts payload and ring sends
+[PASS] stage 2: collective 4 counts payload and ring sends
+[PASS] stage 2: collective 5 counts payload and ring sends
+[PASS] stage 2: dense forward and backward FLOPs independently re-derived
+[PASS] stage 2: optimizer work follows actual padded ownership
+[PASS] stage 3: actual FP64 persistent memory follows ownership
+[PASS] stage 3: persistent total sums components
+[PASS] stage 3: tracked peak includes transient live arrays
+[PASS] stage 3: full finite training curve
+[PASS] stage 3: every training loss matches independent batch grouping
+[PASS] stage 3: final evaluation matches reference
+[PASS] stage 3: parameters match DDP and single-batch reference
+[PASS] stage 3: actual thread workers recorded
+[PASS] stage 3: positive machine-specific step measurements
+[PASS] stage 3: timing average is internally consistent
+[PASS] stage 3: total includes measured steps and executor overhead
+[PASS] stage 3: ring send bytes re-derived for its collective schedule
+[PASS] stage 3: collective events sum to reported traffic
+[PASS] stage 3: collective count matches layer schedule
+[PASS] stage 3: collective counters agree with event log
+[PASS] stage 3: collective 0 counts payload and ring sends
+[PASS] stage 3: collective 1 counts payload and ring sends
+[PASS] stage 3: collective 2 counts payload and ring sends
+[PASS] stage 3: collective 3 counts payload and ring sends
+[PASS] stage 3: collective 4 counts payload and ring sends
+[PASS] stage 3: collective 5 counts payload and ring sends
+[PASS] stage 3: collective 6 counts payload and ring sends
+[PASS] stage 3: collective 7 counts payload and ring sends
+[PASS] stage 3: collective 8 counts payload and ring sends
+[PASS] stage 3: dense forward and backward FLOPs independently re-derived
+[PASS] stage 3: optimizer work follows actual padded ownership
+[PASS] mixed precision example uses 32 ranks
+[PASS] mixed precision accounting has FP16 weights/gradients and FP32 master+Adam states
+[PASS] mixed precision has all four stage rows
+[PASS] mixed precision stage 0: unpadded 2/2/12-byte formula
+[PASS] mixed precision stage 1: unpadded 2/2/12-byte formula
+[PASS] mixed precision stage 2: unpadded 2/2/12-byte formula
+[PASS] mixed precision stage 3: unpadded 2/2/12-byte formula
+[PASS] scaling table includes all rank counts and ZeRO stages
+[PASS] scaling N=1, stage=0: theoretical per-rank bytes
+[PASS] scaling N=2, stage=0: theoretical per-rank bytes
+[PASS] scaling N=4, stage=0: theoretical per-rank bytes
+[PASS] scaling N=8, stage=0: theoretical per-rank bytes
+[PASS] scaling N=16, stage=0: theoretical per-rank bytes
+[PASS] scaling N=32, stage=0: theoretical per-rank bytes
+[PASS] scaling N=64, stage=0: theoretical per-rank bytes
+[PASS] scaling N=1, stage=1: theoretical per-rank bytes
+[PASS] scaling N=2, stage=1: theoretical per-rank bytes
+[PASS] scaling N=4, stage=1: theoretical per-rank bytes
+[PASS] scaling N=8, stage=1: theoretical per-rank bytes
+[PASS] scaling N=16, stage=1: theoretical per-rank bytes
+[PASS] scaling N=32, stage=1: theoretical per-rank bytes
+[PASS] scaling N=64, stage=1: theoretical per-rank bytes
+[PASS] scaling N=1, stage=2: theoretical per-rank bytes
+[PASS] scaling N=2, stage=2: theoretical per-rank bytes
+[PASS] scaling N=4, stage=2: theoretical per-rank bytes
+[PASS] scaling N=8, stage=2: theoretical per-rank bytes
+[PASS] scaling N=16, stage=2: theoretical per-rank bytes
+[PASS] scaling N=32, stage=2: theoretical per-rank bytes
+[PASS] scaling N=64, stage=2: theoretical per-rank bytes
+[PASS] scaling N=1, stage=3: theoretical per-rank bytes
+[PASS] scaling N=2, stage=3: theoretical per-rank bytes
+[PASS] scaling N=4, stage=3: theoretical per-rank bytes
+[PASS] scaling N=8, stage=3: theoretical per-rank bytes
+[PASS] scaling N=16, stage=3: theoretical per-rank bytes
+[PASS] scaling N=32, stage=3: theoretical per-rank bytes
+[PASS] scaling N=64, stage=3: theoretical per-rank bytes
+verdict: PASS
