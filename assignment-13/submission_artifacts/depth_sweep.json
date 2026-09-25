@@ -1,0 +1,194 @@
+[
+  {
+    "variant": "none",
+    "n_layer": 2,
+    "activation_bytes": 123840516,
+    "parameter_bytes": 26754048,
+    "saved_tensors": 61,
+    "tokens": 1024
+  },
+  {
+    "variant": "none",
+    "n_layer": 4,
+    "activation_bytes": 177399812,
+    "parameter_bytes": 40922112,
+    "saved_tensors": 109,
+    "tokens": 1024
+  },
+  {
+    "variant": "none",
+    "n_layer": 6,
+    "activation_bytes": 230959108,
+    "parameter_bytes": 55090176,
+    "saved_tensors": 157,
+    "tokens": 1024
+  },
+  {
+    "variant": "none",
+    "n_layer": 8,
+    "activation_bytes": 284518404,
+    "parameter_bytes": 69258240,
+    "saved_tensors": 205,
+    "tokens": 1024
+  },
+  {
+    "variant": "none",
+    "n_layer": 10,
+    "activation_bytes": 338077700,
+    "parameter_bytes": 83426304,
+    "saved_tensors": 253,
+    "tokens": 1024
+  },
+  {
+    "variant": "none",
+    "n_layer": 12,
+    "activation_bytes": 391636996,
+    "parameter_bytes": 97594368,
+    "saved_tensors": 301,
+    "tokens": 1024
+  },
+  {
+    "variant": "euler",
+    "n_layer": 2,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "euler",
+    "n_layer": 4,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "euler",
+    "n_layer": 6,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "euler",
+    "n_layer": 8,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "euler",
+    "n_layer": 10,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "euler",
+    "n_layer": 12,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "midpoint",
+    "n_layer": 2,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "midpoint",
+    "n_layer": 4,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "midpoint",
+    "n_layer": 6,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "midpoint",
+    "n_layer": 8,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "midpoint",
+    "n_layer": 10,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "midpoint",
+    "n_layer": 12,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "momentum",
+    "n_layer": 2,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "momentum",
+    "n_layer": 4,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "momentum",
+    "n_layer": 6,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "momentum",
+    "n_layer": 8,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "momentum",
+    "n_layer": 10,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  },
+  {
+    "variant": "momentum",
+    "n_layer": 12,
+    "activation_bytes": 73426948,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 1024
+  }
+]
