@@ -1,3 +1,170 @@
 run_demo.py started 2026-09-25 14:10:05 mode=pilot env={'A13_TOKENS': '5000000', 'A13_SCREEN_TOKENS': '1000000', 'A13_BATCH': '32', 'A13_MAXBATCH_CEILING': '8192', 'A13_ART_DIR': '/home/user/era-v5/assignment-13/submission_artifacts', 'A13_DATA_DIR': '/home/user/era-v5/assignment-13/data'}
 01_baseline_fixed_batch.ipynb: executed top to bottom in 46.2 min
 02_reversible_fixed_batch.ipynb: executed top to bottom in 118.9 min
+03_reversible_max_batch.ipynb: executed top to bottom in 97.4 min
+04_report.ipynb: executed top to bottom in 0.1 min
+[PASS] 01_baseline_fixed_batch.ipynb exists
+[PASS] 01_baseline_fixed_batch.ipynb: every code cell executed | 7/7 cells
+[PASS] 01_baseline_fixed_batch.ipynb: no error outputs
+[PASS] 01_baseline_fixed_batch.ipynb: embedded implementation is byte-identical to revllm.py
+[PASS] 02_reversible_fixed_batch.ipynb exists
+[PASS] 02_reversible_fixed_batch.ipynb: every code cell executed | 8/8 cells
+[PASS] 02_reversible_fixed_batch.ipynb: no error outputs
+[PASS] 02_reversible_fixed_batch.ipynb: embedded implementation is byte-identical to revllm.py
+[PASS] 03_reversible_max_batch.ipynb exists
+[PASS] 03_reversible_max_batch.ipynb: every code cell executed | 7/7 cells
+[PASS] 03_reversible_max_batch.ipynb: no error outputs
+[PASS] 03_reversible_max_batch.ipynb: embedded implementation is byte-identical to revllm.py
+[PASS] 04_report.ipynb exists
+[PASS] 04_report.ipynb: every code cell executed | 6/6 cells
+[PASS] 04_report.ipynb: no error outputs
+[PASS] 04_report.ipynb: embedded implementation is byte-identical to revllm.py
+[PASS] run1: results.json present
+[PASS] run2: results.json present
+[PASS] run3: results.json present
+[PASS] run1 is the plain residual baseline
+[PASS] run2 and run3 are reversible
+[PASS] run2 uses run1's batch size
+[PASS] run3 uses a larger batch than run2 | 312 vs 32
+[PASS] all runs share the parameter count | {'total': 20989440, 'embedding': 3244032, 'non_embedding': 17745408}
+[PASS] the model is about 20M parameters | 20,989,440
+[PASS] all runs share one token budget | {5000000}
+[PASS] run1: trained the full budget | 5,005,312 of 5,000,000
+[PASS] run1: finite losses | val 2.6964
+[PASS] run1: loss went down | 9.048 -> 2.696
+[PASS] run1: throughput and memory recorded | 1,869 tok/s, 4.15 GiB (cpu_peak_rss)
+[PASS] run1: tokens/s consistent with tokens and time
+[PASS] run1: steps x tokens/step covers the budget
+[PASS] run2: trained the full budget | 5,005,312 of 5,000,000
+[PASS] run2: finite losses | val 2.6332
+[PASS] run2: loss went down | 9.057 -> 2.633
+[PASS] run2: throughput and memory recorded | 1,345 tok/s, 2.67 GiB (cpu_peak_rss)
+[PASS] run2: tokens/s consistent with tokens and time
+[PASS] run2: steps x tokens/step covers the budget
+[PASS] run3: trained the full budget | 5,031,936 of 5,000,000
+[PASS] run3: finite losses | val 4.9749
+[PASS] run3: loss went down | 9.057 -> 4.975
+[PASS] run3: throughput and memory recorded | 986 tok/s, 10.95 GiB (cpu_peak_rss)
+[PASS] run3: tokens/s consistent with tokens and time
+[PASS] run3: steps x tokens/step covers the budget
+[PASS] run2 keeps far fewer activations than run1 at the same batch | 560 vs 2,579 MiB
+[PASS] run2 reconstruction error is tiny | 2.18e-06
+[PASS] run3 peak lr follows sqrt batch scaling (capped) | 3.00e-03
+[PASS] screening.json present
+[PASS] screening covers euler, midpoint (2h=1 and 2h=2) and momentum
+[PASS] screening winner is the best non-diverged configuration | winner momentum: euler 4.5440, midpoint 4.7524, midpoint-2h2 4.8941, momentum 4.0574
+[PASS] run2 and run3 use the screening winner's configuration | {'reversible': 'momentum', 'momentum_gamma': 0.9}
+[PASS] screen_euler: results file matches screening.json
+[PASS] screen_midpoint: results file matches screening.json
+[PASS] screen_midpoint-2h2: results file matches screening.json
+[PASS] screen_momentum: results file matches screening.json
+[PASS] max_batch.json present
+[PASS] search covers baseline and the reversible model
+[PASS] reversible max batch exceeds the baseline's | 312 vs 96
+[PASS] run3 trains at the reversible maximum
+[PASS] baseline: last verified trial fits the budget | batch 96, peak 9.51 GiB, budget 11.14 GiB
+[PASS] baseline: peak memory grows with batch
+[PASS] reversible-momentum: last verified trial fits the budget | batch 312, peak 10.90 GiB, budget 11.01 GiB
+[PASS] reversible-momentum: peak memory grows with batch
+[PASS] depth_sweep.json present
+[PASS] depth sweep: euler saved bytes flat in depth | 73,426,948 B
+[PASS] depth sweep: midpoint saved bytes flat in depth | 73,426,948 B
+[PASS] depth sweep: momentum saved bytes flat in depth | 73,426,948 B
+[PASS] depth sweep: baseline saved bytes linear in depth | 26,779,648 B/layer
+[PASS] reversibility_checks.json present
+[PASS] euler: inverse exact and gradients match stored-activation autograd | recon 6.4e-07, grad rel 1.1e-06
+[PASS] midpoint: inverse exact and gradients match stored-activation autograd | recon 8.2e-07, grad rel 8.4e-07
+[PASS] momentum: inverse exact and gradients match stored-activation autograd | recon 2.7e-07, grad rel 3.2e-07
+[PASS] summary.json present
+[PASS] summary matches run1
+[PASS] summary matches run2
+[PASS] summary matches run3
+[FAIL] README.md present
+[PASS] run.log present
+verdict: FAIL
+
+audit re-run after README.md was written (2026-09-25 18:35:43, python run_demo.py --verify-only):
+[PASS] 01_baseline_fixed_batch.ipynb exists
+[PASS] 01_baseline_fixed_batch.ipynb: every code cell executed | 7/7 cells
+[PASS] 01_baseline_fixed_batch.ipynb: no error outputs
+[PASS] 01_baseline_fixed_batch.ipynb: embedded implementation is byte-identical to revllm.py
+[PASS] 02_reversible_fixed_batch.ipynb exists
+[PASS] 02_reversible_fixed_batch.ipynb: every code cell executed | 8/8 cells
+[PASS] 02_reversible_fixed_batch.ipynb: no error outputs
+[PASS] 02_reversible_fixed_batch.ipynb: embedded implementation is byte-identical to revllm.py
+[PASS] 03_reversible_max_batch.ipynb exists
+[PASS] 03_reversible_max_batch.ipynb: every code cell executed | 7/7 cells
+[PASS] 03_reversible_max_batch.ipynb: no error outputs
+[PASS] 03_reversible_max_batch.ipynb: embedded implementation is byte-identical to revllm.py
+[PASS] 04_report.ipynb exists
+[PASS] 04_report.ipynb: every code cell executed | 6/6 cells
+[PASS] 04_report.ipynb: no error outputs
+[PASS] 04_report.ipynb: embedded implementation is byte-identical to revllm.py
+[PASS] run1: results.json present
+[PASS] run2: results.json present
+[PASS] run3: results.json present
+[PASS] run1 is the plain residual baseline
+[PASS] run2 and run3 are reversible
+[PASS] run2 uses run1's batch size
+[PASS] run3 uses a larger batch than run2 | 312 vs 32
+[PASS] all runs share the parameter count | {'total': 20989440, 'embedding': 3244032, 'non_embedding': 17745408}
+[PASS] the model is about 20M parameters | 20,989,440
+[PASS] all runs share one token budget | {5000000}
+[PASS] run1: trained the full budget | 5,005,312 of 5,000,000
+[PASS] run1: finite losses | val 2.6964
+[PASS] run1: loss went down | 9.048 -> 2.696
+[PASS] run1: throughput and memory recorded | 1,869 tok/s, 4.15 GiB (cpu_peak_rss)
+[PASS] run1: tokens/s consistent with tokens and time
+[PASS] run1: steps x tokens/step covers the budget
+[PASS] run2: trained the full budget | 5,005,312 of 5,000,000
+[PASS] run2: finite losses | val 2.6332
+[PASS] run2: loss went down | 9.057 -> 2.633
+[PASS] run2: throughput and memory recorded | 1,345 tok/s, 2.67 GiB (cpu_peak_rss)
+[PASS] run2: tokens/s consistent with tokens and time
+[PASS] run2: steps x tokens/step covers the budget
+[PASS] run3: trained the full budget | 5,031,936 of 5,000,000
+[PASS] run3: finite losses | val 4.9749
+[PASS] run3: loss went down | 9.057 -> 4.975
+[PASS] run3: throughput and memory recorded | 986 tok/s, 10.95 GiB (cpu_peak_rss)
+[PASS] run3: tokens/s consistent with tokens and time
+[PASS] run3: steps x tokens/step covers the budget
+[PASS] run2 keeps far fewer activations than run1 at the same batch | 560 vs 2,579 MiB
+[PASS] run2 reconstruction error is tiny | 2.18e-06
+[PASS] run3 peak lr follows sqrt batch scaling (capped) | 3.00e-03
+[PASS] screening.json present
+[PASS] screening covers euler, midpoint (2h=1 and 2h=2) and momentum
+[PASS] screening winner is the best non-diverged configuration | winner momentum: euler 4.5440, midpoint 4.7524, midpoint-2h2 4.8941, momentum 4.0574
+[PASS] run2 and run3 use the screening winner's configuration | {'reversible': 'momentum', 'momentum_gamma': 0.9}
+[PASS] screen_euler: results file matches screening.json
+[PASS] screen_midpoint: results file matches screening.json
+[PASS] screen_midpoint-2h2: results file matches screening.json
+[PASS] screen_momentum: results file matches screening.json
+[PASS] max_batch.json present
+[PASS] search covers baseline and the reversible model
+[PASS] reversible max batch exceeds the baseline's | 312 vs 96
+[PASS] run3 trains at the reversible maximum
+[PASS] baseline: last verified trial fits the budget | batch 96, peak 9.51 GiB, budget 11.14 GiB
+[PASS] baseline: peak memory grows with batch
+[PASS] reversible-momentum: last verified trial fits the budget | batch 312, peak 10.90 GiB, budget 11.01 GiB
+[PASS] reversible-momentum: peak memory grows with batch
+[PASS] depth_sweep.json present
+[PASS] depth sweep: euler saved bytes flat in depth | 73,426,948 B
+[PASS] depth sweep: midpoint saved bytes flat in depth | 73,426,948 B
+[PASS] depth sweep: momentum saved bytes flat in depth | 73,426,948 B
+[PASS] depth sweep: baseline saved bytes linear in depth | 26,779,648 B/layer
+[PASS] reversibility_checks.json present
+[PASS] euler: inverse exact and gradients match stored-activation autograd | recon 6.4e-07, grad rel 1.1e-06
+[PASS] midpoint: inverse exact and gradients match stored-activation autograd | recon 8.2e-07, grad rel 8.4e-07
+[PASS] momentum: inverse exact and gradients match stored-activation autograd | recon 2.7e-07, grad rel 3.2e-07
+[PASS] summary.json present
+[PASS] summary matches run1
+[PASS] summary matches run2
+[PASS] summary matches run3
+[PASS] README.md present
+[PASS] README quotes run1's val loss, tokens/s and peak memory
+[PASS] README quotes run2's val loss, tokens/s and peak memory
+[PASS] README quotes run3's val loss, tokens/s and peak memory
+[PASS] README states the executed token budget | 5,005,312
+[PASS] README quotes both maximum batch sizes
+[PASS] run.log present
+verdict: PASS
