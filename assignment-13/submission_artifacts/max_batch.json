@@ -1,0 +1,116 @@
+{
+  "baseline": {
+    "max_batch": 96,
+    "budget_bytes": 11961047040,
+    "trials": [
+      {
+        "batch": 8,
+        "peak_bytes": 1521926144,
+        "baseline_bytes": 460685312,
+        "step_s": 1.2131105580010626,
+        "tokens_per_second": 1688.2220556835728,
+        "ok": true
+      },
+      {
+        "batch": 16,
+        "peak_bytes": 2433703936,
+        "baseline_bytes": 532049920,
+        "step_s": 2.121392103001199,
+        "tokens_per_second": 1930.8076023311592,
+        "ok": true
+      },
+      {
+        "batch": 32,
+        "peak_bytes": 4147023872,
+        "baseline_bytes": 562245632,
+        "step_s": 6.073867791999874,
+        "tokens_per_second": 1348.7287311044208,
+        "ok": true
+      },
+      {
+        "batch": 64,
+        "peak_bytes": 7592407040,
+        "baseline_bytes": 600944640,
+        "step_s": 12.87017323299915,
+        "tokens_per_second": 1273.0209378993743,
+        "ok": true
+      },
+      {
+        "batch": 96,
+        "peak_bytes": 10209996800,
+        "baseline_bytes": 600973312,
+        "step_s": 21.930846959998235,
+        "tokens_per_second": 1120.6133554634946,
+        "ok": true
+      }
+    ],
+    "method": "cpu doubling gated by a linear RSS model, verified by a real step",
+    "variant": "none",
+    "seq_len": 256
+  },
+  "reversible-momentum": {
+    "max_batch": 312,
+    "budget_bytes": 11824441344,
+    "trials": [
+      {
+        "batch": 8,
+        "peak_bytes": 1104506880,
+        "baseline_bytes": 601051136,
+        "step_s": 1.6515009830000054,
+        "tokens_per_second": 1240.0840333014767,
+        "ok": true
+      },
+      {
+        "batch": 16,
+        "peak_bytes": 1575501824,
+        "baseline_bytes": 601141248,
+        "step_s": 2.979409843999747,
+        "tokens_per_second": 1374.7689020525193,
+        "ok": true
+      },
+      {
+        "batch": 32,
+        "peak_bytes": 2033172480,
+        "baseline_bytes": 601153536,
+        "step_s": 5.762476242998673,
+        "tokens_per_second": 1421.611066935532,
+        "ok": true
+      },
+      {
+        "batch": 64,
+        "peak_bytes": 3429232640,
+        "baseline_bytes": 601182208,
+        "step_s": 11.3928797460012,
+        "tokens_per_second": 1438.0911907501386,
+        "ok": true
+      },
+      {
+        "batch": 128,
+        "peak_bytes": 5678399488,
+        "baseline_bytes": 601190400,
+        "step_s": 28.227385954000056,
+        "tokens_per_second": 1160.8584674967574,
+        "ok": true
+      },
+      {
+        "batch": 256,
+        "peak_bytes": 9764933632,
+        "baseline_bytes": 601255936,
+        "step_s": 70.63012223999976,
+        "tokens_per_second": 927.8760664934143,
+        "ok": true
+      },
+      {
+        "batch": 312,
+        "peak_bytes": 11708039168,
+        "baseline_bytes": 601419776,
+        "step_s": 88.561455467001,
+        "tokens_per_second": 901.8821967053287,
+        "ok": true
+      }
+    ],
+    "method": "cpu doubling gated by a linear RSS model, verified by a real step",
+    "variant": "momentum",
+    "seq_len": 256
+  }
+}
