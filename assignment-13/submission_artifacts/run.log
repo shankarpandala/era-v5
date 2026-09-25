@@ -1,2 +1,3 @@
 run_demo.py started 2026-09-25 14:10:05 mode=pilot env={'A13_TOKENS': '5000000', 'A13_SCREEN_TOKENS': '1000000', 'A13_BATCH': '32', 'A13_MAXBATCH_CEILING': '8192', 'A13_ART_DIR': '/home/user/era-v5/assignment-13/submission_artifacts', 'A13_DATA_DIR': '/home/user/era-v5/assignment-13/data'}
 01_baseline_fixed_batch.ipynb: executed top to bottom in 46.2 min
+02_reversible_fixed_batch.ipynb: executed top to bottom in 118.9 min
