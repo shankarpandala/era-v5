@@ -1,0 +1,408 @@
+{
+  "runs": {
+    "run1": {
+      "variant": "none",
+      "batch_size": 32,
+      "tokens": 5005312,
+      "steps": 611,
+      "lr": 0.001,
+      "final_train_loss_last20": 2.787847661972046,
+      "final_val_loss": 2.69643272459507,
+      "final_val_ppl": 14.826746187050421,
+      "tokens_per_second": 1868.9679850960615,
+      "step_ms_mean": 4372.034514311508,
+      "peak_memory": {
+        "kind": "cpu_peak_rss",
+        "peak_bytes": 4456820736,
+        "baseline_bytes": 815009792
+      },
+      "saved_activation_bytes": 2704607236,
+      "runtime": {
+        "device": "cpu",
+        "torch": "2.14.0+cpu",
+        "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+        "python": "3.11.15",
+        "cpu_threads": 4,
+        "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz"
+      },
+      "params": {
+        "total": 20989440,
+        "embedding": 3244032,
+        "non_embedding": 17745408
+      },
+      "diverged": false
+    },
+    "run2": {
+      "variant": "momentum",
+      "batch_size": 32,
+      "tokens": 5005312,
+      "steps": 611,
+      "lr": 0.001,
+      "final_train_loss_last20": 2.709419310092926,
+      "final_val_loss": 2.633206993341446,
+      "final_val_ppl": 13.918334410673099,
+      "tokens_per_second": 1344.9815762204155,
+      "step_ms_mean": 6074.781982852491,
+      "peak_memory": {
+        "kind": "cpu_peak_rss",
+        "peak_bytes": 2866405376,
+        "baseline_bytes": 1574326272
+      },
+      "saved_activation_bytes": 587401220,
+      "runtime": {
+        "device": "cpu",
+        "torch": "2.14.0+cpu",
+        "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+        "python": "3.11.15",
+        "cpu_threads": 4,
+        "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz"
+      },
+      "params": {
+        "total": 20989440,
+        "embedding": 3244032,
+        "non_embedding": 17745408
+      },
+      "diverged": false
+    },
+    "run3": {
+      "variant": "momentum",
+      "batch_size": 312,
+      "tokens": 5031936,
+      "steps": 63,
+      "lr": 0.003,
+      "final_train_loss_last20": 5.050848221778869,
+      "final_val_loss": 4.974911868572235,
+      "final_val_ppl": 144.73606878967962,
+      "tokens_per_second": 985.7940837527659,
+      "step_ms_mean": 80968.33483285499,
+      "peak_memory": {
+        "kind": "cpu_peak_rss",
+        "peak_bytes": 11753185280,
+        "baseline_bytes": 719826944
+      },
+      "saved_activation_bytes": 5727143940,
+      "runtime": {
+        "device": "cpu",
+        "torch": "2.14.0+cpu",
+        "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+        "python": "3.11.15",
+        "cpu_threads": 4,
+        "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz"
+      },
+      "params": {
+        "total": 20989440,
+        "embedding": 3244032,
+        "non_embedding": 17745408
+      },
+      "diverged": false
+    }
+  },
+  "screening": {
+    "budget_tokens": 1000000,
+    "batch_size": 32,
+    "winner": "momentum",
+    "winner_config": {
+      "reversible": "momentum",
+      "momentum_gamma": 0.9
+    },
+    "variants": {
+      "euler": {
+        "config": {
+          "reversible": "euler"
+        },
+        "final_val_loss": 4.543987035751343,
+        "final_train_loss_last20": 5.312095710209438,
+        "tokens_per_second": 1278.6709308651448,
+        "peak_bytes": 2712698880,
+        "steps": 123,
+        "diverged": false,
+        "tokens": 1007616,
+        "reconstruction": {
+          "max_abs_error": 7.990747690200806e-07,
+          "max_rel_error": 5.622032117450725e-06,
+          "half_steps": 20
+        },
+        "max_grad_norm": 13.303262710571289
+      },
+      "midpoint": {
+        "config": {
+          "reversible": "midpoint",
+          "midpoint_h": 0.5
+        },
+        "final_val_loss": 4.75240170955658,
+        "final_train_loss_last20": 5.436320236751011,
+        "tokens_per_second": 1310.6568862097374,
+        "peak_bytes": 2793271296,
+        "steps": 123,
+        "diverged": false,
+        "tokens": 1007616,
+        "reconstruction": {
+          "max_abs_error": 9.611248970031738e-07,
+          "max_rel_error": 6.767792526552306e-06,
+          "half_steps": 10
+        },
+        "max_grad_norm": 12.165288925170898
+      },
+      "midpoint-2h2": {
+        "config": {
+          "reversible": "midpoint",
+          "midpoint_h": 1.0
+        },
+        "final_val_loss": 4.894090116024017,
+        "final_train_loss_last20": 5.582073518208095,
+        "tokens_per_second": 1330.4103137264665,
+        "peak_bytes": 2884165632,
+        "steps": 123,
+        "diverged": false,
+        "tokens": 1007616,
+        "reconstruction": {
+          "max_abs_error": 3.4347176551818848e-06,
+          "max_rel_error": 2.2857389918116005e-05,
+          "half_steps": 10
+        },
+        "max_grad_norm": 14.049643516540527
+      },
+      "momentum": {
+        "config": {
+          "reversible": "momentum",
+          "momentum_gamma": 0.9
+        },
+        "final_val_loss": 4.057350307703018,
+        "final_train_loss_last20": 4.935672453471592,
+        "tokens_per_second": 1279.6089763461184,
+        "peak_bytes": 2659602432,
+        "steps": 123,
+        "diverged": false,
+        "tokens": 1007616,
+        "reconstruction": {
+          "max_abs_error": 3.390014171600342e-07,
+          "max_rel_error": 2.395718582362225e-06,
+          "half_steps": 20
+        },
+        "max_grad_norm": 5.417107582092285
+      }
+    }
+  },
+  "max_batch": {
+    "baseline": 96,
+    "reversible-momentum": 312
+  },
+  "depth_sweep": [
+    {
+      "variant": "none",
+      "n_layer": 2,
+      "activation_bytes": 123840516,
+      "parameter_bytes": 26754048,
+      "saved_tensors": 61,
+      "tokens": 1024
+    },
+    {
+      "variant": "none",
+      "n_layer": 4,
+      "activation_bytes": 177399812,
+      "parameter_bytes": 40922112,
+      "saved_tensors": 109,
+      "tokens": 1024
+    },
+    {
+      "variant": "none",
+      "n_layer": 6,
+      "activation_bytes": 230959108,
+      "parameter_bytes": 55090176,
+      "saved_tensors": 157,
+      "tokens": 1024
+    },
+    {
+      "variant": "none",
+      "n_layer": 8,
+      "activation_bytes": 284518404,
+      "parameter_bytes": 69258240,
+      "saved_tensors": 205,
+      "tokens": 1024
+    },
+    {
+      "variant": "none",
+      "n_layer": 10,
+      "activation_bytes": 338077700,
+      "parameter_bytes": 83426304,
+      "saved_tensors": 253,
+      "tokens": 1024
+    },
+    {
+      "variant": "none",
+      "n_layer": 12,
+      "activation_bytes": 391636996,
+      "parameter_bytes": 97594368,
+      "saved_tensors": 301,
+      "tokens": 1024
+    },
+    {
+      "variant": "euler",
+      "n_layer": 2,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "euler",
+      "n_layer": 4,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "euler",
+      "n_layer": 6,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "euler",
+      "n_layer": 8,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "euler",
+      "n_layer": 10,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "euler",
+      "n_layer": 12,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "midpoint",
+      "n_layer": 2,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "midpoint",
+      "n_layer": 4,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "midpoint",
+      "n_layer": 6,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "midpoint",
+      "n_layer": 8,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "midpoint",
+      "n_layer": 10,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "midpoint",
+      "n_layer": 12,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "momentum",
+      "n_layer": 2,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "momentum",
+      "n_layer": 4,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "momentum",
+      "n_layer": 6,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "momentum",
+      "n_layer": 8,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "momentum",
+      "n_layer": 10,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    },
+    {
+      "variant": "momentum",
+      "n_layer": 12,
+      "activation_bytes": 73426948,
+      "parameter_bytes": 12585984,
+      "saved_tensors": 15,
+      "tokens": 1024
+    }
+  ],
+  "reversibility_checks": [
+    {
+      "variant": "euler",
+      "half_steps": 20,
+      "reconstruction_max_abs_error": 6.444752216339111e-07,
+      "gradient_max_rel_error": 1.079675677219331e-06,
+      "initial_loss": 9.051854133605957
+    },
+    {
+      "variant": "midpoint",
+      "half_steps": 10,
+      "reconstruction_max_abs_error": 8.23289155960083e-07,
+      "gradient_max_rel_error": 8.383326840034749e-07,
+      "initial_loss": 9.093963623046875
+    },
+    {
+      "variant": "momentum",
+      "half_steps": 20,
+      "reconstruction_max_abs_error": 2.682209014892578e-07,
+      "gradient_max_rel_error": 3.160768189354645e-07,
+      "initial_loss": 9.065710067749023
+    }
+  ],
+  "headline_table_markdown": "| run | variant | batch | tokens / steps | peak lr | train loss | val loss | val ppl | tokens/s | step | peak memory | activations saved/step |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| 1 \u00b7 baseline, fixed batch | `none` | 32 \u00d7 256 | 5,005,312 / 611 | 1.0e-03 | 2.7878 | **2.6964** | 14.8 | **1,869** | 4.37 s | **4.15 GiB** | 2,579 MiB |\n| 2 \u00b7 reversible, fixed batch | `momentum` | 32 \u00d7 256 | 5,005,312 / 611 | 1.0e-03 | 2.7094 | **2.6332** | 13.9 | **1,345** | 6.07 s | **2.67 GiB** | 560 MiB |\n| 3 \u00b7 reversible, max batch | `momentum` | 312 \u00d7 256 | 5,031,936 / 63 | 3.0e-03 | 5.0508 | **4.9749** | 144.7 | **986** | 80.97 s | **10.95 GiB** | 5,462 MiB |"
+}

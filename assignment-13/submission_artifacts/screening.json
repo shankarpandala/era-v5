@@ -1,0 +1,86 @@
+{
+  "budget_tokens": 1000000,
+  "batch_size": 32,
+  "winner": "momentum",
+  "winner_config": {
+    "reversible": "momentum",
+    "momentum_gamma": 0.9
+  },
+  "variants": {
+    "euler": {
+      "config": {
+        "reversible": "euler"
+      },
+      "final_val_loss": 4.543987035751343,
+      "final_train_loss_last20": 5.312095710209438,
+      "tokens_per_second": 1278.6709308651448,
+      "peak_bytes": 2712698880,
+      "steps": 123,
+      "diverged": false,
+      "tokens": 1007616,
+      "reconstruction": {
+        "max_abs_error": 7.990747690200806e-07,
+        "max_rel_error": 5.622032117450725e-06,
+        "half_steps": 20
+      },
+      "max_grad_norm": 13.303262710571289
+    },
+    "midpoint": {
+      "config": {
+        "reversible": "midpoint",
+        "midpoint_h": 0.5
+      },
+      "final_val_loss": 4.75240170955658,
+      "final_train_loss_last20": 5.436320236751011,
+      "tokens_per_second": 1310.6568862097374,
+      "peak_bytes": 2793271296,
+      "steps": 123,
+      "diverged": false,
+      "tokens": 1007616,
+      "reconstruction": {
+        "max_abs_error": 9.611248970031738e-07,
+        "max_rel_error": 6.767792526552306e-06,
+        "half_steps": 10
+      },
+      "max_grad_norm": 12.165288925170898
+    },
+    "midpoint-2h2": {
+      "config": {
+        "reversible": "midpoint",
+        "midpoint_h": 1.0
+      },
+      "final_val_loss": 4.894090116024017,
+      "final_train_loss_last20": 5.582073518208095,
+      "tokens_per_second": 1330.4103137264665,
+      "peak_bytes": 2884165632,
+      "steps": 123,
+      "diverged": false,
+      "tokens": 1007616,
+      "reconstruction": {
+        "max_abs_error": 3.4347176551818848e-06,
+        "max_rel_error": 2.2857389918116005e-05,
+        "half_steps": 10
+      },
+      "max_grad_norm": 14.049643516540527
+    },
+    "momentum": {
+      "config": {
+        "reversible": "momentum",
+        "momentum_gamma": 0.9
+      },
+      "final_val_loss": 4.057350307703018,
+      "final_train_loss_last20": 4.935672453471592,
+      "tokens_per_second": 1279.6089763461184,
+      "peak_bytes": 2659602432,
+      "steps": 123,
+      "diverged": false,
+      "tokens": 1007616,
+      "reconstruction": {
+        "max_abs_error": 3.390014171600342e-07,
+        "max_rel_error": 2.395718582362225e-06,
+        "half_steps": 20
+      },
+      "max_grad_norm": 5.417107582092285
+    }
+  }
+}

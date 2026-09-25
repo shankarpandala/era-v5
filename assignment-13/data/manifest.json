@@ -1,0 +1,14 @@
+{
+  "source": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-train.txt",
+  "validation_source": "https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-valid.txt",
+  "fetched_train_bytes": 56171520,
+  "train_stories": 68444,
+  "val_stories": 27630,
+  "vocab_size": 8192,
+  "eot_id": 0,
+  "train_tokens": 13522813,
+  "val_tokens": 2000000,
+  "train_chars_per_token": 4.139856034391661,
+  "tokenizer_sha256": "74aceea5823fe6f60916d1965859cee3f5646e1273ac6cd0778c255d0384c072",
+  "tokenizer_train_bytes": 20971520
+}

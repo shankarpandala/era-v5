@@ -1,0 +1,23 @@
+[
+  {
+    "variant": "euler",
+    "half_steps": 20,
+    "reconstruction_max_abs_error": 6.444752216339111e-07,
+    "gradient_max_rel_error": 1.079675677219331e-06,
+    "initial_loss": 9.051854133605957
+  },
+  {
+    "variant": "midpoint",
+    "half_steps": 10,
+    "reconstruction_max_abs_error": 8.23289155960083e-07,
+    "gradient_max_rel_error": 8.383326840034749e-07,
+    "initial_loss": 9.093963623046875
+  },
+  {
+    "variant": "momentum",
+    "half_steps": 20,
+    "reconstruction_max_abs_error": 2.682209014892578e-07,
+    "gradient_max_rel_error": 3.160768189354645e-07,
+    "initial_loss": 9.065710067749023
+  }
+]
