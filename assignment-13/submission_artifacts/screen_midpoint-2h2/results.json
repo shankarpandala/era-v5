@@ -1,0 +1,203 @@
+{
+  "run_name": "screen-midpoint-2h2",
+  "model_config": {
+    "vocab_size": 8192,
+    "seq_len": 256,
+    "d_model": 384,
+    "n_layer": 10,
+    "n_head": 6,
+    "reversible": "midpoint",
+    "midpoint_h": 1.0,
+    "momentum_gamma": 0.9
+  },
+  "train_config": {
+    "total_tokens": 1000000,
+    "batch_size": 32,
+    "seq_len": 256,
+    "lr": 0.001,
+    "min_lr_ratio": 0.1,
+    "warmup_frac": 0.025,
+    "weight_decay": 0.1,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "grad_clip": 1.0,
+    "eval_every_steps": 50,
+    "eval_seqs": 128,
+    "final_eval_seqs": 256,
+    "log_every_steps": 10,
+    "seed": 1234,
+    "ckpt_every_steps": 500,
+    "sample_tokens": 120
+  },
+  "runtime": {
+    "device": "cpu",
+    "torch": "2.14.0+cpu",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "cpu_threads": 4,
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz"
+  },
+  "params": {
+    "total": 20989440,
+    "embedding": 3244032,
+    "non_embedding": 17745408
+  },
+  "steps": 123,
+  "tokens": 1007616,
+  "planned_tokens": 1000000,
+  "diverged": false,
+  "final_train_loss_last20": 5.582073518208095,
+  "final_val_loss": 4.894090116024017,
+  "final_val_ppl": 133.49848320614248,
+  "train_seconds": 757.372360695008,
+  "tokens_per_second": 1330.4103137264665,
+  "step_ms_mean": 6180.7740504613885,
+  "step_ms_std": 156.08373953468282,
+  "peak_memory": {
+    "kind": "cpu_peak_rss",
+    "peak_bytes": 2884165632,
+    "baseline_bytes": 1648623616
+  },
+  "saved_for_backward": {
+    "activation_bytes": 587401220,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 8192
+  },
+  "reconstruction": {
+    "max_abs_error": 3.4347176551818848e-06,
+    "max_rel_error": 2.2857389918116005e-05,
+    "half_steps": 10
+  },
+  "history": {
+    "step": [
+      1,
+      11,
+      21,
+      31,
+      41,
+      51,
+      61,
+      71,
+      81,
+      91,
+      101,
+      111,
+      121,
+      123
+    ],
+    "tokens": [
+      8192,
+      90112,
+      172032,
+      253952,
+      335872,
+      417792,
+      499712,
+      581632,
+      663552,
+      745472,
+      827392,
+      909312,
+      991232,
+      1007616
+    ],
+    "train_loss": [
+      9.060235977172852,
+      6.25609016418457,
+      5.933619976043701,
+      5.622258186340332,
+      5.466393947601318,
+      5.422848701477051,
+      5.317539691925049,
+      5.17873477935791,
+      5.083657264709473,
+      5.030747890472412,
+      5.009240627288818,
+      5.000686168670654,
+      4.835557460784912,
+      4.931418418884277
+    ],
+    "lr": [
+      4e-08,
+      0.0009924528131647233,
+      0.000955715978600734,
+      0.0008908750581773805,
+      0.0008024216048304456,
+      0.0006964828198005435,
+      0.0005803971192885487,
+      0.0004622057998327082,
+      0.0003500960149222048,
+      0.0002518336480493928,
+      0.00017422536728010064,
+      0.00012264712500757678,
+      0.00010067176387484803,
+      0.00010000077502885916
+    ],
+    "grad_norm": [
+      14.049643516540527,
+      1.1807118654251099,
+      0.8647094368934631,
+      0.46853339672088623,
+      0.4653063416481018,
+      0.5317545533180237,
+      0.5401113033294678,
+      0.5601146221160889,
+      0.7002328038215637,
+      0.7343904376029968,
+      0.5881762504577637,
+      0.47262513637542725,
+      0.5079305768013,
+      0.46664831042289734
+    ],
+    "step_ms": [
+      6053.388280000036,
+      6289.130185000431,
+      6167.636886999389,
+      6354.55633499987,
+      6267.895834000228,
+      6294.535865000398,
+      6157.427705000373,
+      6146.759133998785,
+      6073.151536000296,
+      6423.308020999684,
+      6161.197515999447,
+      5916.9662189997325,
+      5852.38772699995,
+      6245.10969199946
+    ]
+  },
+  "evals": {
+    "step": [
+      0,
+      50,
+      100,
+      123
+    ],
+    "tokens": [
+      0,
+      409600,
+      819200,
+      1007616
+    ],
+    "val_loss": [
+      9.079093933105469,
+      5.299156188964844,
+      4.950867533683777,
+      4.894090116024017
+    ]
+  },
+  "samples": [
+    {
+      "temperature": 0.0,
+      "text": "Once upon a time.\nOne day.\nOne day.\nOnce big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big big"
+    },
+    {
+      "temperature": 0.8,
+      "text": "Once upon a time. Can a cat said. They saw Tom to happy. He to day. They aOne day. She thought to there was it it came.\nThe big friends. I it. Now.\nMom. He loved to there, you the friend?\"I day. They played was theBut you a park.\nThank and they did a tree, have the big happy. But and a bird.\n But and theYes. It to know a\"Once day all to the dog up.\nOne happy.\nTim did you and you a little Tim it was the boy. It"
+    }
+  ],
+  "finished_at": "2026-09-25 15:37:43"
+}
