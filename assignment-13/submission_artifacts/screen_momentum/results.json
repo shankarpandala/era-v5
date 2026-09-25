@@ -1,0 +1,203 @@
+{
+  "run_name": "screen-momentum",
+  "model_config": {
+    "vocab_size": 8192,
+    "seq_len": 256,
+    "d_model": 384,
+    "n_layer": 10,
+    "n_head": 6,
+    "reversible": "momentum",
+    "midpoint_h": 0.5,
+    "momentum_gamma": 0.9
+  },
+  "train_config": {
+    "total_tokens": 1000000,
+    "batch_size": 32,
+    "seq_len": 256,
+    "lr": 0.001,
+    "min_lr_ratio": 0.1,
+    "warmup_frac": 0.025,
+    "weight_decay": 0.1,
+    "betas": [
+      0.9,
+      0.95
+    ],
+    "grad_clip": 1.0,
+    "eval_every_steps": 50,
+    "eval_seqs": 128,
+    "final_eval_seqs": 256,
+    "log_every_steps": 10,
+    "seed": 1234,
+    "ckpt_every_steps": 500,
+    "sample_tokens": 120
+  },
+  "runtime": {
+    "device": "cpu",
+    "torch": "2.14.0+cpu",
+    "platform": "Linux-6.18.44-fc-v37-x86_64-with-glibc2.39",
+    "python": "3.11.15",
+    "cpu_threads": 4,
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz"
+  },
+  "params": {
+    "total": 20989440,
+    "embedding": 3244032,
+    "non_embedding": 17745408
+  },
+  "steps": 123,
+  "tokens": 1007616,
+  "planned_tokens": 1000000,
+  "diverged": false,
+  "final_train_loss_last20": 4.935672453471592,
+  "final_val_loss": 4.057350307703018,
+  "final_val_ppl": 57.82090032886833,
+  "train_seconds": 787.4405530330168,
+  "tokens_per_second": 1279.6089763461184,
+  "step_ms_mean": 6447.7926303079585,
+  "step_ms_std": 185.19622669392433,
+  "peak_memory": {
+    "kind": "cpu_peak_rss",
+    "peak_bytes": 2659602432,
+    "baseline_bytes": 1573380096
+  },
+  "saved_for_backward": {
+    "activation_bytes": 587401220,
+    "parameter_bytes": 12585984,
+    "saved_tensors": 15,
+    "tokens": 8192
+  },
+  "reconstruction": {
+    "max_abs_error": 3.390014171600342e-07,
+    "max_rel_error": 2.395718582362225e-06,
+    "half_steps": 20
+  },
+  "history": {
+    "step": [
+      1,
+      11,
+      21,
+      31,
+      41,
+      51,
+      61,
+      71,
+      81,
+      91,
+      101,
+      111,
+      121,
+      123
+    ],
+    "tokens": [
+      8192,
+      90112,
+      172032,
+      253952,
+      335872,
+      417792,
+      499712,
+      581632,
+      663552,
+      745472,
+      827392,
+      909312,
+      991232,
+      1007616
+    ],
+    "train_loss": [
+      9.051898002624512,
+      6.1359429359436035,
+      5.597638130187988,
+      5.216489315032959,
+      4.820342540740967,
+      4.698581695556641,
+      4.518373012542725,
+      4.295838356018066,
+      4.18156623840332,
+      4.152219772338867,
+      4.135342121124268,
+      4.0987868309021,
+      4.1315202713012695,
+      4.06487512588501
+    ],
+    "lr": [
+      4e-08,
+      0.0009924528131647233,
+      0.000955715978600734,
+      0.0008908750581773805,
+      0.0008024216048304456,
+      0.0006964828198005435,
+      0.0005803971192885487,
+      0.0004622057998327082,
+      0.0003500960149222048,
+      0.0002518336480493928,
+      0.00017422536728010064,
+      0.00012264712500757678,
+      0.00010067176387484803,
+      0.00010000077502885916
+    ],
+    "grad_norm": [
+      5.417107582092285,
+      4.929264545440674,
+      0.9561618566513062,
+      1.4805666208267212,
+      1.123090386390686,
+      1.3264243602752686,
+      0.9634224772453308,
+      0.6898507475852966,
+      0.7669126987457275,
+      0.6880075335502625,
+      0.5790868401527405,
+      0.6449378728866577,
+      0.5451644659042358,
+      0.5489494204521179
+    ],
+    "step_ms": [
+      5751.448060998882,
+      6427.451686000495,
+      6264.91081200038,
+      6550.997714999539,
+      6725.365251000767,
+      6392.793007998989,
+      6640.80447500055,
+      6578.484534000381,
+      6274.964607000584,
+      5993.569205000313,
+      6546.819887000311,
+      6407.228729000053,
+      6585.868180000034,
+      6432.046105001064
+    ]
+  },
+  "evals": {
+    "step": [
+      0,
+      50,
+      100,
+      123
+    ],
+    "tokens": [
+      0,
+      409600,
+      819200,
+      1007616
+    ],
+    "val_loss": [
+      9.056544542312622,
+      4.633197665214539,
+      4.084024369716644,
+      4.057350307703018
+    ]
+  },
+  "samples": [
+    {
+      "temperature": 0.0,
+      "text": "Once upon a time, there was a time, there was a time, there was a time, there was a time, there was a time, there was a time, there was a big, there was a big, there was a big, there was a big, there was a big, there was a big, a big, there was a big, there was a big, there was a big, there was a big bird. The bird. The bird. The bird. The bird. The bird. The bird. The bird was a big bird was a big bird was a big bird was a big"
+    },
+    {
+      "temperature": 0.8,
+      "text": "Once upon a time, there was a bird, there was in a time, a time, there was a time, there was a little girl named Tim was a little girl named Tom.\n\"It's friends. The boy named Tim. The bird, there was a small bird was so that played with the hill.\nOne day, he found a time, he wanted to the toy together. But the bird, he was so happy for his friends and the end, a small day, there was.\nLily wanted to play with the new of friends and felt happy. The bug, the bird were happy"
+    }
+  ],
+  "finished_at": "2026-09-25 15:51:39"
+}
